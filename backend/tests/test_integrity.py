@@ -1,0 +1,175 @@
+"""Data integrity: impossible values are flagged before conversion, never derived from, never shown as normal."""
+import re
+
+import pandas as pd
+import pytest
+from fastapi.testclient import TestClient
+
+from backend.core.store import get_store
+from backend.core.units import is_flagged, normalize
+from backend.record import gravity_label, test_record as build_record
+
+
+@pytest.fixture(scope="module")
+def st():
+    return get_store()
+
+
+@pytest.fixture(scope="module")
+def api():
+    from backend.api.main import app
+    return TestClient(app)
+
+
+# ---------------------------------------------------------------- validate before convert
+@pytest.mark.parametrize("var,raw,unit", [
+    ("pressure_kpa", "0 atm", None), ("pressure_kpa", "0", "psi"), ("pressure_kpa", "-3 kPa", None), ("pressure_kpa", 0, "kPa"),
+    ("o2_frac", "130%", None), ("o2_frac", "-0.2", None), ("o2_frac", "140", None),
+    ("d0_mm", "0 cm", None), ("flow_cm_s", "-4 mm/s", None), ("burn_rate_k_mm2_s", "-0.5", "mm^2/s"),
+])
+def test_impossible_raw_values_are_flagged_not_converted(var, raw, unit):
+    value, steps = normalize(var, raw, unit)
+    assert value is None
+    assert is_flagged(steps)
+    assert not any(s["op"] == "convert" for s in steps), "an impossible value must never be converted"
+
+
+def test_unknown_unit_is_flagged_not_kept():
+    value, steps = normalize("pressure_kpa", "14.7 furlongs")
+    assert value is None and is_flagged(steps)
+
+
+def test_valid_values_still_convert():
+    value, steps = normalize("pressure_kpa", "1 atm")
+    assert value == pytest.approx(101.325) and not is_flagged(steps)
+    assert normalize("o2_frac", "0")[0] == 0.0            # zero oxygen is possible; zero pressure is not
+    assert normalize("flow_cm_s", "0 cm/s")[0] == 0.0
+
+
+def test_flagged_input_blocks_the_derived_value():
+    from backend.adapters.base import tabular_to_canonical
+    from backend.core import config
+    raw = pd.DataFrame([{"Test ID": "T1", "O2": "0.30", "Pressure": "0 atm", "Outcome": "burned"},
+                        {"Test ID": "T2", "O2": "0.30", "Pressure": "1 atm", "Outcome": "burned"}])
+    cfg = {**config.datasets()["flex_demo"], "constants": {}}
+    res = tabular_to_canonical(raw, "flex_demo", cfg, "unit-test.csv")
+    bad, good = res.tests.iloc[0], res.tests.iloc[1]
+    assert bad["pressure_kpa"] is None or pd.isna(bad["pressure_kpa"])
+    assert bad["o2_pp_kpa"] is None or pd.isna(bad["o2_pp_kpa"])
+    assert set(bad["invalid"]) == {"pressure_kpa", "o2_pp_kpa"}
+    assert bad["invalid"]["o2_pp_kpa"].startswith("Not computed: input flagged")
+    assert good["o2_pp_kpa"] == pytest.approx(0.30 * 101.325) and not good["invalid"]
+    prov = [p for p in res.provenance if p["test_id"] == "T1" and p["variable"] == "o2_pp_kpa"]
+    assert prov and prov[0]["steps"][0]["op"] == "not_computed"
+
+
+def test_dataset_rows_with_impossible_values(st):
+    bad = st.tests[st.tests["invalid"].map(bool)]
+    assert "FX-018" in bad.index
+    for tid, r in bad.iterrows():
+        assert r["excluded"], f"{tid} must be excluded from charts and models"
+        assert "impossible_value" in r["flags"]
+        for var in r["invalid"]:
+            assert pd.isna(r[var]), f"{tid}.{var} is flagged but still holds a number"
+    assert not (st.usable_tests()["pressure_kpa"] <= 0).any()
+
+
+# ---------------------------------------------------------------- nothing flagged renders as a normal value
+def test_no_flagged_value_is_displayed_anywhere(st):
+    """Every record of every test: flagged fields carry no value, only a reason."""
+    for tid in st.tests.index:
+        rec = build_record(tid)
+        invalid = st.tests.at[tid, "invalid"]
+        by_var = {f["var"]: f for f in rec["fields"]}
+        for var in invalid:
+            f = by_var[var]
+            assert f["status"] == "flagged" and f["value"] is None and f["note"], (tid, var)
+        for f in rec["fields"]:
+            if f["status"] == "flagged":
+                assert f["value"] is None
+            if f["value"] is None:
+                assert f["note"], f"{tid}.{f['var']}: a blank must say why"
+            assert f["status"] in {"measured", "derived", "assumed", "flagged", "image", "blank"}
+
+
+def test_fx018_record(st):
+    rec = build_record("FX-018")
+    f = {x["var"]: x for x in rec["fields"]}
+    assert rec["excluded"]
+    assert f["pressure_kpa"]["status"] == "flagged" and "0 atm" in f["pressure_kpa"]["note"]
+    assert f["o2_pp_kpa"]["status"] == "flagged" and f["o2_pp_kpa"]["note"].startswith("Not computed: input flagged")
+    assert f["gravity_g"]["value"] == "Microgravity (ISS)" and f["gravity_g"]["status"] == "assumed"
+    assert f["flow_cm_s"]["status"] == "assumed"
+    assert f["burned"]["value"] == "Extinguished"
+    assert f["burn_rate_k_mm2_s"]["value"] is None and f["burn_rate_k_mm2_s"]["note"] == "Not applicable: flame extinguished"
+    shown = " ".join(str(x["value"]) for x in rec["fields"] if x["value"])
+    assert "0 kPa" not in shown and not re.search(r"\b0 g", shown)
+
+
+def test_gravity_is_always_a_regime_name(st):
+    assert gravity_label(0.0) == "Microgravity (ISS)" and gravity_label(1.0) == "Earth 1g"
+    assert "Moon" in gravity_label(0.165) and "Mars" in gravity_label(0.38)
+    for tid in list(st.tests.index)[:60]:
+        for f in build_record(tid)["fields"]:
+            if f["var"] == "gravity_g" and f["value"]:
+                assert not re.match(r"^[\d.]+", f["value"]), "gravity must not be shown as a bare number"
+            if f["var"] == "burned" and f["value"]:
+                assert f["value"] in {"Burned", "Extinguished"}
+
+
+def test_source_row_is_the_raw_file(api):
+    r = api.get("/api/source/flex_demo/row/19").json()
+    hit = next(x for x in r["rows"] if x["n"] == 19)
+    assert "FX-018" in hit["cells"] and "0 atm" in hit["cells"]
+
+
+# ---------------------------------------------------------------- API payloads behind the new screens
+def test_api_never_returns_a_flagged_number(api, st):
+    rows = api.get("/api/tests?include_excluded=true").json()
+    for r in rows:
+        for var in r["invalid"]:
+            assert r[var] is None
+        assert r["outcome"] in {"Burned", "Extinguished", None}
+        assert r["gravity"] is None or not r["gravity"][0].isdigit()
+
+
+@pytest.mark.parametrize("tid", ["moon-base", "iss-cabin", "microgravity", "untested"])
+def test_topics_separate_measured_inferred_untested(api, tid):
+    t = api.get(f"/api/topic/{tid}").json()
+    assert t["finding"] and t["grade"]["label"] and t["visual"]["kind"]
+    for k in ("measured", "inferred", "untested"):
+        assert t[k]["summary"] and isinstance(t[k]["items"], list)
+    assert t["untested"]["items"], "every answer states what was never tested"
+    assert t["sources"], "every answer cites a source passage"
+    assert t["demo"] is True
+
+
+def test_moon_base_answer_for_one_material(api):
+    t = api.get("/api/topic/moon-base", params={"material": "PMMA"}).json()
+    assert t["material"] == "PMMA" and "PMMA" in t["finding"]
+    assert t["grade"]["label"] == "Model estimate"           # lunar gravity has no data: never graded as measured
+    assert any("Moon gravity" in i["text"] for i in t["untested"]["items"])
+    assert all(m["confidence"] == "low" for m in t["materials"]), "untested gravity caps confidence at low"
+
+
+def test_explore_and_insights_payloads(api):
+    e = api.get("/api/explore").json()
+    ids = {i["id"] for i in e["investigations"]}
+    for g in e["groupings"].values():
+        assert all(m in ids for grp in g for m in grp["members"])
+    assert all(len(v) <= 4 for v in e["links"].values()), "only the strongest few relationships are sent"
+    ins = api.get("/api/insights").json()["insights"]
+    assert 5 <= len(ins) <= 8
+    for i in ins:
+        assert i["sentence"].endswith(".") and i["visual"]["kind"] and i["source"] and i["studio"]
+
+
+def test_lab_grid_shape_and_domain(api):
+    g = api.get("/api/lab/grid", params={"mode": "solid", "item": "PMMA"}).json()
+    n = 1
+    for a in g["axes"]:
+        n *= len(a["values"])
+    assert len(g["p"]) == len(g["rate"]) == len(g["dist"]) == n
+    assert all(0 <= p <= 1 for p in g["p"])
+    assert g["cv"]["accuracy"] > g["cv"]["baseline"], "the model is reported against its baseline"
+    assert max(g["dist"]) > g["edge"], "the grid reaches beyond the tested range and says so"

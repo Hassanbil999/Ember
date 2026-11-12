@@ -1,0 +1,100 @@
+# Concepts: short plain definitions + links. Also feed the glossary (hover definitions).
+# `plain` is the student caption; `definition` is the expert one.
+concepts:
+  - id: fire-pillars
+    name: Fire-safety pillars
+    plain: NASA fire safety rests on three jobs — stop fires starting, notice them early, and put them out.
+    definition: Prevention (materials, flammability limits), detection (smoke/aerosol sensing) and suppression (extinguishing).
+    investigations: []
+    terms: [prevention, detection, suppression, pillar]
+  - id: flammability-limit
+    name: Flammability limit
+    plain: The oxygen level below which a material stops burning.
+    definition: Boundary in (O₂, pressure, flow) space between sustained flame spread and extinction; often reported as limiting oxygen concentration (LOC).
+    investigations: [BASS, BASS-II, Saffire-I, Saffire-II, Saffire-III]
+    terms: [flammability, limiting oxygen concentration, loc, envelope, extinction boundary]
+  - id: flow-replaces-buoyancy
+    name: Flow replaces buoyancy
+    plain: In space hot gas does not rise, so the cabin fans decide how much fresh oxygen reaches a flame.
+    definition: Without buoyant convection, imposed ventilation flow controls oxygen transport; some materials burn at lower O₂ in gentle flow than on Earth.
+    investigations: [BASS, BASS-II, Saffire-I, SPICE, SLICE]
+    terms: [buoyancy, ventilation, opposed flow, forced flow, airflow]
+  - id: d2-law
+    name: d² law
+    plain: A burning droplet's area shrinks at a steady rate, so diameter squared falls in a straight line.
+    definition: Quasi-steady droplet burning gives d² = d₀² − K·t; K is the burning-rate constant (mm²/s).
+    investigations: [FLEX, FLEX-2, CFI]
+    terms: [d2 law, d-squared law, burning rate constant, k]
+  - id: radiative-extinction
+    name: Radiative extinction
+    plain: Large microgravity flames can lose so much heat by glowing that they go out on their own.
+    definition: Extinction caused by radiative heat loss exceeding heat release, typical of large spherical droplet flames in microgravity.
+    investigations: [FLEX, FLEX-2]
+    terms: [extinction, radiative, extinction diameter, quench]
+  - id: cool-flames
+    name: Cool flames
+    plain: A slow, faint, low-temperature burning mode that can continue after the visible flame goes out.
+    definition: Low-temperature chemistry (≈500–800 K) burning regime observed in microgravity droplet and gaseous flames.
+    investigations: [FLEX, CFI, CFI-G]
+    terms: [cool flame, low temperature, ntc]
+  - id: o2-partial-pressure
+    name: O₂ partial pressure
+    plain: How much oxygen is really there — the percentage times the total pressure.
+    definition: pO₂ = x_O₂ · P. Exploration habitats trade lower total pressure for higher O₂ fraction, raising flammability.
+    investigations: [BASS-II, FLEX, CFI-G]
+    terms: [partial pressure, ppo2, po2, oxygen partial pressure]
+  - id: exploration-atmosphere
+    name: Exploration atmospheres
+    plain: Moon bases and rovers plan richer oxygen at lower pressure than the ISS, which makes fires easier.
+    definition: Planned Moon base atmosphere ≥30% O₂ at ≤10.2 psi (Earth 21% at 14.7 psi); spacesuits 100% O₂ at 4.3 psi.
+    investigations: [BASS-II, Saffire-II, CFI-G]
+    terms: [moon base, lunar, rover, spacesuit, habitat, 10.2 psi]
+  - id: partial-gravity-gap
+    name: Partial-gravity gap
+    plain: Nobody has burned things at Moon or Mars gravity in these datasets — we can only bracket it.
+    definition: PSI holds no partial-gravity combustion data. Microgravity and 1g results only bound partial-gravity behavior.
+    investigations: []
+    terms: [partial gravity, lunar gravity, martian gravity, 0.16 g, 0.38 g]
+  - id: smoke-detection
+    name: Smoke and aerosol detection
+    plain: Spacecraft smoke particles differ from Earth smoke, so detectors must be tuned to them.
+    definition: Particle-size distributions of pyrolysis smoke and background dust set detector design (SAME, SAME-R, DAFT, DAFT-2).
+    investigations: [SAME, SAME-R, DAFT, DAFT-2]
+    terms: [smoke, aerosol, particle size, detector, dust]
+  - id: soot
+    name: Soot and smoke point
+    plain: Soot is the glowing carbon in flames; it makes flames bright and radiate heat.
+    definition: Soot formation sets flame luminosity and radiative loss; smoke point measures sooting tendency.
+    investigations: [SPICE, ACME, E-FIELD Flames]
+    terms: [soot, smoke point, luminosity, radiation]
+  - id: flame-spread
+    name: Flame spread
+    plain: How fast a flame creeps across a material's surface.
+    definition: Leading-edge speed of a flame over a solid; in microgravity it depends strongly on opposed flow speed and O₂.
+    investigations: [BASS, BASS-II, Saffire-I, Saffire-III]
+    terms: [spread rate, flame spread, propagation]
+  - id: high-oxygen-flames
+    name: High-oxygen flames
+    plain: In very oxygen-rich air things burn hotter and faster.
+    definition: Elevated O₂ fraction (up to 85% in CFI-G; 100% in suits) widens flammability envelopes and raises burning rates.
+    investigations: [CFI-G, ACME, FLEX]
+    terms: [high oxygen, 85%, enriched oxygen, pure oxygen]
+  - id: inert-diluents
+    name: Inert diluents
+    plain: The gas mixed with oxygen changes how a flame behaves — helium, nitrogen and CO₂ each act differently.
+    definition: Diluent heat capacity and diffusivity change flame temperature and extinction; CO₂ is also a suppressant.
+    investigations: [FLEX, FLEX-2]
+    terms: [diluent, nitrogen, helium, carbon dioxide, co2, inert]
+
+glossary:
+  microgravity: Near-weightless condition (≈10⁻⁶ g) aboard orbiting spacecraft; buoyancy vanishes.
+  MSG: Microgravity Science Glovebox on the ISS — an enclosed work volume used by BASS, SPICE, SLICE, SAME.
+  CIR: Combustion Integrated Rack on the ISS — a combustion chamber with diagnostics.
+  MDCA: Multi-user Droplet Combustion Apparatus — the CIR insert used for FLEX, FLEX-2 and CFI droplets.
+  PSI: NASA Physical Sciences Informatics — the public database of ISS physical-science data.
+  applicability domain: The region of input space where a data-driven model has nearby training data and can be trusted.
+  GP: Gaussian process — a model that returns both a prediction and its uncertainty.
+  RRF: Reciprocal-rank fusion — combines several ranked lists by summing 1/(k + rank).
+  BM25: A keyword ranking function based on term frequency and rarity.
+  standoff ratio: Flame diameter divided by droplet diameter.
+  mutual information: How much knowing one variable reduces uncertainty about another; detects non-linear association.

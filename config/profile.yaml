@@ -1,0 +1,3 @@
+# Active data profile. `python run.py demo off` sets include_demo: false so only
+# non-demo datasets (your real PSI files) are ingested; `demo on` restores the fixture.
+include_demo: true

@@ -1,0 +1,163 @@
+Test ID,Campaign,Investigation,Fuel,O2,Diluent,Pressure,D0 (mm),Outcome,K (mm^2/s),Ext. D (mm),Date
+FX-001,FLEX-C1,FLEX,n-heptane,35.1%,N2,0.50 atm,3.902,Burned to completion,0.755,,2009-01-01
+FX-002,FLEX-C2,FLEX,methanol,0.210,N2,2.00 atm,3.45,Burned to completion,0.5112,,2010-08-12
+FX-003,FLEX-C3,FLEX,ethanol,23.7,He,3.00 atm,2.442,Burned to completion,0.662,,2011-03-23
+FX-004,FLEX2-C1,FLEX-2,methanol,15.7 %,N2,29.39 psi,4.677,Burned to completion,0.4873,,2013-10-07
+FX-005,FLEX2-C2,FLEX-2,n-heptane,31.4%,N2,44.09 psi,2.542,Burned to completion,0.8056,,2015-05-18
+FX-006,FLEX-C1,FLEX,ethanol,0.391,N2,22.04 psi,2.288,Burned to completion,0.6642,,2009-12-02
+FX-007,FLEX-C2,FLEX,n-heptane,25.4,N2,202.7 kPa,3.605,Burned to completion,0.732,,2010-07-13
+FX-008,FLEX-C3,FLEX,n-heptane,36.8 %,He,304.0 kPa,2.825,Burned to completion,1.0183,,2011-02-24
+FX-009,FLEX2-C1,FLEX-2,n-heptane,39.4%,He,50.7 kPa,4.948,Burned,0.9551,1.068,2013-09-08
+FX-010,FLEX2-C2,FLEX-2,n-heptane,0.277,N2,1.013 bar,4.143,Burned to completion,0.7286,,2015-04-19
+FX-011,FLEX-C1,FLEX,methanol,33.4,N2,0.507 bar,4.378,Burned,0.5866,1.048,2009-11-03
+FX-012,FLEX-C2,FLEX,n-heptane,21.0 %,He,1.013 bar,4.747,Flame extinction,,1.303,2010-06-14
+FX-013,FLEX-C3,FLEX,methanol,36.7%,He,3.00 atm,4.618,Burned,0.7986,0.701,2011-01-25
+FX-014,FLEX2-C1,FLEX-2,n-heptane,0.210,N2,0.50 atm,2.881,Burned to completion,0.5515,,2013-08-09
+FX-015,FLEX2-C2,FLEX-2,methanol,21.6,N2,1.50 atm,2.632,Burned to completion,0.491,,2015-03-20
+FX-016,FLEX-C1,FLEX,n-decane,18.0 %,N2,14.70 psi,3.229,Burned to completion,0.5385,,2009-10-04
+FX-017,FLEX-C2,FLEX,n-heptane,24.7%,N2,44.09 psi,2.283,Burned to completion,0.7203,,2010-05-15
+FX-018,FLEX-C3,FLEX,methanol,0.301,N2,0 atm,3.396,Flame extinction,,0.832,2011-12-26
+FX-019,FLEX2-C1,FLEX-2,ethanol,14.6,N2,70.9 kPa,4.236,Flame extinction,,2.471,2013-07-10
+FX-020,FLEX2-C2,FLEX-2,ethanol,22.0 %,N2,202.7 kPa,3.099,Flame extinction,,0.855,2015-02-21
+FX-021,FLEX-C1,FLEX,n-heptane,36.8%,CO2,101.3 kPa,3.155,Burned to completion,0.6508,,2009-09-05
+FX-022,FLEX-C2,FLEX,ethanol,0.125,He,2.026 bar,1.898,Flame extinction,0.51,1.612,2010-04-16
+FX-023,FLEX-C3,FLEX,methanol,12.9,CO2,3.040 bar,4.32,Flame extinction,,3.906,2011-11-27
+FX-024,FLEX2-C1,FLEX-2,n-decane,25.7 %,N2,0.507 bar,2.284,Burned to completion,0.5496,,2013-06-11
+FX-025,FLEX2-C2,FLEX-2,n-decane,21.0%,N2,2.00 atm,3.814,Burned to completion,0.5654,,2015-01-22
+FX-026,FLEX-C1,FLEX,n-decane,0.320,N2,1.00 atm,2.023,Burned to completion,0.6627,,2009-08-06
+FX-027,FLEX-C2,FLEX,n-decane,16.4,N2,1.00 atm,4.721,Burned to completion,0.5472,,2010-03-17
+FX-028,FLEX-C3,FLEX,n-heptane,20.0 %,N2,29.39 psi,2.031,Burned to completion,0.6416,,2011-10-01
+FX-029,FLEX2-C1,FLEX-2,ethanol,12.9%,N2,7.35 psi,2.007,Flame extinction,,1.416,2013-05-12
+FX-030,FLEX2-C2,FLEX-2,ethanol,0.354,CO2,7.35 psi,3.835,Burned to completion,0.5312,,2015-12-23
+FX-031,FLEX-C1,FLEX,methanol,28.1,N2,202.7 kPa,3.333,Burned to completion,0.5391,,2009-07-07
+FX-032,FLEX-C2,FLEX,methanol,17.2 %,N2,101.3 kPa,3.842,Flame extinction,,1.785,2010-02-18
+FX-033,FLEX-C3,FLEX,methanol,38.1%,CO2,101.3 kPa,4.317,Burned to completion,0.5664,,2011-09-02
+FX-034,FLEX2-C1,FLEX-2,n-decane,0.135,N2,1.013 bar,4.51,Flame extinction,,2.717,2013-04-13
+FX-035,FLEX2-C2,FLEX-2,n-heptane,32.4,N2,0.507 bar,4.258,Burned to completion,0.7506,,2015-11-24
+FX-036,FLEX-C1,FLEX,ethanol,21.0 %,N2,2.026 bar,3.055,Burned to completion,0.5712,,2009-06-08
+FX-037,FLEX-C2,FLEX,ethanol,18.2%,CO2,1.50 atm,2.005,Burned to completion,0.3982,,2010-01-19
+FX-038,FLEX-C3,FLEX,n-heptane,0.242,He,1.00 atm,4.969,Burned to completion,0.7983,,2011-08-03
+FX-039,FLEX2-C1,FLEX-2,n-heptane,24.2,N2,1.00 atm,4.618,Burned,0.7322,1.028,2013-03-14
+FX-040,FLEX2-C2,FLEX-2,n-heptane,34.8 %,N2,22.04 psi,2.015,Burned to completion,0.776,,2015-10-25
+FX-041,FLEX-C1,FLEX,n-decane,21.0%,CO2,29.39 psi,3.441,Burned to completion,0.4857,,2009-05-09
+FX-042,FLEX-C2,FLEX,n-heptane,0.399,N2,22.04 psi,3.607,,0.8338,,2010-12-20
+FX-043,FLEX-C3,FLEX,n-decane,24.6,N2,304.0 kPa,3.43,Burned to completion,0.6825,,2011-07-04
+FX-044,FLEX2-C1,FLEX-2,methanol,25.4 %,N2,70.9 kPa,2.286,Burned to completion,0.4513,,2013-02-15
+FX-045,FLEX2-C2,FLEX-2,methanol,21.0%,CO2,202.7 kPa,3.333,Flame extinction,,1.541,2015-09-26
+FX-046,FLEX-C1,FLEX,ethanol,0.187,CO2,1.520 bar,4.804,Flame extinction,,2.797,2009-04-10
+FX-047,FLEX-C2,FLEX,methanol,33.3,N2,1.013 bar,4.315,Burned,0.6034,0.701,2010-11-21
+FX-048,FLEX-C3,FLEX,ethanol,15.8 %,CO2,0.507 bar,2.308,Flame extinction,0.3905,1.602,2011-06-05
+FX-049,FLEX2-C1,FLEX-2,n-heptane,13.8%,He,2.00 atm,4.444,Flame extinction,,2.873,2013-01-16
+FX-050,FLEX2-C2,FLEX-2,n-decane,0.210,He,1.00 atm,4.869,Burned to completion,0.6574,,2015-08-27
+FX-051,FLEX-C1,FLEX,methanol,29.6,He,0.50 atm,4.088,Burned to completion,0.62,,2009-03-11
+FX-052,FLEX-C2,FLEX,methanol,26.9 %,N2,14.70 psi,4.83,Burned,0.5558,0.959,2010-10-22
+FX-053,FLEX-C3,FLEX,n-heptane,21.0%,N2,22.04 psi,4.104,Flame extinction,0.6248,0.999,2011-05-06
+FX-054,FLEX2-C1,FLEX-2,ethanol,0.376,He,29.39 psi,4.734,Burned,0.8117,1.105,2013-12-17
+FX-055,FLEX2-C2,FLEX-2,methanol,25.1,CO2,202.7 kPa,2.355,Burned to completion,0.4418,,2015-07-01
+FX-056,FLEX-C1,FLEX,ethanol,34.6 %,He,101.3 kPa,2.237,Burned to completion,0.6116,,2009-02-12
+FX-057,FLEX-C2,FLEX,ethanol,18.4%,CO2,101.3 kPa,4.78,Flame extinction,,2.887,2010-09-23
+FX-058,FLEX-C3,FLEX,ethanol,0.365,CO2,1.013 bar,4.695,Burned to completion,0.5842,,2011-04-07
+FX-059,FLEX2-C1,FLEX-2,n-heptane,25.1,N2,1.520 bar,3.379,Burned to completion,0.7025,,2013-11-18
+FX-060,FLEX2-C2,FLEX-2,n-heptane,12.8 %,N2,0.709 bar,2.43,Burned to completion,0.5221,,2015-06-02
+FX-061,FLEX-C1,FLEX,ethanol,37.7%,CO2,1.50 atm,4.729,Burned to completion,0.5874,,2009-01-13
+FX-062,FLEX-C2,FLEX,n-heptane,0.133,N2,0.50 atm,4.94,Flame extinction,,2.536,2010-08-24
+FX-063,FLEX-C3,FLEX,methanol,21.0,CO2,1.00 atm,4.003,Burned to completion,0.4067,,2011-03-08
+FX-064,FLEX2-C1,FLEX-2,n-heptane,21.0 %,CO2,14.70 psi,12.0,Flame extinction,,1.617,2013-10-19
+FX-065,FLEX2-C2,FLEX-2,methanol,20.2%,N2,14.70 psi,2.386,Burned to completion,0.456,,2015-05-03
+FX-066,FLEX-C1,FLEX,n-heptane,0.290,CO2,44.09 psi,2.856,Burned to completion,0.675,,2009-12-14
+FX-067,FLEX-C2,FLEX,ethanol,31.1,CO2,101.3 kPa,3.958,Burned to completion,0.4634,,2010-07-25
+FX-068,FLEX-C3,FLEX,ethanol,20.9 %,N2,101.3 kPa,2.827,Flame extinction,,0.747,2011-02-09
+FX-069,FLEX2-C1,FLEX-2,ethanol,33.8%,N2,304.0 kPa,2.182,Burned to completion,0.6051,,2013-09-20
+FX-070,FLEX2-C2,FLEX-2,methanol,0.210,N2,3.040 bar,3.025,Burned to completion,0.5237,,2015-04-04
+FX-071,FLEX-C1,FLEX,n-decane,39.1,N2,0.709 bar,3.299,Burned to completion,0.6716,,2009-11-15
+FX-072,FLEX-C2,FLEX,methanol,38.8 %,CO2,1.013 bar,3.714,Burned to completion,0.5141,,2010-06-26
+FX-073,FLEX-C3,FLEX,n-heptane,37.2%,N2,1.00 atm,3.247,Burned to completion,0.7933,,2011-01-10
+FX-074,FLEX2-C1,FLEX-2,n-heptane,0.272,N2,2.00 atm,3.59,Burned to completion,0.7565,,2013-08-21
+FX-075,FLEX2-C2,FLEX-2,n-heptane,19.5,CO2,0.70 atm,2.164,Burned to completion,0.4772,,2015-03-05
+FX-076,FLEX-C1,FLEX,methanol,18.9 %,CO2,44.09 psi,4.466,Burned to completion,0.4261,,2009-10-16
+FX-077,FLEX-C2,FLEX,n-heptane,21.0%,He,29.39 psi,4.007,Burned to completion,0.7711,,2010-05-27
+FX-078,FLEX-C3,FLEX,n-heptane,0.273,N2,44.09 psi,3.562,Burned to completion,0.7685,,2011-12-11
+FX-079,FLEX2-C1,FLEX-2,n-decane,18.7,N2,50.7 kPa,4.019,Flame extinction,,1.286,2013-07-22
+FX-080,FLEX2-C2,FLEX-2,n-decane,16.5 %,N2,50.7 kPa,1.831,Burned to completion,0.4794,,2015-02-06
+FX-081,FLEX-C1,FLEX,n-decane,33.1%,N2,50.7 kPa,2.482,Burned to completion,0.6013,,2009-09-17
+FX-082,FLEX-C2,FLEX,n-heptane,0.305,He,1.013 bar,4.249,Burned to completion,0.8254,,2010-04-01
+FX-083,FLEX-C3,FLEX,methanol,29.3,CO2,1.013 bar,2.313,Burned to completion,0.4403,,2011-11-12
+FX-084,FLEX2-C1,FLEX-2,methanol,26.5 %,N2,2.026 bar,4.006,Burned to completion,0.5919,,2013-06-23
+FX-085,FLEX2-C2,FLEX-2,methanol,33.0%,N2,0.70 atm,4.719,Burned to completion,0.6238,,2015-01-07
+FX-086,FLEX-C1,FLEX,methanol,0.322,N2,3.00 atm,3.633,Burned to completion,0.6359,,2009-08-18
+FX-087,FLEX-C2,FLEX,n-heptane,21.0,N2,2.00 atm,3.806,Burned to completion,0.6838,,2010-03-02
+FX-088,FLEX-C3,FLEX,methanol,38.4 %,He,44.09 psi,2.522,Burned to completion,0.7754,,2011-10-13
+FX-089,FLEX2-C1,FLEX-2,n-heptane,24.7%,CO2,29.39 psi,4.763,,0.6614,1.275,2013-05-24
+FX-090,FLEX2-C2,FLEX-2,n-decane,0.135,He,7.35 psi,4.522,Flame extinction,,2.91,2015-12-08
+FX-091,FLEX-C1,FLEX,n-heptane,28.0,N2,304.0 kPa,2.393,Burned to completion,0.6792,,2009-07-19
+FX-092,FLEX-C2,FLEX,n-decane,21.0 %,He,70.9 kPa,2.775,Burned to completion,0.5731,,2010-02-03
+FX-093,FLEX-C3,FLEX,n-heptane,20.3%,CO2,304.0 kPa,4.53,Burned,0.615,1.29,2011-09-14
+FX-094,FLEX2-C1,FLEX-2,n-heptane,0.232,He,1.013 bar,3.613,Burned to completion,0.8141,,2013-04-25
+FX-095,FLEX2-C2,FLEX-2,n-heptane,21.0,N2,3.040 bar,2.079,Burned to completion,0.5963,,2015-11-09
+FX-096,FLEX-C1,FLEX,n-heptane,19.6 %,N2,0.507 bar,4.334,Flame extinction,,1.144,2009-06-20
+FX-097,FLEX-C2,FLEX,ethanol,21.0%,N2,3.00 atm,2.936,Burned to completion,0.5627,,2010-01-04
+FX-098,FLEX-C3,FLEX,n-heptane,0.233,N2,2.00 atm,1.852,Burned to completion,0.6464,,2011-08-15
+FX-099,FLEX2-C1,FLEX-2,n-heptane,38.1,CO2,1.00 atm,4.797,Burned,0.6899,1.226,2013-03-26
+FX-100,FLEX2-C2,FLEX-2,methanol,21.0 %,CO2,29.39 psi,2.756,Burned to completion,0.4363,,2015-10-10
+FX-101,FLEX-C1,FLEX,ethanol,25.8%,N2,14.70 psi,4.736,Burned,0.5573,0.724,2009-05-21
+FX-102,FLEX-C2,FLEX,n-heptane,0.217,N2,10.29 psi,1.892,Burned to completion,0.6266,,2010-12-05
+FX-103,FLEX-C3,FLEX,n-heptane,21.0,CO2,70.9 kPa,4.999,Flame extinction,,1.773,2011-07-16
+FX-104,FLEX2-C1,FLEX-2,n-heptane,23.8 %,N2,101.3 kPa,1.919,Burned to completion,0.6267,,2013-02-27
+FX-105,FLEX2-C2,FLEX-2,methanol,16.7%,N2,202.7 kPa,4.151,Burned to completion,0.4488,,2015-09-11
+FX-106,FLEX-C1,FLEX,ethanol,0.159,He,1.013 bar,4.366,Burned to completion,0.5352,,2009-04-22
+FX-107,FLEX-C2,FLEX,n-heptane,23.1,He,3.040 bar,2.941,Burned to completion,0.7618,,2010-11-06
+FX-108,FLEX-C3,FLEX,n-decane,22.2 %,CO2,1.520 bar,4.654,Flame extinction,0.5137,1.656,2011-06-17
+FX-109,FLEX2-C1,FLEX-2,ethanol,38.2%,N2,1.00 atm,2.35,Burned to completion,0.6592,,2013-01-01
+FX-110,FLEX2-C2,FLEX-2,n-heptane,0.179,CO2,1.50 atm,2.201,Flame extinction,0.5317,1.176,2015-08-12
+FX-111,FLEX-C1,FLEX,methanol,21.0,N2,1.00 atm,2.971,Burned to completion,0.5375,,2009-03-23
+FX-112,FLEX-C2,FLEX,n-heptane,24.2 %,N2,14.70 psi,1.978,Burned to completion,0.6451,,2010-10-07
+FX-113,FLEX-C3,FLEX,n-decane,29.0%,N2,14.70 psi,4.42,Burned to completion,0.6819,,2011-05-18
+FX-114,FLEX2-C1,FLEX-2,methanol,0.263,N2,14.70 psi,3.009,Burned to completion,0.5252,,2013-12-02
+FX-115,FLEX2-C2,FLEX-2,n-heptane,19.8,CO2,101.3 kPa,4.383,Burned to completion,0.5736,,2015-07-13
+FX-116,FLEX-C1,FLEX,n-decane,27.7 %,He,202.7 kPa,3.508,Burned to completion,0.7883,,2009-02-24
+FX-117,FLEX-C2,FLEX,n-heptane,37.6%,N2,304.0 kPa,3.339,Burned to completion,0.834,,2010-09-08
+FX-118,FLEX-C3,FLEX,n-heptane,0.151,He,1.013 bar,2.622,Flame extinction,,1.6,2011-04-19
+FX-119,FLEX2-C1,FLEX-2,methanol,35.1,CO2,2.026 bar,2.785,Burned to completion,0.5177,,2013-11-03
+FX-120,FLEX2-C2,FLEX-2,n-heptane,28.3 %,N2,3.040 bar,1.921,Burned to completion,0.7319,,2015-06-14
+FX-121,FLEX-C1,FLEX,n-decane,38.9%,CO2,0.70 atm,2.294,,0.5663,,2009-01-25
+FX-122,FLEX-C2,FLEX,methanol,0.210,N2,1.00 atm,3.589,Flame extinction,,1.1,2010-08-09
+FX-123,FLEX-C3,FLEX,ethanol,31.9,N2,2.00 atm,2.122,Burned to completion,0.5564,,2011-03-20
+FX-124,FLEX2-C1,FLEX-2,n-heptane,12.4 %,N2,44.09 psi,3.18,Burned to completion,0.5278,,2013-10-04
+FX-125,FLEX2-C2,FLEX-2,n-heptane,31.6%,N2,22.04 psi,3.473,Burned to completion,0.7648,,2015-05-15
+FX-126,FLEX-C1,FLEX,methanol,0.270,N2,22.04 psi,2.253,Burned to completion,0.5409,,2009-12-26
+FX-127,FLEX-C2,FLEX,n-heptane,24.3,He,101.3 kPa,4.557,Burned,0.8086,0.899,2010-07-10
+FX-128,FLEX-C3,FLEX,methanol,20.8 %,N2,101.3 kPa,4.22,Burned to completion,0.5159,,2011-02-21
+FX-129,FLEX2-C1,FLEX-2,methanol,26.7%,CO2,70.9 kPa,2.241,Burned to completion,0.4284,,2013-09-05
+FX-130,FLEX2-C2,FLEX-2,methanol,0.188,CO2,1.013 bar,2.283,Burned to completion,0.3924,,2015-04-16
+FX-131,FLEX-C1,FLEX,n-heptane,32.9,N2,1.013 bar,3.883,Burned to completion,0.7587,,2009-11-27
+FX-132,FLEX-C2,FLEX,methanol,36.0 %,He,2.026 bar,2.808,Burned to completion,0.7167,,2010-06-11
+FX-133,FLEX-C3,FLEX,ethanol,12.4%,N2,0.70 atm,4.109,Flame extinction,0.4152,2.763,2011-01-22
+FX-134,FLEX2-C1,FLEX-2,n-decane,0.187,N2,0.70 atm,2.775,Burned to completion,0.5007,,2013-08-06
+FX-135,FLEX2-C2,FLEX-2,n-decane,17.9,CO2,2.00 atm,3.643,Burned to completion,0.4735,,2015-03-17
+FX-136,FLEX-C1,FLEX,n-heptane,17.8 %,N2,7.35 psi,4.302,Flame extinction,,1.612,2009-10-01
+FX-137,FLEX-C2,FLEX,methanol,28.4%,N2,7.35 psi,1.807,Flame extinction,,0.435,2010-05-12
+FX-138,FLEX-C3,FLEX,n-heptane,0.374,N2,22.04 psi,3.291,Burned to completion,0.8017,,2011-12-23
+FX-139,FLEX2-C1,FLEX-2,ethanol,25.5,N2,70.9 kPa,3.955,Burned to completion,0.5443,,2013-07-07
+FX-140,FLEX2-C2,FLEX-2,ethanol,32.7 %,CO2,152.0 kPa,3.394,Burned to completion,0.5593,,2015-02-18
+FX-141,FLEX-C1,FLEX,n-decane,22.6%,N2,101.3 kPa,4.041,Burned to completion,0.5965,,2009-09-02
+FX-142,FLEX-C2,FLEX,methanol,0.298,CO2,1.520 bar,2.95,Burned to completion,0.508,,2010-04-13
+FX-143,FLEX-C3,FLEX,n-heptane,35.9,He,1.520 bar,2.974,Burned to completion,0.8774,,2011-11-24
+FX-144,FLEX2-C1,FLEX-2,methanol,19.1 %,N2,1.013 bar,3.349,Burned to completion,0.4534,,2013-06-08
+FX-145,FLEX2-C2,FLEX-2,n-heptane,28.0%,N2,1.00 atm,3.228,Burned to completion,0.715,,2015-01-19
+FX-146,FLEX-C1,FLEX,methanol,0.332,CO2,1.50 atm,4.456,Burned to completion,0.5513,,2009-08-03
+FX-147,FLEX-C2,FLEX,n-heptane,13.3,He,0.70 atm,4.987,Flame extinction,,3.473,2010-03-14
+FX-148,FLEX-C3,FLEX,n-heptane,21.0 %,N2,22.04 psi,3.695,Flame extinction,,0.925,2011-10-25
+FX-149,FLEX2-C1,FLEX-2,n-heptane,27.3%,CO2,10.29 psi,2.679,Flame extinction,0.5643,0.737,2013-05-09
+FX-150,FLEX2-C2,FLEX-2,ethanol,0.264,CO2,14.70 psi,3.542,Flame extinction,0.4936,0.864,2015-12-20
+FX-151,FLEX-C1,FLEX,n-decane,32.0,N2,50.7 kPa,3.355,Burned to completion,0.6071,,2009-07-04
+FX-152,FLEX-C2,FLEX,n-heptane,16.4 %,CO2,304.0 kPa,4.311,Flame extinction,0.5591,2.834,2010-02-15
+FX-153,FLEX-C3,FLEX,n-decane,25.4%,N2,70.9 kPa,3.546,Burned to completion,0.5859,,2011-09-26
+FX-154,FLEX2-C1,FLEX-2,methanol,0.348,N2,1.520 bar,4.197,Flame extinction,,1.073,2013-04-10
+FX-155,FLEX2-C2,FLEX-2,n-heptane,12.8,N2,1.520 bar,4.503,Flame extinction,0.589,2.753,2015-11-21
+FX-156,FLEX-C1,FLEX,n-decane,19.2 %,N2,2.026 bar,3.001,Burned to completion,0.5474,,2009-06-05
+FX-157,FLEX-C2,FLEX,methanol,26.5%,He,0.50 atm,3.871,Burned to completion,0.5836,,2010-01-16
+FX-158,FLEX-C3,FLEX,n-decane,0.210,N2,0.50 atm,2.889,Burned to completion,0.5245,,2011-08-27
+FX-159,FLEX2-C1,FLEX-2,n-heptane,33.5,N2,0.70 atm,2.042,Burned to completion,0.6935,,2013-03-11
+FX-160,FLEX2-C2,FLEX-2,methanol,15.1 %,CO2,7.35 psi,3.203,Flame extinction,,2.833,2015-10-22
+FX-006,FLEX-C1,FLEX,ethanol,0.391,N2,22.04 psi,2.288,Burned to completion,0.6642,,2009-12-02
+FX-034,FLEX2-C1,FLEX-2,n-decane,0.135,N2,1.013 bar,4.51,Flame extinction,,2.717,2013-04-13

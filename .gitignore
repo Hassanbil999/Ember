@@ -1,0 +1,9 @@
+node_modules/
+.next/
+__pycache__/
+*.pyc
+data/processed/
+data/artifacts/
+.pytest_cache/
+tests/screens/
+.next-build/

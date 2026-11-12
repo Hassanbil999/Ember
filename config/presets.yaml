@@ -1,0 +1,49 @@
+# Scenario Lab presets and gap-map target environments.
+presets:
+  - id: iss
+    label: ISS cabin
+    o2_frac: 0.21
+    pressure_kpa: 101.3
+    flow_cm_s: 10
+    gravity_g: 0.0
+    diluent: N2
+    note: "Sea-level-equivalent air; cabin ventilation of order 10 cm/s."
+  - id: moon_base
+    label: Moon base
+    o2_frac: 0.30
+    pressure_kpa: 70.3        # 10.2 psi
+    flow_cm_s: 10
+    gravity_g: 0.165
+    diluent: N2
+    note: "Planned ≥30% O₂ at ≤10.2 psi. Lunar gravity is untested in PSI."
+  - id: rover
+    label: Pressurized rover
+    o2_frac: 0.34
+    pressure_kpa: 56.5        # 8.2 psi
+    flow_cm_s: 5
+    gravity_g: 0.165
+    diluent: N2
+    note: "Exploration-atmosphere style 34% O₂ / 8.2 psi; partial gravity untested."
+  - id: spacesuit
+    label: Spacesuit
+    o2_frac: 1.0
+    pressure_kpa: 29.6        # 4.3 psi
+    flow_cm_s: 5
+    gravity_g: 0.0
+    diluent: N2
+    note: "100% O₂ at 4.3 psi."
+  - id: earth
+    label: Earth 1g
+    o2_frac: 0.21
+    pressure_kpa: 101.3
+    flow_cm_s: 0
+    gravity_g: 1.0
+    diluent: N2
+    note: "Reference: buoyant flames, sea-level air."
+
+targets:   # used by the gap map and the next-experiment advisor
+  - { id: moon_base, label: Moon base, o2_frac: [0.28, 0.34], pressure_kpa: [62, 72], gravity_g: 0.165 }
+  - { id: rover, label: Pressurized rover, o2_frac: [0.32, 0.36], pressure_kpa: [52, 60], gravity_g: 0.165 }
+  - { id: mars, label: Mars habitat, o2_frac: [0.26, 0.34], pressure_kpa: [56, 72], gravity_g: 0.38 }
+  - { id: iss, label: ISS cabin, o2_frac: [0.19, 0.24], pressure_kpa: [95, 104], gravity_g: 0.0 }
+  - { id: spacesuit, label: Spacesuit, o2_frac: [0.95, 1.0], pressure_kpa: [28, 31], gravity_g: 0.0 }

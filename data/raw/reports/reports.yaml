@@ -1,0 +1,52 @@
+documents:
+  fire_safety_context.pdf:
+    title: 'Context notes: microgravity combustion and spacecraft fire safety'
+    investigations:
+    - BASS
+    - BASS-II
+    - Saffire-I
+    - Saffire-II
+    - Saffire-III
+    - SAME
+    - SAME-R
+    - FLEX
+    - FLEX-2
+    - CFI
+    - ACME
+    - CFI-G
+    - E-FIELD Flames
+    - SPICE
+    - SLICE
+    - DAFT
+    - DAFT-2
+    demo: true
+    authors: Freefall Atlas authors
+    year: 2026
+  flex_demo_report.pdf:
+    title: Droplet combustion demo report (FLEX-shaped fixture)
+    investigations:
+    - FLEX
+    - FLEX-2
+    demo: true
+    authors: Demo fixture
+    year: 2026
+  bass2_demo_report.pdf:
+    title: Solid material flammability demo report (BASS-II-shaped fixture)
+    investigations:
+    - BASS-II
+    - BASS
+    demo: true
+    authors: Demo fixture
+    year: 2026
+  detection_suppression_notes.pdf:
+    title: 'Context notes: detection and suppression'
+    investigations:
+    - SAME
+    - SAME-R
+    - DAFT
+    - DAFT-2
+    - FLEX
+    - BASS
+    demo: true
+    authors: Freefall Atlas authors
+    year: 2026

@@ -1,0 +1,222 @@
+{
+ "label": "after",
+ "theme": "void",
+ "screens": {
+  "home": {
+   "cold": {
+    "usable_ms": 905,
+    "fcp_ms": 508,
+    "lcp_ms": 508,
+    "ok": true
+   },
+   "warm": {
+    "usable_ms": 259,
+    "fcp_ms": 212,
+    "lcp_ms": 212,
+    "ok": true
+   }
+  },
+  "answer_moon_base": {
+   "cold": {
+    "usable_ms": 761,
+    "fcp_ms": 376,
+    "lcp_ms": 636,
+    "ok": true
+   },
+   "warm": {
+    "usable_ms": 328,
+    "fcp_ms": 164,
+    "lcp_ms": 264,
+    "ok": true
+   }
+  },
+  "answer_iss": {
+   "cold": {
+    "usable_ms": 426,
+    "fcp_ms": 180,
+    "lcp_ms": 312,
+    "ok": true
+   },
+   "warm": {
+    "usable_ms": 401,
+    "fcp_ms": 124,
+    "lcp_ms": 292,
+    "ok": true
+   }
+  },
+  "answer_microgravity": {
+   "cold": {
+    "usable_ms": 335,
+    "fcp_ms": 144,
+    "lcp_ms": 308,
+    "ok": true
+   },
+   "warm": {
+    "usable_ms": 271,
+    "fcp_ms": 108,
+    "lcp_ms": 232,
+    "ok": true
+   }
+  },
+  "answer_untested": {
+   "cold": {
+    "usable_ms": 422,
+    "fcp_ms": 132,
+    "lcp_ms": 380,
+    "ok": true
+   },
+   "warm": {
+    "usable_ms": 311,
+    "fcp_ms": 148,
+    "lcp_ms": 272,
+    "ok": true
+   }
+  },
+  "answer_question": {
+   "cold": {
+    "usable_ms": 518,
+    "fcp_ms": 180,
+    "lcp_ms": 388,
+    "ok": true
+   },
+   "warm": {
+    "usable_ms": 342,
+    "fcp_ms": 124,
+    "lcp_ms": 280,
+    "ok": true
+   }
+  },
+  "explore": {
+   "cold": {
+    "usable_ms": 499,
+    "fcp_ms": 124,
+    "lcp_ms": 420,
+    "ok": true
+   },
+   "warm": {
+    "usable_ms": 312,
+    "fcp_ms": 132,
+    "lcp_ms": 268,
+    "ok": true
+   }
+  },
+  "simulate": {
+   "cold": {
+    "usable_ms": 450,
+    "fcp_ms": 116,
+    "lcp_ms": 360,
+    "ok": true
+   },
+   "warm": {
+    "usable_ms": 372,
+    "fcp_ms": 100,
+    "lcp_ms": 332,
+    "ok": true
+   }
+  },
+  "insights": {
+   "cold": {
+    "usable_ms": 357,
+    "fcp_ms": 176,
+    "lcp_ms": 292,
+    "ok": true
+   },
+   "warm": {
+    "usable_ms": 331,
+    "fcp_ms": 168,
+    "lcp_ms": 264,
+    "ok": true
+   }
+  },
+  "studio": {
+   "cold": {
+    "usable_ms": 447,
+    "fcp_ms": 168,
+    "lcp_ms": 204,
+    "ok": true
+   },
+   "warm": {
+    "usable_ms": 383,
+    "fcp_ms": 148,
+    "lcp_ms": 184,
+    "ok": true
+   }
+  },
+  "data": {
+   "cold": {
+    "usable_ms": 348,
+    "fcp_ms": 108,
+    "lcp_ms": 336,
+    "ok": true
+   },
+   "warm": {
+    "usable_ms": 384,
+    "fcp_ms": 172,
+    "lcp_ms": 328,
+    "ok": true
+   }
+  },
+  "image": {
+   "cold": {
+    "usable_ms": 380,
+    "fcp_ms": 160,
+    "lcp_ms": 272,
+    "ok": true
+   },
+   "warm": {
+    "usable_ms": 232,
+    "fcp_ms": 120,
+    "lcp_ms": 164,
+    "ok": true
+   }
+  }
+ },
+ "interactions": {
+  "home_to_answer_ms": 43,
+  "answer_pick_material_ms": 50,
+  "inp_answer_ms": 168,
+  "nav_to_explore_ms": 68,
+  "explore_open_node_ms": 10,
+  "explore_switch_view_frames": {
+   "frames": 43,
+   "median_ms": 16.7,
+   "p95_ms": 16.7,
+   "worst_ms": 16.8,
+   "fps": 60.0
+  },
+  "explore_open_cluster_frames": {
+   "frames": 43,
+   "median_ms": 16.7,
+   "p95_ms": 16.7,
+   "worst_ms": 16.7,
+   "fps": 60.0
+  },
+  "inp_explore_ms": 104,
+  "lab_idle_frames": {
+   "frames": 55,
+   "median_ms": 16.7,
+   "p95_ms": 33.3,
+   "worst_ms": 33.4,
+   "fps": 55.0
+  },
+  "lab_preset_frames": {
+   "frames": 40,
+   "median_ms": 16.7,
+   "p95_ms": 33.4,
+   "worst_ms": 83.3,
+   "fps": 43.6
+  },
+  "lab_slider_drag_frames": {
+   "frames": 63,
+   "median_ms": 16.7,
+   "p95_ms": 33.3,
+   "worst_ms": 33.4,
+   "fps": 51.8
+  },
+  "inp_lab_ms": 80,
+  "open_provenance_ms": 20,
+  "provenance_open_row_ms": 5,
+  "inp_data_ms": 136
+ },
+ "page_errors": []
+}

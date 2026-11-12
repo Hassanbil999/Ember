@@ -1,0 +1,50 @@
+# Surrogate models, learned only from loaded data. One entry per model.
+# type: gp_classifier | gp_regressor | gbr_quantile
+models:
+  droplet_burn:
+    dataset: flex_demo
+    label: Droplet — sustained burning vs extinction
+    type: gp_classifier
+    target: burned
+    features: [o2_frac, pressure_kpa, d0_mm, diluent, fuel]
+    group: campaign
+  droplet_k:
+    dataset: flex_demo
+    label: Droplet — burning-rate constant K
+    type: gp_regressor
+    target: burn_rate_k_mm2_s
+    features: [o2_frac, pressure_kpa, d0_mm, diluent, fuel]
+    group: campaign
+    only_when: { burned: 1 }
+  droplet_dext:
+    dataset: flex_demo
+    label: Droplet — extinction diameter
+    type: gp_regressor
+    target: extinction_d_mm
+    features: [o2_frac, pressure_kpa, d0_mm, diluent, fuel]
+    group: campaign
+    only_when: { burned: 0 }
+  solid_burn:
+    dataset: bass2_demo
+    label: Solid — flame spread vs extinction
+    type: gp_classifier
+    target: burned
+    features: [o2_frac, pressure_kpa, flow_cm_s, thickness_mm, gravity_g, material]
+    group: campaign
+  solid_spread:
+    dataset: bass2_demo
+    label: Solid — flame spread rate
+    type: gp_regressor
+    target: spread_rate_mm_s
+    features: [o2_frac, pressure_kpa, flow_cm_s, thickness_mm, gravity_g, material]
+    group: campaign
+    only_when: { burned: 1 }
+
+applicability:
+  k_neighbors: 5
+  # thresholds are percentiles of the training set's own leave-one-out kNN distance
+  inside_percentile: 95
+  edge_multiplier: 2.0
+  nearest_tests: 6
+  close_conditions_distance: 1.0   # standardized units; used by the Answer Engine grade
+  morph_max_distance: 1.5          # Image Lab: switch to a real test only within this distance

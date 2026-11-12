@@ -1,0 +1,89 @@
+# Dataset registry. `make ingest` runs every entry with enabled: true.
+# To add a dataset: drop files in data/raw/<id>/, add an entry here, and
+# (only if the shape is new) write backend/adapters/<adapter>.py. See docs/ADDING_A_DATASET.md.
+
+datasets:
+  flex_demo:
+    title: Droplet combustion tests (FLEX-shaped demo fixture)
+    adapter: flex_droplets
+    enabled: true
+    demo: true
+    investigations: [FLEX, FLEX-2]
+    files: [flex_droplet_tests.csv]
+    license: "Demo fixture (synthetic) — CC0. Not NASA data."
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    # raw column -> canonical variable (units are parsed from the cell or header)
+    columns:
+      "Test ID": test_id
+      "Campaign": campaign
+      "Investigation": investigation_id
+      "Fuel": fuel
+      "O2": o2_frac
+      "Diluent": diluent
+      "Pressure": pressure_kpa
+      "D0 (mm)": d0_mm
+      "Outcome": burned
+      "K (mm^2/s)": burn_rate_k_mm2_s
+      "Ext. D (mm)": extinction_d_mm
+      "Date": mission_date
+    constants: { gravity_g: 0.0, flow_cm_s: 0.0 }
+    outcome_map: { "burned": 1, "burned to completion": 1, "flame extinction": 0, "extinguished": 0, "no ignition": 0 }
+
+  bass2_demo:
+    title: Solid-material flammability tests (BASS-II-shaped demo fixture)
+    adapter: bass2_solids
+    enabled: true
+    demo: true
+    investigations: [BASS-II]
+    files: [bass2_flammability.xlsx]
+    sheet: Tests
+    license: "Demo fixture (synthetic) — CC0. Not NASA data."
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    columns:
+      "Sample": test_id
+      "Campaign": campaign
+      "Material": material
+      "Thickness [mm]": thickness_mm
+      "O2 mole frac": o2_frac
+      "Total P [kPa]": pressure_kpa
+      "Flow [mm/s]": flow_cm_s
+      "Gravity": gravity_g
+      "Result": burned
+      "Spread rate [mm/s]": spread_rate_mm_s
+      "Run date": mission_date
+    units: { "Flow [mm/s]": "mm/s", "Total P [kPa]": kPa }
+    outcome_map: { "burned": 1, "spread": 1, "extinguished": 0, "self-extinguished": 0, "no ignition": 0 }
+
+  reports:
+    title: Reports and notes (PDF)
+    adapter: pdf_reports
+    enabled: true
+    demo: true
+    files: ["*.pdf"]
+    license: "Demo fixture text and compiled catalog notes — CC0."
+
+# Validation rules, applied to every tabular dataset after normalization.
+# Flag, never silently fix. action: flag | exclude
+validation:
+  - id: impossible_value
+    invalid: true              # the raw value failed the physical check in core/units.py, before conversion
+    action: exclude
+    reason: "Impossible value in the source. It is shown as flagged, never converted and never used in a calculation."
+  - id: implausible
+    plausible: true            # checks each variable's plausible_range from variables.yaml
+    action: flag
+    reason: "Value outside the plausible range for this variable."
+  - id: duplicate
+    duplicate_on: [test_id]
+    action: exclude
+    reason: "Duplicate test id; first occurrence kept."
+  - id: missing_outcome
+    missing: burned
+    action: flag
+    reason: "Outcome not recorded; row kept for conditions but excluded from outcome models."
+  - id: rate_without_burn
+    when: "burned == 0 and (burn_rate_k_mm2_s > 0 or spread_rate_mm_s > 0)"
+    action: flag
+    reason: "Rate reported for a test marked extinguished — check the source (rate may be pre-extinction)."

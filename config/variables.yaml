@@ -1,0 +1,142 @@
+# Canonical variables. Every adapter maps raw columns onto these names.
+# role: condition | outcome | id | meta
+# kind: number | category | date | bool
+variables:
+  o2_frac:
+    label: Oxygen fraction
+    short: O₂
+    unit: "mol/mol"
+    display_unit: "%"
+    display_scale: 100
+    kind: number
+    role: condition
+    description: Oxygen mole fraction of the ambient atmosphere (0–1).
+    synonyms: [oxygen, o2, "o₂", oxygen concentration, oxygen fraction, oxygen percent, ox]
+    valid_range: [0.0, 1.0]
+    plausible_range: [0.05, 1.0]
+  pressure_kpa:
+    label: Total pressure
+    short: P
+    unit: kPa
+    kind: number
+    role: condition
+    description: Total ambient pressure.
+    synonyms: [pressure, total pressure, ambient pressure, psi, atm, kpa, bar]
+    valid_range: [0.0001, 1000]
+    plausible_range: [5, 350]
+  o2_pp_kpa:
+    label: O₂ partial pressure
+    short: pO₂
+    unit: kPa
+    kind: number
+    role: condition
+    derived: "o2_frac * pressure_kpa"
+    description: Oxygen partial pressure = O₂ mole fraction × total pressure.
+    synonyms: [partial pressure, oxygen partial pressure, ppo2, po2]
+    valid_range: [0, 1000]
+  flow_cm_s:
+    label: Airflow speed
+    short: U
+    unit: cm/s
+    kind: number
+    role: condition
+    description: Imposed or ventilation airflow speed past the sample (replaces buoyancy in microgravity).
+    synonyms: [flow, airflow, flow speed, ventilation, velocity, forced flow, opposed flow]
+    valid_range: [0, 1000]
+    plausible_range: [0, 100]
+  d0_mm:
+    label: Initial droplet diameter
+    short: d₀
+    unit: mm
+    kind: number
+    role: condition
+    description: Droplet diameter at ignition.
+    synonyms: [droplet diameter, initial diameter, droplet size, d0]
+    valid_range: [0.1, 20]
+    plausible_range: [0.5, 6]
+  thickness_mm:
+    label: Sample thickness
+    short: δ
+    unit: mm
+    kind: number
+    role: condition
+    description: Thickness of the solid fuel sample.
+    synonyms: [thickness, sample thickness, sample size]
+    valid_range: [0.01, 50]
+  gravity_g:
+    label: Gravity
+    short: gravity
+    unit: "g"
+    kind: number
+    role: condition
+    # Stored as a regime code and always displayed as a regime name (backend/record.py gravity_label).
+    description: Gravity regime. Code 0 means microgravity (about a millionth of Earth gravity on the ISS, not zero); 1 means Earth.
+    synonyms: [gravity, microgravity, "1g", "normal gravity", "μg", "ug", lunar, martian, partial gravity]
+    valid_range: [0, 1.5]
+  diluent:
+    label: Inert diluent
+    short: dil.
+    kind: category
+    role: condition
+    description: Inert gas that makes up the non-oxygen fraction.
+    synonyms: [diluent, inert, nitrogen, n2, helium, he, carbon dioxide, co2]
+    categories: [N2, CO2, He]
+  fuel:
+    label: Fuel
+    kind: category
+    role: condition
+    description: Liquid fuel of the droplet.
+    synonyms: [fuel, heptane, n-heptane, methanol, decane, n-decane, ethanol]
+  material:
+    label: Material
+    kind: category
+    role: condition
+    description: Solid material tested.
+    synonyms: [material, pmma, acrylic, cotton, fiberglass, nomex, fabric, acetal, delrin]
+  burned:
+    label: Sustained burning
+    short: burn
+    kind: bool
+    role: outcome
+    description: 1 if a flame was sustained (burned to completion / spread), 0 if extinguished or no ignition.
+    synonyms: [burn, burned, burning, extinction, extinguished, flammable, flammability, quench]
+  burn_rate_k_mm2_s:
+    label: Burning-rate constant K
+    short: K
+    unit: "mm²/s"
+    kind: number
+    role: outcome
+    description: Slope of the d² law (d² = d₀² − K·t) during quasi-steady burning.
+    synonyms: [burning rate, burning rate constant, k, d2 law, d-squared]
+    valid_range: [0, 5]
+    plausible_range: [0.1, 2]
+  extinction_d_mm:
+    label: Extinction diameter
+    short: d_ext
+    unit: mm
+    kind: number
+    role: outcome
+    description: Droplet diameter at the moment of flame extinction.
+    synonyms: [extinction diameter]
+    valid_range: [0, 20]
+  spread_rate_mm_s:
+    label: Flame spread rate
+    short: V_f
+    unit: mm/s
+    kind: number
+    role: outcome
+    description: Speed of the flame leading edge over the solid surface.
+    synonyms: [spread rate, flame spread, spread, propagation]
+    valid_range: [0, 200]
+  mission_date:
+    label: Test date
+    kind: date
+    role: meta
+    description: Date of the test.
+    synonyms: [date, year, mission date, time]
+  campaign:
+    label: Campaign
+    kind: category
+    role: meta
+    description: Test campaign / increment; used as the group for cross-validation.
+    synonyms: [campaign, increment, series]
