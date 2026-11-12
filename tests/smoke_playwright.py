@@ -193,6 +193,19 @@ with sync_playwright() as p:
     check(took < 60, f"moon-base path took {took:.1f}s")
     print(f"ok  moon-base question: 2 clicks, {took:.2f} s")
 
+    # ---- simulator: a real FLEX test can be replayed in the scene, and sound is off until asked for
+    page.goto(BASE + "/lab?mode=droplet")
+    page.wait_for_selector("[data-ready=lab]")
+    snd = page.locator("[data-sound]")
+    check(snd.get_attribute("aria-pressed") == "false", "simulator: sound is not off by default")
+    page.locator("[data-replay]").click()
+    page.wait_for_selector("[data-replay-readout]")
+    txt = page.locator("[data-replay-readout]").inner_text()
+    check("FLEX-" in txt and "after ignition" in txt, f"simulator replay: readout is {txt!r}")
+    page.locator("[data-replay-readout] button").click()
+    page.wait_for_selector("[data-verdict]")
+    print("ok  simulator: real-test replay starts and stops; sound off by default")
+
     # ---- keyboard: "/" focuses the ask box, Enter answers
     page.goto(BASE + "/explore")
     page.wait_for_selector("[data-ready=explore]")

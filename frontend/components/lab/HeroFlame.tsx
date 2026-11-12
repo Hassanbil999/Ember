@@ -9,6 +9,7 @@ export interface FlameState {
   flow: number;       // 0..1 of the airflow slider (solids only)
   gravity: number;    // regime code
   known: boolean;     // false when the model has no nearby data
+  drop?: number;      // 0..1 droplet size (droplet mode)
 }
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;

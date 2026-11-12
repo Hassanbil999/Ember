@@ -25,7 +25,7 @@ Docker alternative: `docker compose up --build`. The Compose files are provided 
 | **Answer** | `/answer` | For a starting point: finding, one visual, evidence grade, then measured / inferred / never tested, with sources. For a typed question: an extractive answer in which every sentence is verified against rows or pages, or an explicit refusal. |
 | **Explore** | `/explore` | The experiments, at most 15 on screen, grouped by what burns, safety goal or era. Size = amount of test data. Relationships appear for the experiment in focus. |
 | **Atmosphere trade** | `/trade` | One map of cabin pressure against oxygen with three layers: where a crew can breathe, how much pre-breathe a spacewalk costs, and where things burn, with the real tests marked and the untested area hatched. Drag a point to read all three at once. |
-| **Simulate** | `/lab` | One flame that reacts to oxygen, pressure and airflow, preset places, and one sentence with confidence and the nearest real test. |
+| **Simulate** | `/lab` | One flame, drawn on the GPU, that reacts to oxygen, pressure and airflow; preset places; one sentence with confidence and the nearest real test. A real FLEX test can be replayed in the same scene from its measured burning rate and extinction diameter. Optional generated sound (off by default). |
 | **Insights** | `/insights` | Up to eight findings recomputed from the data, each a sentence, a chart and its source. Links to the Studio (`/studio`) for custom charts and exports. |
 | **Data** | `/data` | Data quality, everything set aside and why, every test. Any test opens the provenance panel: values with status → plain source → technical trail. Links to flame image measurements (`/image`). |
 

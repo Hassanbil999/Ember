@@ -41,7 +41,9 @@ Geist Sans for everything; Geist Mono only for numbers and the technical trail. 
 `Measured` solid dot · `Derived` dashed, diamond · `Assumed (dataset setting)` dotted, hollow, italic value · `Flagged` warning triangle, tinted · `No value` with the reason in words. Told apart by word, shape and colour, never by colour alone.
 
 ## Motion (only where it means something)
-- The flame eases toward each new state, so a slider move reads as growing or dying.
+- The flame eases toward each new state, so a slider move reads as growing or dying. It is drawn by one GPU shader inside a window that stays dark in both themes: blue and round when starved or in microgravity, amber and stretched with buoyancy or airflow, never grey in between.
+- A real test can be replayed in that same window: the droplet shrinks at its measured rate and the flame ends when and how the record says.
+- Sound is part of the same scene and off until asked for: a low cabin hum, airflow, a flame roar that follows the burning rate, and breathing that grows laboured as the air's oxygen falls. Quiet, eased, no effects that do not map to a number.
 - Explore nodes slide to their new slot when the grouping changes (300 ms).
 - Untested gaps pulse slowly ("never tested", "0 tests").
 - `prefers-reduced-motion` turns all of it off; the flame becomes a still image that updates on change.

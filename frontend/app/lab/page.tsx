@@ -1,15 +1,18 @@
 "use client";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { get } from "@/lib/api";
 import { gravityLabel, PSI } from "@/lib/format";
 import { useMeta } from "@/lib/meta";
 import { useUI } from "@/lib/store";
-import HeroFlame from "@/components/lab/HeroFlame";
+import FlameScene, { SceneOverride } from "@/components/lab/FlameScene";
+import { useFlameSound } from "@/components/lab/useFlameSound";
 
 /* Simulate: one hero flame, three sliders, one sentence. The model grid is fetched once per
-   material; every slider move is answered in the browser by interpolating it (immediate feedback). */
+   material; every slider move is answered in the browser by interpolating it (immediate feedback).
+   The same scene can replay a real test: the droplet shrinks at its measured burning rate and the
+   flame ends the way, and when, the test record says it did. Sound is optional and off by default. */
 
 type Mode = "solid" | "droplet";
 type Grid = { axes: { var: string; values: number[] }[]; p: number[]; rate: number[]; dist: number[]; inside: number; edge: number;
@@ -69,8 +72,14 @@ function Inner() {
   const [diluent, setDiluent] = useState("N2");
   const [preset, setPreset] = useState<string | null>(null);
   const [grid, setGrid] = useState<Grid | null>(null);
+  const [sound, setSound] = useState(false);
+  const [atm, setAtm] = useState<any>(null);
+  const [rp, setRp] = useState<{ id: string; t: number; d: number; dur: number; speed: number; end: string; dEnd: number; done: boolean } | null>(null);
+  const override = useRef<SceneOverride | null>(null);
+  const stopReplay = useRef<() => void>(() => {});
 
-  useEffect(() => { get("/lab/items").then(setItems); }, []);
+  useEffect(() => { get("/lab/items").then(setItems); get("/atmosphere").then(setAtm).catch(() => {}); }, []);
+  useEffect(() => () => stopReplay.current(), []);
   useEffect(() => {
     if (!items) return;
     const list: string[] = items[mode];
@@ -125,10 +134,44 @@ function Inner() {
     return { p, rate, status, conf, best, away, partial, heat: Math.min(1, rate / (maxRate * 0.7)) };
   }, [grid, o2, pk, third, gravity, th, maxRate]);
 
+  // breathing: the oxygen that reaches the lungs at this pressure and oxygen level (limits from NASA OCHMO-TB-003)
+  const C = atm?.constants;
+  const pio2 = C ? (pk / 0.1333224 - C.water_vapour_mmhg) * o2 : null;
+  const breath = pio2 == null ? "" : pio2 < C.pio2_floor_mmhg ? "too little oxygen for a crew to breathe" : pio2 < C.pio2_normal_mmhg ? "breathable, mildly low on oxygen" : "breathable";
+  const strain = pio2 == null ? 0 : Math.min(1, Math.max(0, (C.pio2_normal_mmhg - pio2) / 45));
+  const dropOf = (mm: number) => Math.min(1, Math.max(0, (mm - 0.4) / 5.6));
+
+  // replay a real test in the scene: d² = d0² − K·t, ending at the measured extinction diameter
+  const replay = async (id: string) => {
+    stopReplay.current();
+    const rows = await get(`/tests?include_excluded=true&ids=${encodeURIComponent(id)}`);
+    const r = rows[0];
+    if (!r || r.d0_mm == null || r.burn_rate_k_mm2_s == null) return;
+    const d0 = r.d0_mm, K = r.burn_rate_k_mm2_s, end = r.test_end ?? (r.burned ? "Completion" : "Extinction");
+    const dEnd = r.extinction_d_mm ?? Math.sqrt(Math.max(0, d0 * d0 - K * (r.burn_time_s ?? (d0 * d0) / K)));
+    const dur = r.burn_time_s ?? (d0 * d0 - dEnd * dEnd) / K, speed = Math.max(1, dur / 12);
+    setPreset(null); setO2(r.o2_frac); setPk(r.pressure_kpa); setThird(Math.min(6, Math.max(1, d0)));
+    let raf = 0, t0 = 0, tick = 0, alive = true;
+    const heat = Math.min(1, K / 0.9);
+    const step = (now: number) => {
+      if (!alive) return;
+      if (!t0) t0 = now;
+      const t = ((now - t0) / 1000) * speed, burning = t < dur;
+      const d = burning ? Math.sqrt(Math.max(dEnd * dEnd, d0 * d0 - K * t)) : end === "Extinction" ? dEnd : 0;
+      override.current = { p: burning ? 1 : 0, heat, known: true, flow: 0, gravity: 0, o2: r.o2_frac, drop: dropOf(d) };
+      if (tick++ % 5 === 0 || !burning) setRp({ id, t: Math.min(t, dur), d: burning ? d : dEnd, dur, speed, end, dEnd, done: !burning });
+      if (t < dur + 3.2 * speed) raf = requestAnimationFrame(step); else stopReplay.current();
+    };
+    stopReplay.current = () => { alive = false; cancelAnimationFrame(raf); override.current = null; setRp(null); stopReplay.current = () => {}; };
+    raf = requestAnimationFrame(step);
+  };
+
   const conds = `${(o2 * 100).toFixed(0)}% O₂ and ${(pk / PSI).toFixed(1)} psi${mode === "solid" ? ` with ${third.toFixed(0)} cm/s airflow` : `, ${third.toFixed(1)} mm droplet`}`;
   const burns = !!out && out.p >= 0.5;
   const tone = !out || out.status === "outside" ? "var(--nodata)" : burns ? "var(--flame)" : "var(--ext)";
-  const set = <T,>(fn: (v: T) => void) => (v: T) => { setPreset(null); fn(v); };
+  const set = <T,>(fn: (v: T) => void) => (v: T) => { stopReplay.current(); setPreset(null); fn(v); };
+  const live = out && out.status !== "outside" ? Math.min(1, Math.max(0, (out.p - 0.2) / 0.45)) : 0;
+  useFlameSound(sound, { life: rp ? (rp.done ? 0 : 1) : live, heat: out?.heat ?? 0, flow: mode === "solid" && !rp ? third / 40 : 0, strain });
 
   return (
     <div className="flex h-full min-h-[640px]" data-ready={out ? "lab" : undefined}>
@@ -138,9 +181,25 @@ function Inner() {
           {presets.map((p) => <button key={p.id} className="chip" aria-pressed={preset === p.id} data-preset={p.id} onClick={() => apply(p)}>{p.label}</button>)}
         </div>
 
-        <div className="relative mt-4 min-h-0 flex-1 overflow-hidden rounded-md" style={{ background: "radial-gradient(ellipse at 50% 70%, var(--surface-2), var(--surface) 70%)", border: "1px solid var(--line)" }}>
-          {out && <HeroFlame state={{ mode, p: out.p, heat: out.heat, o2, flow: mode === "solid" ? third / 40 : 0, gravity, known: out.status !== "outside" }} />}
-          {out && (
+        {/* the scene is a window into a dark cabin in both themes */}
+        <div data-theme="void" className="relative mt-4 min-h-0 flex-1 overflow-hidden rounded-md" style={{ background: "#05070C", border: "1px solid var(--line)" }}>
+          {out && <FlameScene override={override} state={{ mode, p: out.p, heat: out.heat, o2, flow: mode === "solid" ? third / 40 : 0, gravity, known: out.status !== "outside", drop: dropOf(third) }} />}
+          <button className="btn absolute right-4 top-4 h-9" style={{ background: "rgba(5,7,12,.6)" }} aria-pressed={sound} onClick={() => setSound(!sound)} data-sound>
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden><path d="M2 6h2.5L8 3v10L4.5 10H2z" fill="currentColor" />{sound ? <path d="M10.5 5.5a3.5 3.5 0 010 5M12.3 3.6a6 6 0 010 8.8" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /> : <path d="M10.5 6l4 4m0-4l-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />}</svg>
+            {sound ? "Sound on" : "Sound off"}
+          </button>
+          {rp && (
+            <div className="absolute left-6 top-5" data-replay-readout>
+              <p className="text-sm text-ink-2">Real test, replayed from its record{rp.speed > 1.05 ? `, ${rp.speed.toFixed(1)}× speed` : ""}</p>
+              <p className="mono mt-1 text-[40px] leading-none text-ink">{rp.id}</p>
+              <p className="mt-2 text-base text-ink-2"><span className="mono text-ink">{rp.t.toFixed(1)} s</span> after ignition · droplet <span className="mono text-ink">{rp.d.toFixed(2)} mm</span></p>
+              {rp.done && <p className="rise mt-2 max-w-[44ch] text-base" style={{ color: rp.end === "Extinction" ? "var(--ext)" : "var(--flame)" }}>
+                {rp.end === "Extinction" ? `The flame went out with ${rp.dEnd.toFixed(2)} mm of fuel left, ${rp.dur.toFixed(1)} s after ignition.` : rp.end === "Completion" ? `Burned to completion in ${rp.dur.toFixed(1)} s.` : `The droplet broke apart ${rp.dur.toFixed(1)} s after ignition.`}</p>}
+              <button className="btn mt-3 h-8" onClick={() => stopReplay.current()}>Back to the simulator</button>
+            </div>
+          )}
+          {rp && <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1" style={{ background: "var(--line)" }}><div className="h-full" style={{ width: `${(rp.t / rp.dur) * 100}%`, background: "var(--flame)" }} /></div>}
+          {out && !rp && (
             <div className="pointer-events-none absolute left-6 top-5">
               <p className="text-[40px] font-semibold leading-none tracking-tight" style={{ color: tone }} data-verdict>
                 {out.status === "outside" ? "No data here" : burns ? "Keeps burning" : "Goes out"}
@@ -149,8 +208,8 @@ function Inner() {
             </div>
           )}
           <p className="pointer-events-none absolute bottom-4 left-6 right-6 flex flex-wrap items-end justify-between gap-2 text-sm text-ink-3">
-            <span>{mode === "solid" ? `Sample: ${item ?? ""}${third > 0.5 ? `, airflow ${third.toFixed(0)} cm/s from the left` : ", still air"}` : `Droplet: ${item ?? ""}, ${third.toFixed(1)} mm`} · {gravityLabel(gravity)}</span>
-            <span>Illustration driven by the model, not footage</span>
+            <span>{mode === "solid" ? `Sample: ${item ?? ""}${third > 0.5 ? `, airflow ${third.toFixed(0)} cm/s from the left` : ", still air"}` : `Droplet: ${item ?? ""}, ${third.toFixed(1)} mm`} · {gravityLabel(gravity)}{breath ? ` · Air: ${breath}` : ""}</span>
+            <span>{rp ? "Illustration timed by the test's measurements, not footage" : "Illustration driven by the model, not footage"}</span>
           </p>
         </div>
 
@@ -161,7 +220,7 @@ function Inner() {
             <>At {conds}, {item} is predicted to <span style={{ color: tone }} className="font-semibold">{burns ? "keep burning" : "go out"}</span> (confidence: {out.conf}). </>
           ))}
           {out?.best && (
-            <span className="text-ink-2">Nearest real test: <button className="mono underline decoration-dotted underline-offset-4 hover:text-ink" onClick={() => openProv({ testId: out.best.test_id, label: out.best.test_id })}>{out.best.test_id}</button>, {out.away}; it {out.best.burned == null ? "has no recorded outcome" : out.best.burned ? "burned" : "went out"}. </span>
+            <span className="text-ink-2">Nearest real test: <button className="mono underline decoration-dotted underline-offset-4 hover:text-ink" onClick={() => openProv({ testId: out.best.test_id, label: out.best.test_id })}>{out.best.test_id}</button>, {out.away}; it {out.best.burned == null ? "has no recorded outcome" : out.best.burned ? "burned" : "went out"}.{mode === "droplet" && <> <button className="font-medium text-flame underline decoration-dotted underline-offset-4" data-replay onClick={() => replay(out.best.test_id)}>Watch it burn</button>.</>} </span>
           )}
           {out?.partial && <span style={{ color: "var(--warn)" }}>Nothing has ever been tested at {gravityLabel(gravity).split(" (")[0]}: this is bracketed between microgravity and Earth results.</span>}
         </p>

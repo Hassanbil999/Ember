@@ -105,3 +105,14 @@ Totals now: 415 source rows (274 real, 141 demo), 3 excluded.
 **Tests.** 90 backend tests (5 new: real table loaded as published, disruption explained, breathing limits, pre-breathe estimate, sources cited) and the browser acceptance test, now including `/trade`.
 
 **Still open.** Solid-material data is still synthetic, so the layer that matters for cabin materials is a demo. The pre-breathe model is first-order. The simulator frame rate varied between 35 and 60 fps across runs of the headless test on this laptop depending on what else was running; the last run measured 57–60 fps.
+
+## 6. Round 4: the flame scene
+
+Screenshots: `after/scene_*.png` (captured with the GPU scene forced on through a software renderer).
+
+- Solid material: microgravity flame is a low amber dome with a blue base (`scene_solid_moon_base.png`); at Earth gravity it stretches into a tall flame (`scene_solid_earth.png`); when the model says it goes out, only an ember remains (`scene_solid_goes_out.png`).
+- Droplet: a blue spherical flame standing off the droplet (`scene_droplet_live.png`).
+- Replay of a real FLEX test (`scene_droplet_replay_mid.png`, `scene_droplet_replay_end.png`): the readout shows the test id, time since ignition and droplet diameter, then how the test ended, in the record's own terms.
+
+Checked automatically: the replay starts from the nearest real test and returns to the simulator; sound is off by default; no page errors with the scene running.
+Not verified: appearance and smoothness on a real graphics card; how the sound feels. Both need a person at a real machine.
