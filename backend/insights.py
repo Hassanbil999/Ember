@@ -23,7 +23,7 @@ def _cite(ids, field, op):
 @lru_cache(maxsize=1)
 def insights() -> dict:
     st = get_store()
-    solids, drops = st.usable_tests("bass2_demo"), st.usable_tests("flex_demo")
+    solids, drops = st.usable_tests("bass2_demo"), st.usable_tests("flex")
     out = []
 
     # 1 — oxygen decides: burned vs extinguished along the oxygen axis, per material (position on a common scale)
@@ -72,7 +72,7 @@ def insights() -> dict:
             "visual": {"kind": "bars", "unit": "median burning rate K, mm²/s (number of tests behind each bar on the right)", "max": None,
                        "rows": [{"label": DIL.get(k, k).capitalize(), "value": round(float(v.burn_rate_k_mm2_s.median()), 3), "n": int(len(v))} for k, v in g]},
             "citation": _cite(d.test_id, "burn_rate_k_mm2_s", "median"), "source": "Droplet combustion tests",
-            "studio": "/studio?dataset=flex_demo"})
+            "studio": "/studio?dataset=flex"})
 
     # 4 — which diluent puts droplets out
     e = drops.dropna(subset=["burned", "diluent"])
@@ -87,7 +87,7 @@ def insights() -> dict:
             "visual": {"kind": "bars", "unit": "% extinguished", "max": 100, "tone": "ext",
                        "rows": [{"label": DIL.get(k, k).capitalize(), "value": round(float((1 - v.burned.mean()) * 100), 1), "n": int(len(v))} for k, v in g]},
             "citation": _cite(e.test_id, "burned", "share"), "source": "Droplet combustion tests",
-            "studio": "/studio?dataset=flex_demo"})
+            "studio": "/studio?dataset=flex"})
 
     # 5 — thinner samples spread flame faster
     th = solids.dropna(subset=["spread_rate_mm_s", "thickness_mm"])
@@ -144,4 +144,13 @@ def insights() -> dict:
                             {"label": "Used, with a warning", "value": int(((st.tests["flags"].map(len) > 0) & ~st.tests["excluded"]).sum()), "n": n_all, "muted": True},
                             {"label": "Excluded", "value": n_ex, "n": n_all, "muted": True}]},
         "citation": _cite(st.tests[st.tests.excluded].test_id, "test_id", "count"), "source": "Validation log", "studio": "/data"})
-    return {"insights": out[:8], "demo": bool(st.tests["demo"].any())}
+    real = {"Droplet combustion tests": not bool(drops["demo"].any()) if len(drops) else False}
+    for o in out:
+        if o["source"] == "Droplet combustion tests":
+            o["source"], o["demo"] = "FLEX droplet tests (NASA PSI-69)" if real[o["source"]] else o["source"], not real[o["source"]]
+        elif o["source"] == "Solid-material flammability tests":
+            o["demo"] = bool(solids["demo"].any())
+        else:
+            o["demo"] = None                      # spans both tables, or is about the model
+    out.sort(key=lambda o: {False: 0, None: 1, True: 2}[o["demo"]])      # findings on real data first (stable sort)
+    return {"insights": out[:8], "demo": bool(st.tests["demo"].any()), "mixed": bool((~st.tests["demo"]).any())}

@@ -162,7 +162,12 @@ def write_canonical() -> dict:
     known = set(tests.test_id)
     for test_id in media_by_test():
         r = load_result(test_id)
-        if not r or test_id not in known:
+        if not r:
+            continue
+        if test_id not in known:      # media whose test is not in the loaded tables (e.g. test patterns of the retired
+            d = r["derived"]           # synthetic set): still validated, but nothing is written into the tables
+            summary.append({"test_id": test_id, "kind": r["kind"], "img_burn_rate_k_mm2_s": d["fit"].get("K") if d["fit"].get("ok") else None,
+                            "img_d0_mm": d.get("d0_mm"), "img_extinction_d_mm": d.get("extinction_d_mm"), "validation": r["validation"]})
             continue
         bl = r["views"].get("backlit", {})
         for fr in r["frames"]:

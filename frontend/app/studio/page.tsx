@@ -73,16 +73,16 @@ function StudioInner() {
       else setRows(r);
     });
     get(`/relationships/${dataset}`).then((r) => { setRel(r); setPvars(r.order.map((i: number) => r.vars[i]).filter((v: string) => v !== "burned")); });
-    if (dataset === "flex_demo") { setX("o2_frac"); setY("burn_rate_k_mm2_s"); setLogX(false); setFacet("fuel"); setAdvModel("droplet_burn"); if (type === "scatter") setTitle("Burning-rate constant vs oxygen"); }
+    if (dataset === "flex") { setX("o2_frac"); setY("burn_rate_k_mm2_s"); setLogX(false); setFacet("fuel"); setAdvModel("droplet_burn"); if (type === "scatter") setTitle("Burning-rate constant vs oxygen"); }
     else { setX("flow_cm_s"); setY("o2_frac"); setLogX(true); setFacet("material"); setAdvModel("solid_burn"); if (type === "scatter") setTitle("Flame spread vs extinction across flow speed"); }
     setSel(null); setAnn([]);
   }, [dataset, groupFilter]);
 
   useEffect(() => {
     if (type !== "envelope") return;
-    const model = dataset === "flex_demo" ? "droplet_burn" : "solid_burn";
-    const [ex, ey, lx] = dataset === "flex_demo" ? ["pressure_kpa", "o2_frac", false] : ["flow_cm_s", "o2_frac", true];
-    get(`/envelope?model=${model}&x=${ex}&y=${ey}&logx=${lx}&fixed=${encodeURIComponent(JSON.stringify(dataset === "flex_demo" ? { fuel: "n-heptane", diluent: "N2", d0_mm: 3 } : { material: "PMMA", thickness_mm: 0.5, gravity_g: 0, pressure_kpa: 101.3 }))}`).then(setGrid);
+    const model = dataset === "flex" ? "droplet_burn" : "solid_burn";
+    const [ex, ey, lx] = dataset === "flex" ? ["pressure_kpa", "o2_frac", false] : ["flow_cm_s", "o2_frac", true];
+    get(`/envelope?model=${model}&x=${ex}&y=${ey}&logx=${lx}&fixed=${encodeURIComponent(JSON.stringify(dataset === "flex" ? { fuel: "n-heptane", co2_frac: 0, he_frac: 0, d0_mm: 3 } : { material: "PMMA", thickness_mm: 0.5, gravity_g: 0, pressure_kpa: 101.3 }))}`).then(setGrid);
   }, [type, dataset]);
   useEffect(() => { if (type === "gap" && !gap) get("/gapmap").then(setGap); }, [type, gap]);
   useEffect(() => { if (type === "advisor") post("/advisor", { model: advModel, target: advTarget }).then(setAdv); }, [type, advModel, advTarget]);
@@ -126,7 +126,7 @@ ${body}<h2>References</h2><pre>${c.text}</pre><h2>BibTeX</h2><pre>${c.bibtex}</p
         <div>
           <p className="eyebrow">Data</p>
           <select className="mt-2 w-full" value={dataset} onChange={(e) => setDataset(e.target.value)} aria-label="Dataset">
-            <option value="bass2_demo">Solid tests (BASS-II-shaped demo)</option><option value="flex_demo">Droplet tests (FLEX-shaped demo)</option>
+            <option value="bass2_demo">Solid tests (BASS-II-shaped demo)</option><option value="flex">Droplet tests (FLEX, NASA PSI-69)</option>
           </select>
           <p className="mono mt-1.5 text-2xs text-ink-3">{plotted.length} tests{groupFilter ? ` · group ${groupFilter.split(":").at(-1)}` : ""}{sel ? ` · ${sel.length} brushed` : ""}</p>
           {sel && <button className="btn mt-2 h-6 text-xs" onClick={() => setSel(null)}>clear selection</button>}
@@ -201,7 +201,7 @@ ${body}<h2>References</h2><pre>${c.text}</pre><h2>BibTeX</h2><pre>${c.bibtex}</p
               onCanvasClick={annMode ? (ax, ay) => { setPending({ x: ax, y: ay }); setAnnMode(false); } : undefined} />
           )}
           {bsize.w > 0 && type === "envelope" && grid && (
-            <Envelope ref={svg} grid={grid} rows={plotted.filter((r) => r.gravity_g == null || r.gravity_g < 0.5)} width={W - 10} height={H} logX={dataset !== "flex_demo"}
+            <Envelope ref={svg} grid={grid} rows={plotted.filter((r) => r.gravity_g == null || r.gravity_g < 0.5)} width={W - 10} height={H} logX={dataset !== "flex"}
               onPoint={(r) => openProv({ testId: r.test_id, label: r.test_id })} />
           )}
           {bsize.w > 0 && type === "multiples" && (

@@ -146,12 +146,12 @@ def train_one(mid: str, cfg: dict, ad_cfg: dict) -> dict:
         "ranges": {f: [enc.min[f], enc.max[f]] for f in enc.numeric},
         "categories": enc.cats,
         "limits": [
-            "Learned only from the loaded data (currently the synthetic demo fixture).",
+            "Learned only from the loaded data" + (" (a synthetic demo fixture)." if config.datasets()[cfg["dataset"]].get("demo") else "."),
             "Not a physics model: it interpolates measured outcomes and cannot extrapolate physics.",
             "No partial-gravity data exist; any partial-gravity scenario is untested by construction.",
         ] + (["All training tests are microgravity droplets with no imposed flow; flow and gravity sliders do not change this model."]
-             if cfg["dataset"] == "flex_demo" else []),
-        "trained_seconds": round(time.time() - t0, 2), "demo": True,
+             if cfg["dataset"] == "flex" else []),
+        "trained_seconds": round(time.time() - t0, 2), "demo": bool(config.datasets()[cfg["dataset"]].get("demo")),
     }
     joblib.dump({"model": model, "enc": enc, "X": X, "y": y, "ids": df["test_id"].tolist(), "card": card,
                  "cfg": cfg}, MODEL_DIR / f"{mid}.joblib")

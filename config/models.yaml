@@ -2,26 +2,25 @@
 # type: gp_classifier | gp_regressor | gbr_quantile
 models:
   droplet_burn:
-    dataset: flex_demo
+    dataset: flex
     label: Droplet — sustained burning vs extinction
     type: gp_classifier
     target: burned
-    features: [o2_frac, pressure_kpa, d0_mm, diluent, fuel]
+    features: [o2_frac, pressure_kpa, d0_mm, co2_frac, he_frac, fuel]
     group: campaign
   droplet_k:
-    dataset: flex_demo
+    dataset: flex
     label: Droplet — burning-rate constant K
     type: gp_regressor
     target: burn_rate_k_mm2_s
-    features: [o2_frac, pressure_kpa, d0_mm, diluent, fuel]
+    features: [o2_frac, pressure_kpa, d0_mm, co2_frac, he_frac, fuel]
     group: campaign
-    only_when: { burned: 1 }
   droplet_dext:
-    dataset: flex_demo
+    dataset: flex
     label: Droplet — extinction diameter
     type: gp_regressor
     target: extinction_d_mm
-    features: [o2_frac, pressure_kpa, d0_mm, diluent, fuel]
+    features: [o2_frac, pressure_kpa, d0_mm, co2_frac, he_frac, fuel]
     group: campaign
     only_when: { burned: 0 }
   solid_burn:

@@ -73,7 +73,7 @@ def test_api_smoke():
     t0 = time.perf_counter()
     r = c.get("/api/navigate?q=tests%20near%2030%25%20oxygen")
     assert r.status_code == 200 and (time.perf_counter() - t0) < 0.15
-    r = c.post("/api/scenario", json={"mode": "droplet", "scenario": {"o2_frac": 0.21, "pressure_kpa": 101.3, "d0_mm": 3, "diluent": "N2", "fuel": "n-heptane", "gravity_g": 0}})
+    r = c.post("/api/scenario", json={"mode": "droplet", "scenario": {"o2_frac": 0.21, "pressure_kpa": 101.3, "d0_mm": 3, "co2_frac": 0, "he_frac": 0, "fuel": "n-heptane", "gravity_g": 0}})
     assert r.status_code == 200 and r.json()["burn"]["domain"]["status"] == "inside"
-    csv = c.post("/api/export/csv", json={"ids": ["FX-001"]}).text
+    csv = c.post("/api/export/csv", json={"ids": ["BS-001"]}).text
     assert "DEMO FIXTURE" in csv and "source" in csv.splitlines()[5]

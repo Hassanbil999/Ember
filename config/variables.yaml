@@ -34,6 +34,36 @@ variables:
     description: Oxygen partial pressure = O₂ mole fraction × total pressure.
     synonyms: [partial pressure, oxygen partial pressure, ppo2, po2]
     valid_range: [0, 1000]
+  n2_frac:
+    label: Nitrogen fraction
+    unit: "mol/mol"
+    display_unit: "%"
+    display_scale: 100
+    kind: number
+    role: condition
+    description: Nitrogen mole fraction of the ambient atmosphere.
+    synonyms: [nitrogen fraction]
+    valid_range: [0.0, 1.0]
+  co2_frac:
+    label: Carbon dioxide fraction
+    unit: "mol/mol"
+    display_unit: "%"
+    display_scale: 100
+    kind: number
+    role: condition
+    description: Carbon dioxide mole fraction of the ambient atmosphere.
+    synonyms: [co2 fraction, carbon dioxide fraction]
+    valid_range: [0.0, 1.0]
+  he_frac:
+    label: Helium fraction
+    unit: "mol/mol"
+    display_unit: "%"
+    display_scale: 100
+    kind: number
+    role: condition
+    description: Helium mole fraction of the ambient atmosphere.
+    synonyms: [helium fraction]
+    valid_range: [0.0, 1.0]
   flow_cm_s:
     label: Airflow speed
     short: U
@@ -119,6 +149,20 @@ variables:
     description: Droplet diameter at the moment of flame extinction.
     synonyms: [extinction diameter]
     valid_range: [0, 20]
+  burn_time_s:
+    label: Burn time
+    unit: s
+    kind: number
+    role: outcome
+    description: Time from ignition to the end of burning.
+    synonyms: [burn time, burning time]
+    valid_range: [0, 600]
+  test_end:
+    label: How the test ended
+    kind: category
+    role: outcome
+    description: Completion (burned out), Extinction (flame went out with fuel left) or Disruption (the droplet broke apart).
+    synonyms: [test end, disruption, completion]
   spread_rate_mm_s:
     label: Flame spread rate
     short: V_f

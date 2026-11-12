@@ -25,6 +25,7 @@ SCREENS = [
     ("/answer?topic=untested", "[data-ready=answer]"),
     ("/answer?q=burning%20rate%20of%20heptane%20droplets%20in%20helium", "[data-ready=answer]"),
     ("/explore", "[data-ready=explore]"),
+    ("/trade", "[data-ready=trade]"),
     ("/lab", "[data-ready=lab]"),
     ("/lab?mode=droplet", "[data-ready=lab]"),
     ("/insights", "[data-ready=insights]"),
@@ -96,7 +97,7 @@ with sync_playwright() as p:
             continue
         page.wait_for_timeout(500)
         check(not errors, f"{path}: page errors {errors[:2]}")
-        check(page.get_by_text("Demo data, not NASA results").is_visible(), f"{path}: demo notice missing")
+        check(page.locator("header [role=status]").is_visible(), f"{path}: demo-data notice missing")
         mf = page.evaluate(MIN_FONT)
         check(mf["min"] >= 13, f"{path}: text at {mf['min']}px (“{mf['who']}”)")
         clipped = page.evaluate(CLIPPED)
@@ -162,7 +163,7 @@ with sync_playwright() as p:
         panel = page.locator("aside[role=dialog]").inner_text()
         check("→ 0 kPa" not in panel and "= 0 kPa" not in panel and "g₀" not in panel, f"{r['test_id']}: panel shows a converted impossible value")
         check("Microgravity" in panel or "Earth 1g" in panel, f"{r['test_id']}: gravity is not a regime name")
-        check("Assumed (dataset setting)" in panel or r["dataset"] != "flex_demo", f"{r['test_id']}: dataset settings not labelled as assumed")
+        check("Assumed (dataset setting)" in panel or r["dataset"] != "flex", f"{r['test_id']}: dataset settings not labelled as assumed")
         check("data/raw" not in panel, f"{r['test_id']}: file paths shown in the normal view")
         page.locator(f"[data-prov-row=pressure_kpa] > button").click()
         check(page.locator("[data-open-source]").is_visible(), f"{r['test_id']}: no link to the source row")

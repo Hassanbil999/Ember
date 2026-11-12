@@ -42,6 +42,10 @@ PHYSICAL = {
     "burn_rate_k_mm2_s": (0.0, True, None, "A burning rate cannot be negative."),
     "spread_rate_mm_s": (0.0, True, None, "A flame spread rate cannot be negative."),
     "gravity_g": (0.0, True, None, "A gravity level cannot be negative."),
+    "n2_frac": (0.0, True, 1.0, "A gas fraction must lie between 0 and 1."),
+    "co2_frac": (0.0, True, 1.0, "A gas fraction must lie between 0 and 1."),
+    "he_frac": (0.0, True, 1.0, "A gas fraction must lie between 0 and 1."),
+    "burn_time_s": (0.0, True, None, "A burn time cannot be negative."),
 }
 
 
@@ -75,7 +79,7 @@ def parse_number_unit(raw: Any) -> tuple[Optional[float], Optional[str]]:
         if isinstance(raw, float) and math.isnan(raw):
             return None, None
         return float(raw), None
-    s = str(raw).strip().replace(",", "")
+    s = str(raw).strip().replace(",", "").lstrip("~≈ ")        # "~6" in a source means "about 6"
     if not s or s.lower() in {"nan", "na", "n/a", "-", "—", "none"}:
         return None, None
     m = _NUM_UNIT.match(s)
@@ -148,6 +152,9 @@ def normalize(var: str, raw: Any, header_unit: Optional[str] = None) -> tuple[Op
             return refuse(bad)
         return value, steps
 
+    bad = raw_problem(var, value, 1.0, unit or "")
+    if bad:
+        return refuse(bad)
     return value, steps
 
 

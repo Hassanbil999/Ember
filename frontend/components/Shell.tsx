@@ -10,7 +10,7 @@ import SourceViewer from "./SourceViewer";
 
 const NAV = [
   { href: "/explore", label: "Explore" },
-  { href: "/lab", label: "Simulate" },
+  { href: "/lab", label: "Simulate", also: ["/trade"] },
   { href: "/insights", label: "Insights", also: ["/studio"] },
   { href: "/data", label: "Data", also: ["/image"] },
 ];
@@ -23,12 +23,15 @@ const DEPTH = [
 export function DemoBadge() {
   const meta = useMeta();
   if (meta && !meta.demo) return null;
+  const mixed = !!meta && meta.loaded.real.length > 0;
   return (
     <span className="inline-flex h-7 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 text-xs text-ink-2"
       style={{ border: "1px dashed var(--warn)" }} role="status"
-      title="Every table, report and chart in this build comes from a synthetic demo fixture, not from NASA. Replace data/raw with real PSI files and re-ingest.">
+      title={mixed
+        ? `Real NASA data: ${meta!.loaded.real.join("; ")}. Synthetic demo data: ${meta!.loaded.demo.join("; ")}, and the demo reports. Each screen says which it is using.`
+        : "Every table, report and chart in this build comes from a synthetic demo fixture, not from NASA."}>
       <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--warn)" }} />
-      Demo data, not NASA results
+      {mixed ? "Solid-material tests are demo data" : "Demo data, not NASA results"}
     </span>
   );
 }
@@ -95,8 +98,8 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   // first click on each is as fast as a repeat visit (measured: 182 ms → under 90 ms for home → answer).
   useEffect(() => {
     const t = setTimeout(() => {
-      import("@/app/answer/page"); import("@/app/explore/page"); import("@/app/lab/page"); import("@/app/insights/page"); import("@/app/data/page");
-      ["/explore", "/insights", "/refinery", "/lab/items", "/lab/grid?mode=solid&item=PMMA&gravity=0&diluent=N2"].forEach((u) => get(u).catch(() => {}));
+      import("@/app/answer/page"); import("@/app/explore/page"); import("@/app/lab/page"); import("@/app/insights/page"); import("@/app/data/page"); import("@/app/trade/page");
+      ["/explore", "/insights", "/refinery", "/lab/items", "/atmosphere", "/lab/grid?mode=solid&item=PMMA&gravity=0&diluent=N2"].forEach((u) => get(u).catch(() => {}));
     }, 900);
     return () => clearTimeout(t);
   }, []);

@@ -10,7 +10,10 @@ from . import config
 def _eval_when(df: pd.DataFrame, expr: str) -> pd.Series:
     # missing columns evaluate as NaN → comparisons False
     cols = {c: df[c] if c in df.columns else pd.Series(np.nan, index=df.index) for c in
-            ["pressure_kpa", "o2_frac", "burned", "burn_rate_k_mm2_s", "spread_rate_mm_s", "d0_mm", "flow_cm_s"]}
+            ["pressure_kpa", "o2_frac", "n2_frac", "co2_frac", "he_frac", "burned", "burn_rate_k_mm2_s", "spread_rate_mm_s",
+             "d0_mm", "extinction_d_mm", "flow_cm_s"]}
+    for c in cols:
+        cols[c] = pd.to_numeric(cols[c], errors="coerce")
     local = pd.DataFrame(cols)
     try:
         return local.eval(expr).fillna(False).astype(bool)

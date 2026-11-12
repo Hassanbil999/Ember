@@ -15,6 +15,7 @@ from .core.config import ARTIFACTS, CONFIG, PROCESSED
 from .core.validate import validate
 
 TEST_COLS = ["test_id", "dataset", "investigation_id", "campaign", "fuel", "material", "diluent", "o2_frac",
+             "n2_frac", "co2_frac", "he_frac", "burn_time_s", "test_end",
              "pressure_kpa", "o2_pp_kpa", "flow_cm_s", "d0_mm", "thickness_mm", "gravity_g", "burned",
              "burn_rate_k_mm2_s", "extinction_d_mm", "spread_rate_mm_s", "mission_date", "flags", "invalid", "excluded", "demo", "_row"]
 
@@ -76,14 +77,20 @@ def run() -> dict:
             "raw_preview": json.loads(res.raw_preview.astype(str).to_json(orient="records")) if res.raw_preview is not None else [],
         })
 
+    # Test-pattern media may belong to a table that is no longer loaded (the synthetic droplet set). Its table
+    # values are still the reference the image pipeline is validated against, so keep them available.
+    for ds_id in {m.get("dataset") for m in (config.media_cfg().get("media", []) or [])} - set(published):
+        if ds_id in datasets and datasets[ds_id]["adapter"] in REGISTRY:
+            published[ds_id] = REGISTRY[datasets[ds_id]["adapter"]](ds_id, datasets[ds_id]).published
+
     tests = pd.concat(all_tests, ignore_index=True)
     tests["flags"] = tests["flags"].map(json.dumps)
     tests["invalid"] = tests["invalid"].map(lambda d: json.dumps(d if isinstance(d, dict) else {}, ensure_ascii=False))
     tests["image_derived"] = "[]"
-    for c in ["o2_frac", "pressure_kpa", "o2_pp_kpa", "flow_cm_s", "d0_mm", "thickness_mm", "gravity_g", "burned",
+    for c in ["n2_frac", "co2_frac", "he_frac", "burn_time_s", "o2_frac", "pressure_kpa", "o2_pp_kpa", "flow_cm_s", "d0_mm", "thickness_mm", "gravity_g", "burned",
               "burn_rate_k_mm2_s", "extinction_d_mm", "spread_rate_mm_s"]:
         tests[c] = pd.to_numeric(tests[c], errors="coerce")
-    for c in ["campaign", "fuel", "material", "diluent", "mission_date", "investigation_id"]:
+    for c in ["campaign", "fuel", "material", "diluent", "mission_date", "investigation_id", "test_end"]:
         tests[c] = tests[c].astype("string")
 
     invs = []

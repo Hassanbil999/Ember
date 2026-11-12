@@ -44,6 +44,7 @@ SCREENS = {
         ("/answer?topic=untested", "[data-ready=answer]", "answer_untested"),
         ("/answer?q=Is%20PMMA%20flammable%20at%2030%25%20oxygen%3F", "[data-ready=answer]", "answer_question"),
         ("/explore", "[data-ready=explore]", "explore"),
+        ("/trade", "[data-ready=trade]", "trade"),
         ("/lab", "[data-ready=lab]", "simulate"),
         ("/insights", "[data-ready=insights]", "insights"),
         ("/studio", "[data-ready=studio]", "studio"),
@@ -147,7 +148,7 @@ with sync_playwright() as p:
             row = page.locator("tr", has_text="FX-018").first
             I["open_provenance_ms"] = respond(page, lambda: row.click(timeout=5000), "aside[aria-label=Provenance] table")
             page.wait_for_timeout(400)
-            page.screenshot(path=str(OUT / "provenance_FX-018.png"))
+            page.screenshot(path=str(OUT / "provenance_FLEX-114.png"))
             I["inp_ms"] = inp(page)
         except Exception as e:
             print("prov click failed:", str(e)[:160])
@@ -218,20 +219,20 @@ with sync_playwright() as p:
         page.goto(BASE + "/data")
         page.wait_for_selector("[data-ready=data]")
         page.wait_for_timeout(500)
-        I["open_provenance_ms"] = respond(page, lambda: page.locator("[data-test=FX-018]").first.click(), "[data-ready=provenance]")
+        I["open_provenance_ms"] = respond(page, lambda: page.locator("[data-test=FLEX-114]").first.click(), "[data-ready=provenance]")
         page.wait_for_timeout(400)
-        page.screenshot(path=str(OUT / "provenance_FX-018.png"))
+        page.screenshot(path=str(OUT / "provenance_FLEX-114.png"))
         I["provenance_open_row_ms"] = respond(page, lambda: page.locator("[data-prov-row=pressure_kpa] > button").click(), "[data-open-source]")
         page.wait_for_timeout(250)
-        page.screenshot(path=str(OUT / "provenance_FX-018_level2.png"))
+        page.screenshot(path=str(OUT / "provenance_FLEX-114_level2.png"))
         page.locator("[data-open-source]").click()
         page.wait_for_selector("[data-ready=source-row] table")
         page.wait_for_timeout(250)
-        page.screenshot(path=str(OUT / "provenance_FX-018_source_row.png"))
+        page.screenshot(path=str(OUT / "provenance_FLEX-114_source_row.png"))
         page.keyboard.press("Escape")
         page.locator("[data-trail-toggle]").check()
         page.wait_for_timeout(250)
-        page.screenshot(path=str(OUT / "provenance_FX-018_level3.png"))
+        page.screenshot(path=str(OUT / "provenance_FLEX-114_level3.png"))
         I["inp_data_ms"] = inp(page)
 
         # light theme, for the record
@@ -240,7 +241,7 @@ with sync_playwright() as p:
         page = light.new_page()
         for path, sel, name in [("/", "[data-ready=home]", "light_home"), ("/explore", "[data-ready=explore]", "light_explore"),
                                 ("/lab", "[data-ready=lab]", "light_simulate"), ("/answer?topic=moon-base", "[data-ready=answer]", "light_answer"),
-                                ("/data?test=FX-018", "[data-ready=provenance]", "light_provenance")]:
+                                ("/data?test=FLEX-114", "[data-ready=provenance]", "light_provenance"), ("/trade", "[data-ready=trade]", "light_trade")]:
             page.goto(BASE + path)
             page.wait_for_selector(sel)
             page.wait_for_timeout(700)

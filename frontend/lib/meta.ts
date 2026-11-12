@@ -5,6 +5,7 @@ import { setVars } from "./format";
 
 export interface Meta {
   demo: boolean;
+  loaded: { real: string[]; demo: string[] };
   counts: Record<string, number>;
   variables: Record<string, any>;
   glossary: Record<string, string>;

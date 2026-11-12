@@ -65,7 +65,7 @@ def test_flagged_input_blocks_the_derived_value():
 
 def test_dataset_rows_with_impossible_values(st):
     bad = st.tests[st.tests["invalid"].map(bool)]
-    assert "FX-018" in bad.index
+    assert {"FLEX-114", "BS-023"} <= set(bad.index)      # one in the real FLEX table, one in the demo solids
     for tid, r in bad.iterrows():
         assert r["excluded"], f"{tid} must be excluded from charts and models"
         assert "impossible_value" in r["flags"]
@@ -92,16 +92,18 @@ def test_no_flagged_value_is_displayed_anywhere(st):
             assert f["status"] in {"measured", "derived", "assumed", "flagged", "image", "blank"}
 
 
-def test_fx018_record(st):
-    rec = build_record("FX-018")
+def test_impossible_pressure_record(st):
+    """FLEX-114: the real PSI-69 table gives an ambient pressure of 0 mmHg for this test."""
+    rec = build_record("FLEX-114")
     f = {x["var"]: x for x in rec["fields"]}
     assert rec["excluded"]
-    assert f["pressure_kpa"]["status"] == "flagged" and "0 atm" in f["pressure_kpa"]["note"]
+    assert f["pressure_kpa"]["status"] == "flagged" and "0 mmHg" in f["pressure_kpa"]["note"]
     assert f["o2_pp_kpa"]["status"] == "flagged" and f["o2_pp_kpa"]["note"].startswith("Not computed: input flagged")
     assert f["gravity_g"]["value"] == "Microgravity (ISS)" and f["gravity_g"]["status"] == "assumed"
     assert f["flow_cm_s"]["status"] == "assumed"
     assert f["burned"]["value"] == "Extinguished"
-    assert f["burn_rate_k_mm2_s"]["value"] is None and f["burn_rate_k_mm2_s"]["note"] == "Not applicable: flame extinguished"
+    assert f["burn_rate_k_mm2_s"]["status"] == "measured"      # droplets report a rate before extinction; it is kept
+    assert f["campaign"]["status"] == "derived" and f["diluent"]["status"] == "derived"
     shown = " ".join(str(x["value"]) for x in rec["fields"] if x["value"])
     assert "0 kPa" not in shown and not re.search(r"\b0 g", shown)
 
@@ -118,9 +120,9 @@ def test_gravity_is_always_a_regime_name(st):
 
 
 def test_source_row_is_the_raw_file(api):
-    r = api.get("/api/source/flex_demo/row/19").json()
-    hit = next(x for x in r["rows"] if x["n"] == 19)
-    assert "FX-018" in hit["cells"] and "0 atm" in hit["cells"]
+    r = api.get("/api/source/flex/row/115").json()
+    hit = next(x for x in r["rows"] if x["n"] == 115)
+    assert hit["cells"][0] == "114" and hit["cells"][r["columns"].index("Ambient pressure; mmHg")] == "0"
 
 
 # ---------------------------------------------------------------- API payloads behind the new screens
@@ -173,3 +175,50 @@ def test_lab_grid_shape_and_domain(api):
     assert all(0 <= p <= 1 for p in g["p"])
     assert g["cv"]["accuracy"] > g["cv"]["baseline"], "the model is reported against its baseline"
     assert max(g["dist"]) > g["edge"], "the grid reaches beyond the tested range and says so"
+
+
+# ---------------------------------------------------------------- the real FLEX table (NASA PSI-69)
+def test_real_flex_table_is_loaded_as_published(st):
+    t = st.tests[st.tests.dataset == "flex"]
+    assert len(t) == 274 and not t["demo"].any()
+    assert set(t.fuel.dropna().unique()) == {"methanol", "n-heptane"}
+    first = t.loc["FLEX-001"]
+    assert first.pressure_kpa == pytest.approx(757.7 * 0.133322, rel=1e-4)      # mmHg → kPa
+    assert first.o2_frac == 0.21 and first.d0_mm == 1.69 and first.burn_rate_k_mm2_s == 0.52
+    assert first.test_end == "Disruption" and pd.isna(first.burned)           # disruption decides nothing about burning
+    assert t.loc["FLEX-002"].burned == 0 and t.loc["FLEX-020"].burned == 1     # Extinction / Completion
+    assert not st.tests[st.tests.dataset == "flex_demo"].shape[0], "the synthetic droplet set must not be mixed in"
+
+
+def test_disruption_is_explained_not_blank(st):
+    f = {x["var"]: x for x in build_record("FLEX-001")["fields"]}
+    assert f["test_end"]["value"] == "Disruption"
+    assert f["burned"]["value"] is None and "broke apart" in f["burned"]["note"]
+
+
+# ---------------------------------------------------------------- atmosphere trade physiology (NASA OCHMO briefs)
+def test_breathing_limits_match_the_nasa_briefs():
+    from backend.atmosphere import breathing, pio2_mmhg
+    assert pio2_mmhg(101.325, 0.21) == pytest.approx(149.7, abs=0.3)            # the brief's own worked example
+    assert breathing(101.325, 0.21)["status"] == "normal"
+    assert breathing(8.2 * 6.894757, 0.34)["status"] == "mild"                  # exploration atmosphere: just above the floor
+    assert pio2_mmhg(8.2 * 6.894757, 0.34) == pytest.approx(128, abs=1.5)
+    assert breathing(8.2 * 6.894757, 0.25)["status"] == "too_low"
+    assert breathing(30.0, 0.9)["status"] == "too_rich"
+
+
+def test_prebreathe_estimate_reproduces_known_protocols():
+    from backend.atmosphere import prebreathe
+    iss = prebreathe(14.7 * 6.894757, 0.21)
+    assert iss["r0"] == pytest.approx(2.70, abs=0.02)
+    assert 3.5 * 60 < iss["minutes"] < 4.6 * 60          # NASA's in-suit protocol from 14.7 psi is 4 hours
+    assert prebreathe(8.2 * 6.894757, 0.34)["minutes"] == 0   # the reason the exploration atmosphere was chosen
+    camp = prebreathe(10.2 * 6.894757, 0.265)
+    assert 0 < camp["minutes"] < 90                       # the 10.2 psi campout leaves a short in-suit pre-breathe
+
+
+def test_atmosphere_payload_cites_its_sources(api):
+    a = api.get("/api/atmosphere").json()
+    assert {r["id"] for r in a["references"]} == {"iss", "campout", "exploration"}
+    assert all(s["url"].startswith("https://") and "nasa.gov" in s["url"] for s in a["sources"])
+    assert a["constants"]["pio2_floor_mmhg"] == 127 and a["constants"]["r_accept"] == 1.65 and a["caveats"]

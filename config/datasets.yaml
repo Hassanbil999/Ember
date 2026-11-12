@@ -3,10 +3,46 @@
 # (only if the shape is new) write backend/adapters/<adapter>.py. See docs/ADDING_A_DATASET.md.
 
 datasets:
-  flex_demo:
+  flex:
+    title: FLEX droplet combustion tests (NASA PSI-69 experimental table)
+    adapter: flex_psi
+    enabled: true
+    demo: false
+    investigations: [FLEX]
+    files: ["PSI-69_Experimental table_FLEX.csv"]
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-69. See the PSI terms of use."
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    # "Test", "Campaign", "Investigation", "Diluent" and "Outcome" are helper columns built by the adapter
+    # from the file's own columns; they are recorded as derived, never as source values.
+    columns:
+      "Test": test_id
+      "Campaign": campaign
+      "Investigation": investigation_id
+      "Fuel": fuel
+      "O initial ambient composition; mole fraction": o2_frac
+      "N initial ambient composition; mole fraction": n2_frac
+      "CO initial ambient composition; mole fraction": co2_frac
+      "He initial ambient composition; mole fraction": he_frac
+      "Diluent": diluent
+      "Ambient pressure; mmHg": pressure_kpa
+      "Droplet initial diameter; mm": d0_mm
+      "Test end": test_end
+      "Outcome": burned
+      "Burning rate; mm": burn_rate_k_mm2_s
+      "Visible flame extinction diameter; mm": extinction_d_mm
+      "Burn time; s": burn_time_s
+      "Test Date": mission_date
+    units: { "Ambient pressure; mmHg": mmHg, "Droplet initial diameter; mm": mm, "Visible flame extinction diameter; mm": mm,
+             "Burning rate; mm": "mm^2/s", "Burn time; s": s }
+    constants: { gravity_g: 0.0, flow_cm_s: 0.0 }
+    # Disruption (the droplet broke apart) decides nothing about burning vs extinction, so it maps to no outcome.
+    outcome_map: { "completion": 1, "extinction": 0 }
+
+  flex_demo:        # synthetic stand-in used before the real table was loaded; kept for the adapter tests
     title: Droplet combustion tests (FLEX-shaped demo fixture)
     adapter: flex_droplets
-    enabled: true
+    enabled: false
     demo: true
     investigations: [FLEX, FLEX-2]
     files: [flex_droplet_tests.csv]
@@ -61,7 +97,8 @@ datasets:
     adapter: pdf_reports
     enabled: true
     demo: true
-    files: ["*.pdf"]
+    # the synthetic droplet report is left out now that the real FLEX table is loaded: it would contradict it
+    files: [bass2_demo_report.pdf, detection_suppression_notes.pdf, fire_safety_context.pdf]
     license: "Demo fixture text and compiled catalog notes — CC0."
 
 # Validation rules, applied to every tabular dataset after normalization.
@@ -82,8 +119,16 @@ validation:
   - id: missing_outcome
     missing: burned
     action: flag
-    reason: "Outcome not recorded; row kept for conditions but excluded from outcome models."
+    reason: "No burn-or-extinguish outcome for this test; the row is kept for its conditions but not used in outcome models."
   - id: rate_without_burn
-    when: "burned == 0 and (burn_rate_k_mm2_s > 0 or spread_rate_mm_s > 0)"
+    when: "burned == 0 and spread_rate_mm_s > 0"      # droplets legitimately report a burning rate before extinction
     action: flag
-    reason: "Rate reported for a test marked extinguished — check the source (rate may be pre-extinction)."
+    reason: "A flame spread rate is reported for a sample marked extinguished: check the source."
+  - id: fractions_do_not_sum
+    when: "abs(o2_frac + n2_frac + co2_frac + he_frac - 1) > 0.015"
+    action: flag
+    reason: "The four gas fractions in the source do not add up to 100 %."
+  - id: extinction_larger_than_start
+    when: "extinction_d_mm > d0_mm"
+    action: flag
+    reason: "The extinction diameter is larger than the starting diameter: check the source."

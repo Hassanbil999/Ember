@@ -79,3 +79,29 @@ Totals: 85 backend tests pass; the browser acceptance test passes.
 - Studio and image-measurement screens were not redesigned.
 - The old Atlas artefacts (`backend/atlas.py` layouts for nine lenses) are still built at ingest; only its node and grouping data are used now.
 - Docker files remain unrun, as before.
+
+## 5. Round 3: real FLEX data and the atmosphere trade
+
+**Data.** The droplet table is now the real FLEX experimental table from NASA PSI (PSI-69, 274 tests). The synthetic droplet set, including test FX-018 discussed in section 1, is retired; the same validate-before-convert rules now run on real data. Section 1's screenshots for FX-018 were replaced by the equivalent real case, `after/provenance_FLEX-114*.png`.
+
+Scan of the real table (274 rows):
+
+| Finding | Tests | Handling |
+|---|---|---|
+| Ambient pressure given as 0 mmHg | FLEX-114 | Flagged before conversion, excluded, partial pressure not computed |
+| The four gas fractions add to 98 %, not 100 % | FLEX-069, 075, 076, 079, 080, 081 | Kept, marked with a warning, values shown as published |
+| Extinction diameter larger than the starting diameter | FLEX-129 | Kept, marked with a warning |
+| Burning rate 0.05 mm²/s, far below the rest | FLEX-130 | Kept, marked as unusual |
+| Test ended in "Disruption" (no burn-or-extinguish outcome) | 61 tests | Kept; outcome shown as "Not determined", not used in the outcome model |
+| Two tests share the identifier 193F001 | FLEX-070, FLEX-073 | Both kept under their own test numbers |
+| Empty cells (en dash in the export), "~6"-style approximate burn times | various | Empty cells shown as "Not reported in source"; approximate values read as numbers with the raw text kept in the trail |
+
+Totals now: 415 source rows (274 real, 141 demo), 3 excluded.
+
+**Atmosphere trade** (`after/trade.png`, `after/light_trade.png`). Checks: the physiology reproduces the briefs' own numbers (sea-level inspired oxygen 149.7 mmHg; the 8.2 psi / 34 % atmosphere at 128 mmHg, just above the 127 floor; about 4 h 16 min of pre-breathe from ISS air against NASA's 4-hour protocol; none from 8.2 psi / 34 %). Label overlap on the map is covered by the browser test, which caught and forced the fix of one collision.
+
+**Result on real data.** At the planned 8.2 psi / 34 % habitat atmosphere there is no FLEX test close enough to say whether heptane droplets burn: FLEX's lowest test pressure is about 10.3 psi. Of the atmospheres on the map that are breathable and need under an hour of pre-breathe, 5 % are predicted to keep heptane droplets burning and 95 % have no nearby test.
+
+**Tests.** 90 backend tests (5 new: real table loaded as published, disruption explained, breathing limits, pre-breathe estimate, sources cited) and the browser acceptance test, now including `/trade`.
+
+**Still open.** Solid-material data is still synthetic, so the layer that matters for cabin materials is a demo. The pre-breathe model is first-order. The simulator frame rate varied between 35 and 60 fps across runs of the headless test on this laptop depending on what else was running; the last run measured 57–60 fps.

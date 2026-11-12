@@ -76,31 +76,39 @@ export default function Home() {
   };
   if (picked) return <TopicAnswer id={picked} material={null} />;
   return (
-    <div className="mx-auto flex min-h-full max-w-[1240px] flex-col justify-center px-8 py-10" data-ready="home">
-      <h1 className="display max-w-[18ch]">What NASA knows about <span className="text-flame">fire in space</span>, and what it doesn't.</h1>
-      <p className="lead mt-4 max-w-[62ch] text-ink-2">Every microgravity combustion experiment in one place: ask a question, see the evidence, and see exactly where the data ends.</p>
+    <div className="mx-auto flex min-h-full max-w-[1240px] flex-col justify-center px-8 py-8" data-ready="home">
+      <h1 className="display max-w-[24ch]" style={{ fontSize: "clamp(32px, 3.6vw, 46px)" }}>What NASA knows about <span className="text-flame">fire in space</span>, and what it doesn't.</h1>
+      <p className="lead mt-3 max-w-[62ch] text-ink-2">NASA's microgravity combustion experiments in one place: ask a question, see the evidence, and see exactly where the data ends.</p>
 
-      <form onSubmit={ask} role="search" className="field mt-8 flex h-16 max-w-[820px] items-center gap-3 rounded-md pl-5 pr-2" style={{ background: "var(--surface)", border: "1px solid var(--line-strong)" }}>
+      <form onSubmit={ask} role="search" className="field mt-6 flex h-14 max-w-[820px] items-center gap-3 rounded-md pl-5 pr-2" style={{ background: "var(--surface)", border: "1px solid var(--line-strong)" }}>
         <svg width="22" height="22" viewBox="0 0 16 16" aria-hidden className="shrink-0 text-ink-3"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" strokeWidth="1.4" /><path d="M11 11l3.5 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
         <input ref={input} type="search" autoFocus aria-label="Ask a question" placeholder="Ask anything, for example: is PMMA flammable at 30% oxygen?"
           className="bare h-full min-w-0 flex-1 text-ink placeholder:text-ink-3" style={{ fontSize: 18 }} />
-        <button type="submit" className="btn primary h-12 px-6 text-base">Ask</button>
+        <button type="submit" className="btn primary h-10 px-6 text-base">Ask</button>
       </form>
 
-      <p className="eyebrow mt-10">Or start here</p>
+      <p className="eyebrow mt-6">Or start here</p>
       <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {STARTS.map((s) => (
           <Link key={s.id} href={`/answer?topic=${s.id}`} data-start={s.id} className="card card-hover group flex flex-col overflow-hidden"
             onClick={(e) => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return; e.preventDefault(); setPicked(s.id); router.push(`/answer?topic=${s.id}`); }}>
-            <div className="h-[150px] p-4" style={{ background: "var(--surface-2)" }}>{s.art}</div>
-            <div className="flex flex-1 flex-col p-5">
+            <div className="h-[104px] p-3" style={{ background: "var(--surface-2)" }}>{s.art}</div>
+            <div className="flex flex-1 flex-col p-4">
               <h2 className="text-xl font-semibold leading-snug tracking-tight text-ink">{s.title}</h2>
               <p className="mt-1.5 flex-1 text-sm text-ink-2">{s.text}</p>
-              <span className="mt-4 text-sm font-medium text-flame">See the answer <span aria-hidden className="inline-block transition-transform group-hover:translate-x-1">→</span></span>
+              <span className="mt-3 text-sm font-medium text-flame">See the answer <span aria-hidden className="inline-block transition-transform group-hover:translate-x-1">→</span></span>
             </div>
           </Link>
         ))}
       </div>
+
+      <Link href="/trade" data-start="trade" className="card card-hover group mt-4 flex flex-wrap items-center gap-x-8 gap-y-2 px-6 py-4" style={{ borderColor: "var(--flame)" }}>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-xl font-semibold tracking-tight text-ink">What air should the crew breathe?</h2>
+          <p className="mt-1 text-sm text-ink-2">Thin, oxygen-rich air saves hours before every spacewalk and feeds every fire. See breathing, spacewalks and flammability on one map, and where the tests run out.</p>
+        </div>
+        <span className="text-sm font-medium text-flame">Open the atmosphere trade <span aria-hidden className="inline-block transition-transform group-hover:translate-x-1">→</span></span>
+      </Link>
     </div>
   );
 }

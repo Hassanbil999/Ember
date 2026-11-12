@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { get } from "@/lib/api";
@@ -13,7 +14,7 @@ import HeroFlame from "@/components/lab/HeroFlame";
 type Mode = "solid" | "droplet";
 type Grid = { axes: { var: string; values: number[] }[]; p: number[]; rate: number[]; dist: number[]; inside: number; edge: number;
   tested: Record<string, [number, number]>; tests: any[]; rate_label: string; rate_unit: string; gravity_is_feature: boolean;
-  cv: { accuracy: number; baseline: number; scheme: string; rows: number } };
+  demo: boolean; cv: { accuracy: number; baseline: number; auc: number | null; scheme: string; rows: number } };
 const GRAV = [{ v: 0, l: "Microgravity" }, { v: 0.165, l: "Moon" }, { v: 0.38, l: "Mars" }, { v: 1, l: "Earth" }];
 const THIRD: Record<Mode, { var: string; label: string; unit: string; min: number; max: number; step: number }> = {
   solid: { var: "flow_cm_s", label: "Airflow", unit: "cm/s", min: 0, max: 40, step: 0.5 },
@@ -197,8 +198,8 @@ function Inner() {
             </div>
             {mode === "droplet" && (
               <div>
-                <p className="text-sm text-ink-3">Rest of the atmosphere</p>
-                <div className="seg mt-1.5 w-full">{(items?.diluents ?? []).map((d: string) => <button key={d} className="flex-1" aria-pressed={diluent === d} onClick={() => setDiluent(d)}>{({ N2: "Nitrogen", CO2: "CO₂", He: "Helium" } as any)[d] ?? d}</button>)}</div>
+                <p className="text-sm text-ink-3">Rest of the atmosphere (nitrogen, or nitrogen mixed with)</p>
+                <div className="seg mt-1.5 w-full">{(items?.diluents ?? []).map((d: string) => <button key={d} className="flex-1" aria-pressed={diluent === d} onClick={() => setDiluent(d)}>{({ N2: "Nitrogen", CO2: "30% CO₂", He: "30% helium" } as any)[d] ?? d}</button>)}</div>
               </div>
             )}
           </div>
@@ -207,7 +208,10 @@ function Inner() {
         {grid && out && (
           <div className="rule-t mt-auto pt-4 text-sm text-ink-2">
             {out.status !== "outside" && burns && <p>Predicted {grid.rate_label}: <span className="mono text-ink">{out.rate.toFixed(2)} {grid.rate_unit}</span></p>}
-            <p className="mt-1.5">How far to trust this: the model is right <span className="mono text-ink">{Math.round(grid.cv.accuracy * 100)}%</span> of the time on test campaigns it has not seen, against <span className="mono text-ink">{Math.round(grid.cv.baseline * 100)}%</span> for always guessing the commonest outcome. It learned from {grid.cv.rows} tests and knows no physics.</p>
+            <p className="mt-1.5">How far to trust this: the model is right <span className="mono text-ink">{Math.round(grid.cv.accuracy * 100)}%</span> of the time on test campaigns it has not seen{grid.cv.accuracy > grid.cv.baseline + 0.005
+              ? <>, against <span className="mono text-ink">{Math.round(grid.cv.baseline * 100)}%</span> for always guessing the commonest outcome.</>
+              : <>, which is <span style={{ color: "var(--warn)" }}>no better than always guessing the commonest outcome</span> (<span className="mono text-ink">{Math.round(grid.cv.baseline * 100)}%</span>){grid.cv.auc ? <>; it does rank risk better than chance (AUC <span className="mono text-ink">{grid.cv.auc.toFixed(2)}</span>, 0.5 is chance)</> : null}.</>} It learned from {grid.cv.rows} {grid.demo ? "synthetic demo" : "real FLEX"} tests and knows no physics.</p>
+            <p className="mt-2"><Link className="underline decoration-dotted underline-offset-4 hover:text-ink" href="/trade">See this against breathing and spacewalk limits</Link></p>
           </div>
         )}
       </aside>

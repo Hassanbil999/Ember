@@ -17,7 +17,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response
 from pydantic import BaseModel
 
-from .. import explore as explore_mod, insights as insights_mod, labgrid, record, topics
+from .. import atmosphere, explore as explore_mod, insights as insights_mod, labgrid, record, topics
 from ..answer.engine import answer
 from ..atlas import tests_near
 from ..core import config
@@ -117,6 +117,9 @@ def _meta():
     cats = {c: sorted(st.usable_tests()[c].dropna().unique().tolist()) for c in ["fuel", "material", "diluent"]}
     return {
         "demo": bool(st.tests["demo"].any()),
+        # which loaded tables are real and which are the synthetic stand-in, so every screen can say so precisely
+        "loaded": {"real": [config.datasets()[d]["title"] for d in sorted(st.tests.loc[~st.tests["demo"], "dataset"].unique())],
+                   "demo": [config.datasets()[d]["title"] for d in sorted(st.tests.loc[st.tests["demo"], "dataset"].unique())]},
         "counts": {"investigations": len(st.investigations), "tests": int((~st.tests.excluded).sum()),
                    "documents": len(st.documents), "chunks": len(st.chunks), "media": len(st.media)},
         "variables": config.variables(), "glossary": st.glossary,
@@ -153,7 +156,7 @@ def navigate(q: str, k: int = 12):
     if p.conditions and best and not best.startswith("ds:"):
         paths = [c for c in paths if not c["label"].startswith("tests near")]
         bn = views.node(best) or {}
-        ds = (bn.get("datasets") or [None])[0] or             ("bass2_demo" if ("material" in p.categories or "flow_cm_s" in p.conditions) else "flex_demo")
+        ds = (bn.get("datasets") or [None])[0] or             ("bass2_demo" if ("material" in p.categories or "flow_cm_s" in p.conditions) else "flex")
         paths.insert(0, {"label": "tests near " + ", ".join(c["text"] for c in p.chips if c["var"] in p.conditions),
                          "kind": "node", "node": f"ds:{ds}", "conditions": p.conditions})
     if p.question:
@@ -184,6 +187,11 @@ def api_node(nid: str, role: str = "researcher"):
 @app.get("/api/topic/{tid}")
 def api_topic(tid: str, material: str | None = None):
     return cached(("topic", tid, material), lambda: topics.topic(tid, material))
+
+
+@app.get("/api/atmosphere")
+def api_atmosphere():
+    return J(atmosphere.payload())
 
 
 @app.get("/api/explore")

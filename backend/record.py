@@ -23,14 +23,19 @@ FIELDS = [
     ("material", "Material", "conditions"),
     ("fuel", "Fuel", "conditions"),
     ("o2_frac", "Oxygen in the atmosphere", "conditions"),
-    ("diluent", "Rest of the atmosphere", "conditions"),
+    ("n2_frac", "Nitrogen", "conditions"),
+    ("co2_frac", "Carbon dioxide", "conditions"),
+    ("he_frac", "Helium", "conditions"),
+    ("diluent", "Main inert gas", "conditions"),
     ("pressure_kpa", "Total pressure", "conditions"),
     ("o2_pp_kpa", "Oxygen partial pressure", "conditions"),
     ("flow_cm_s", "Airflow past the sample", "conditions"),
     ("d0_mm", "Droplet size at ignition", "conditions"),
     ("thickness_mm", "Sample thickness", "conditions"),
     ("gravity_g", "Gravity", "conditions"),
+    ("test_end", "How the test ended", "results"),
     ("burned", "Outcome", "results"),
+    ("burn_time_s", "Burn time", "results"),
     ("burn_rate_k_mm2_s", "Burning rate (K)", "results"),
     ("extinction_d_mm", "Droplet size when the flame went out", "results"),
     ("spread_rate_mm_s", "Flame spread speed", "results"),
@@ -40,7 +45,8 @@ FIELDS = [
 ]
 DILUENT = {"N2": "Nitrogen (N₂)", "CO2": "Carbon dioxide (CO₂)", "He": "Helium (He)"}
 RULE_TITLE = {"impossible_value": "Impossible value", "implausible": "Unusual value", "duplicate": "Duplicate row",
-              "missing_outcome": "Outcome missing", "rate_without_burn": "Rate reported for an extinguished flame"}
+              "missing_outcome": "No burn-or-extinguish outcome", "rate_without_burn": "Spread rate reported for an extinguished sample",
+              "fractions_do_not_sum": "Gas fractions do not add up", "extinction_larger_than_start": "Extinction diameter larger than the start"}
 
 
 def gravity_label(g) -> str | None:
@@ -79,7 +85,7 @@ def display(var: str, v) -> tuple[str | None, str]:
         return outcome_label(v), ""
     if var == "diluent":
         return DILUENT.get(str(v), str(v)), ""
-    if var == "o2_frac":
+    if var.endswith("_frac"):
         return _num(float(v) * 100), "%"
     meta = config.variables().get(var, {})
     if meta.get("kind") == "number":
@@ -90,6 +96,8 @@ def display(var: str, v) -> tuple[str | None, str]:
 def _blank_reason(var: str, row: dict) -> str:
     burned = row.get("burned")
     known = burned is not None and not pd.isna(burned)
+    if var == "burned" and row.get("test_end") == "Disruption":
+        return "Not determined: the droplet broke apart before the flame burned out or went out"
     if var == "extinction_d_mm" and known and burned >= 0.5:
         return "Not applicable: the droplet burned to completion"
     if var in ("burn_rate_k_mm2_s", "spread_rate_mm_s") and known and burned < 0.5:
@@ -105,7 +113,10 @@ def _raw_table(dataset: str) -> tuple[str, pd.DataFrame]:
     if path.suffix.lower() in {".xlsx", ".xls"}:
         df = pd.read_excel(path, sheet_name=cfg.get("sheet", 0), dtype=str)
     else:
-        df = pd.read_csv(path, dtype=str, keep_default_na=False)
+        try:
+            df = pd.read_csv(path, dtype=str, keep_default_na=False, encoding="utf-8-sig")
+        except UnicodeDecodeError:          # e.g. the PSI export, which is Latin-1
+            df = pd.read_csv(path, dtype=str, keep_default_na=False, encoding="latin-1")
     return name, df.fillna("")
 
 
@@ -157,7 +168,8 @@ def test_record(test_id: str) -> dict | None:
         if "constant" in ops:
             src = {"kind": "setting", "text": f"Dataset setting for “{_source_name(ds)}”. The source table has no column for this."}
         elif "derive" in ops or "not_computed" in ops:
-            src = {"kind": "calculation", "text": "Calculated here: oxygen fraction × total pressure."}
+            how = "oxygen fraction × total pressure" if var == "o2_pp_kpa" else steps[0]["detail"]
+            src = {"kind": "calculation", "text": f"Worked out here, not read from the source: {how}."}
         else:
             src = {"kind": "table", "dataset": ds, "row": int(row["_row"]), "column": p.column,
                    "text": f"{_source_name(ds)}, row {int(row['_row'])}, column “{p.column}”"}

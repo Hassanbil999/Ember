@@ -66,3 +66,19 @@ Format: *decision → principle → expected effect*. Decisions 24 and 25 above 
 | 53 | Dark theme by default, cool light theme, amber and blue as the only saturated colours, minimum text size 13 px. | Figure-ground; WCAG 2.2 AA | An identity tied to the subject; readable |
 | 54 | The star field is a fixed layer painted once; overlay shadows are small. | Measured paint cost | Lower interaction-to-paint times |
 
+## Round 3: real data and the atmosphere trade
+
+| # | Decision | Principle | Expected effect |
+|---|----------|-----------|-----------------|
+| 55 | The real FLEX table (NASA PSI-69) replaces the synthetic droplet set; the synthetic set is disabled, not mixed in. | Provenance; never blend real and synthetic | Every droplet number on screen is a NASA measurement |
+| 56 | "Disruption" maps to no outcome instead of being forced into burned or extinguished. | Do not invent a measurement | 61 tests stay honest; the outcome model uses 212 decided tests |
+| 57 | Test id, campaign (calendar quarter) and main inert gas are built by the adapter and recorded as derived. | Distinguish measured from derived | Nothing synthetic is presented as a source column |
+| 58 | Droplet models use the CO₂ and helium mole fractions as features, not a single diluent category. | Use the data as measured | Mixtures are represented as they were tested |
+| 59 | The rule "rate reported for an extinguished flame" now applies to flame spread only. | Correct physics: a droplet has a burning rate before it extinguishes | 170 real rows are no longer wrongly flagged |
+| 60 | Two new checks: gas fractions that do not add to 100 %, and an extinction diameter above the starting diameter. | Flag, never fix | Found 6 and 1 rows in the real table |
+| 61 | Screens and findings are labelled per dataset ("Real NASA data" / "Demo data"); findings on real data are listed first. | Honest limits; provenance | A reader always knows which kind of evidence they are looking at |
+| 62 | When a model does not beat its baseline the simulator says "no better than always guessing" and reports the AUC. | Report models against baselines | The droplet classifier's 86 % is not passed off as skill |
+| 63 | New centrepiece: the atmosphere trade map (pressure × oxygen) with breathing, spacewalk and fire layers. | One focal point; dual coding; show the decision the data serves | The gap becomes a consequence: the planned habitat air sits outside the FLEX tests |
+| 64 | Physiology constants and formulas are taken from NASA OCHMO briefs, served with their sources, and unit-tested against the briefs' own numbers. | Provenance for every value; correct physics | Nothing on the map is from memory |
+| 65 | On the trade map a prediction counts as supported only inside the tested pressure and oxygen ranges. | Applicability domain; never extrapolate silently | No confident colour where FLEX never tested |
+| 66 | The synthetic droplet report is no longer ingested. | Remove what contradicts the evidence | Answers cannot quote synthetic droplet text beside real droplet data |

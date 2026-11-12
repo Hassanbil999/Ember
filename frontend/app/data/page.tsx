@@ -10,7 +10,8 @@ import { useUI } from "@/lib/store";
 
 const RULE: Record<string, string> = {
   impossible_value: "Impossible value", implausible: "Unusual value", duplicate: "Duplicate row",
-  missing_outcome: "Outcome missing", rate_without_burn: "Rate reported for an extinguished flame",
+  missing_outcome: "No burn-or-extinguish outcome", rate_without_burn: "Spread rate reported for an extinguished sample",
+  fractions_do_not_sum: "Gas fractions do not add up", extinction_larger_than_start: "Extinction diameter larger than the start",
 };
 const PAGE = 25;
 type Filter = "all" | "warn" | "excluded";
@@ -19,7 +20,7 @@ function Inner() {
   const sp = useSearchParams();
   const openProv = useUI((s) => s.openProv);
   const [ref, setRef] = useState<any>(null);
-  const [ds, setDs] = useState(sp.get("dataset") || "flex_demo");
+  const [ds, setDs] = useState(sp.get("dataset") || "flex");
   const [rows, setRows] = useState<any[]>([]);
   const [filter, setFilter] = useState<Filter>("all");
   const [page, setPage] = useState(0);
@@ -57,7 +58,7 @@ function Inner() {
       </div>
       {cur && (
         <>
-          <p className="mt-3 text-base text-ink-2">{cur.title}. {cur.demo && <span style={{ color: "var(--warn)" }}>Synthetic demo file, not NASA data.</span>}</p>
+          <p className="mt-3 text-base text-ink-2">{cur.title}. {cur.demo ? <span style={{ color: "var(--warn)" }}>Synthetic demo file, not NASA data.</span> : <span>Real NASA data, loaded as published.</span>}</p>
 
           <section className="card mt-6 p-6" aria-label="Data quality">
             <h2 className="text-lg font-semibold tracking-tight">Data quality</h2>

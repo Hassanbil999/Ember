@@ -26,7 +26,7 @@ def test_span_must_exist(st):
 
 
 def test_numbers_must_be_backed(st):
-    t = st.usable_tests("flex_demo").dropna(subset=["burn_rate_k_mm2_s"]).head(5)
+    t = st.usable_tests("flex").dropna(subset=["burn_rate_k_mm2_s"]).head(5)
     ids = t.test_id.tolist()
     med = float(t.burn_rate_k_mm2_s.median())
     good = {"text": f"Median K over {len(ids)} tests was {med:.2f} mm2/s.",
@@ -41,7 +41,7 @@ def test_numbers_must_be_backed(st):
 
 def test_answer_is_cited_and_graded():
     from backend.answer.engine import answer
-    a = answer("burning rate of heptane droplets in helium")
+    a = answer("burning rate of heptane droplets")
     assert a["grade"] == "Measured"
     assert a["key"] and all(s["verified"] for s in a["key"] + a["sources"])
 
@@ -60,9 +60,9 @@ def test_answer_partial_gravity_caveat():
 
 def test_applicability_domain():
     from backend.models.surrogate import predict
-    inside = predict("droplet_k", {"o2_frac": 0.21, "pressure_kpa": 101.3, "d0_mm": 3, "diluent": "N2", "fuel": "n-heptane"}, False)
+    inside = predict("droplet_k", {"o2_frac": 0.21, "pressure_kpa": 101.3, "d0_mm": 3, "co2_frac": 0, "he_frac": 0, "fuel": "n-heptane"}, False)
     assert inside["domain"]["status"] == "inside"
-    outside = predict("droplet_k", {"o2_frac": 0.95, "pressure_kpa": 25, "d0_mm": 5.9, "diluent": "He", "fuel": "methanol"}, False)
+    outside = predict("droplet_k", {"o2_frac": 0.95, "pressure_kpa": 25, "d0_mm": 5.9, "co2_frac": 0, "he_frac": 0.4, "fuel": "methanol"}, False)
     assert outside["domain"]["status"] in ("edge", "outside")
     assert outside["domain"]["distance"] > inside["domain"]["distance"]
     partial = predict("solid_burn", {"o2_frac": 0.3, "pressure_kpa": 70.3, "flow_cm_s": 10, "thickness_mm": 0.5, "material": "PMMA", "gravity_g": 0.165}, False)

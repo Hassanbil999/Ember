@@ -83,7 +83,7 @@ investigations:
     platform: ISS / CIR
     years: [2009, 2011]
     objectives: Isolated fuel droplet burning and extinction in oxygen/diluent atmospheres to evaluate suppressants.
-    datasets: [flex_demo]
+    datasets: [flex]
   - id: FLEX-2
     name: Flame Extinguishment Experiment 2
     pillars: [suppression, prevention]
@@ -92,7 +92,6 @@ investigations:
     platform: ISS / CIR
     years: [2012, 2016]
     objectives: Multi-component fuels, droplet pairs and arrays, and convective effects on droplet burning.
-    datasets: [flex_demo]
   - id: CFI
     name: Cool Flames Investigation
     pillars: [prevention]

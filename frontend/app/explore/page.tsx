@@ -106,7 +106,7 @@ function Detail({ id, data, onSelect }: { id: string; data: any; onSelect: (id: 
       {inv.n_tests > 0 && (
         <div className="mt-5 flex flex-wrap gap-2.5">
           <Link className="btn primary" href={`/lab?mode=${inv.fuel_phase === "solid" ? "solid" : "droplet"}`}>Simulate it</Link>
-          <Link className="btn" href={`/data?dataset=${inv.fuel_phase === "solid" ? "bass2_demo" : "flex_demo"}`}>Open its tests</Link>
+          <Link className="btn" href={`/data?dataset=${inv.fuel_phase === "solid" ? "bass2_demo" : "flex"}`}>Open its tests</Link>
         </div>
       )}
 

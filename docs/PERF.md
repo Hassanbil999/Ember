@@ -83,3 +83,15 @@ python run.py start            # terminal 1
 python run.py audit            # terminal 2: screenshots + perf.json into docs/audit/after
 python run.py test             # 85 backend tests + browser acceptance test
 ```
+
+## Round 3 re-measure (real data, atmosphere trade added)
+
+| Screen | Cold | Warm |
+|---|---|---|
+| Home | 770 ms | 272 ms |
+| Atmosphere trade | 640 ms | 443 ms |
+| Simulate | 404 ms | 366 ms |
+| Others | 250–455 ms | 206–402 ms |
+
+Interactions: home card → answer 23 ms, material 27 ms, navigation → Explore 72 ms, open experiment 15 ms, open test record 23 ms. Explore animations 60 fps.
+Simulator animation in this run: idle 59 fps, preset 60 fps, slider drag 57.5 fps. Earlier runs on the same build measured 35–52 fps while other work was running on the laptop, so the figure depends on machine load; it is still unverified on a GPU-backed browser.

@@ -24,7 +24,7 @@ SENT_SPLIT = re.compile(r"(?<=[.!?])\s+(?=[A-Z])")
 
 def _metric_for(q: str, ds: str) -> str:
     ql = q.lower()
-    if ds == "flex_demo":
+    if ds == "flex":
         if re.search(r"extinction diameter|d_ext", ql):
             return "extinction_d_mm"
         if re.search(r"\brate\b|\bk\b|d2|d²|burning rate|how fast", ql):
@@ -38,11 +38,11 @@ def _datasets_for(p, q: str) -> list[str]:
     ql = q.lower()
     out = []
     if "fuel" in p.categories or re.search(r"droplet|drop\b|liquid|fuel|flex|heptane|methanol|decane|ethanol|d2|d²", ql):
-        out.append("flex_demo")
+        out.append("flex")
     if "material" in p.categories or re.search(r"solid|material|spread|fabric|pmma|bass|flow|ventilat|cotton|nomex|acetal", ql):
         out.append("bass2_demo")
     if not out and (p.conditions or p.categories):
-        out = ["bass2_demo", "flex_demo"]
+        out = ["bass2_demo", "flex"]
     return out
 
 
@@ -115,7 +115,7 @@ def answer(q: str, role: str = "researcher") -> dict:
             cond_txt = f"{p.environment} conditions ({env})" if env else f"{p.environment} conditions"
         cond_txt = cond_txt or "the matched conditions"
         qcite = {"kind": "query", "text": cond_txt + " " + q}
-        dlabel = {"flex_demo": "droplet", "bass2_demo": "solid-material"}[ds]
+        dlabel = {"flex": "droplet", "bass2_demo": "solid-material"}[ds]
         if metric == "burned":
             nb = int(vals.sum())
             s = {"text": f"{nb} of {len(ids_m)} {dlabel} tests near {cond_txt} sustained burning.",
@@ -150,7 +150,7 @@ def answer(q: str, role: str = "researcher") -> dict:
         grade = sel_grade if grade == "No data" or sel_grade == "Measured" else grade
         if chart is None:
             xv = "o2_frac"
-            yv = "pressure_kpa" if ds == "flex_demo" else "flow_cm_s"
+            yv = "pressure_kpa" if ds == "flex" else "flow_cm_s"
             chart = {"type": "scatter", "dataset": ds, "x": xv, "y": yv, "color": "burned" if metric == "burned" else metric,
                      "highlight": ids_m, "marker": {k: v for k, v in p.conditions.items() if k in (xv, yv)}}
 
