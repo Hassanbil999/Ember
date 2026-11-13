@@ -93,6 +93,28 @@ variables:
     description: Thickness of the solid fuel sample.
     synonyms: [thickness, sample thickness, sample size]
     valid_range: [0.01, 50]
+    plausible_range: [0.02, 15]
+  diameter_mm:
+    label: Sample diameter
+    short: ⌀
+    unit: mm
+    kind: number
+    role: condition
+    description: Diameter of a rod or sphere sample.
+    synonyms: [diameter, rod diameter, sphere diameter, rod, sphere]
+    valid_range: [0.1, 200]
+  sample_shape:
+    label: Sample shape
+    kind: category
+    role: condition
+    description: Form of the solid sample (thin film, slab, rod, sphere, fabric, candle).
+    synonyms: [shape, film, slab, rod, sphere, fabric, candle, cylinder, sheet]
+  flow_direction:
+    label: Flow direction
+    kind: category
+    role: condition
+    description: Whether the airflow pushes the flame along the sample (concurrent) or against its spread (opposed).
+    synonyms: [concurrent, opposed, flow direction, wind-aided, opposed flow]
   gravity_g:
     label: Gravity
     short: gravity

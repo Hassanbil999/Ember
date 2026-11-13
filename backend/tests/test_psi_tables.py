@@ -100,3 +100,57 @@ def test_gas_flame_question_is_answered_from_real_cfig_data():
     assert not a["dropped"], "every sentence must pass the verifier"
     assert [d["demo"] for d in a["data"]] == [False], "the evidence must be the real table only"
     assert a["chart"]["dataset"] == "cfig_normal"
+
+
+# ------------------------------------------------------------------ solids (BASS-II, BASS, SAFFIRE)
+def test_bass2_rows_and_no_invented_outcome():
+    cfg, res, df = _load("bass2")
+    assert len(df) == 129 and df.test_id.is_unique and not df.excluded.any()
+    assert "burned" not in df.columns or df["burned"].isna().all(), "BASS-II has no burned/went-out column"
+    assert df.o2_frac.min() == pytest.approx(0.136) and df.o2_frac.max() == pytest.approx(0.222)
+    ends = df.test_end.value_counts().to_dict()
+    assert ends["Flame went out when the airflow was lowered"] == 17 and ends["Flame blew off when the airflow was raised"] == 7
+
+
+def test_bass2_reads_text_and_says_so():
+    _, res, df = _load("bass2")
+    r = df.set_index("test_id").loc["BASS2-O4"]
+    assert r.material == "PMMA" and r.sample_shape == "rod" and r.diameter_mm == pytest.approx(9.525)   # 3/8 inch
+    assert r.o2_frac == pytest.approx(0.148) and r.mission_date == "2014-07-08"
+    by = {p["variable"]: p for p in res.provenance if p["test_id"] == "BASS2-O4"}
+    assert "every rod sample that is named" in by["material"]["steps"][0]["detail"]   # inferred, and the panel says why
+    assert by["test_end"]["raw_value"].startswith("Fan display: 5 0.7")
+    assert df.set_index("test_id").loc["BASS2-B1"].thickness_mm == pytest.approx(0.1)  # "100 micron"
+
+
+def test_saffire2_flight_and_ground_rows():
+    _, _, df = _load("saffire2")
+    d = df.set_index("test_id")
+    assert len(df) == 18 and (df.gravity_g == 0).sum() == 9 and (df.gravity_g == 1).sum() == 9
+    for s in ("2-1", "2-2", "2-3", "2-4"):                       # silicone: no spread in microgravity
+        assert d.loc[f"SAF2-{s}-UG", "material"] == "Silicone" and d.loc[f"SAF2-{s}-UG", "burned"] == 0
+    assert d.loc["SAF2-2-1-1G", "burned"] == 1                    # ... while the same sample burned at 1g
+    assert d.loc["SAF2-2-5-UG", "burned"] == 1 and d.loc["SAF2-2-5-UG", "spread_rate_mm_s"] == pytest.approx(2.1)
+    assert pd.isna(d.loc["SAF2-2-7-UG", "burned"]) and "Nomex was not ignited" in d.loc["SAF2-2-7-UG", "test_end"]
+    assert pd.isna(d.loc["SAF2-2-9-UG", "burned"]) and "anchored at the base" in d.loc["SAF2-2-9-UG", "test_end"]
+    assert pd.isna(d.loc["SAF2-2-1-1G", "o2_frac"]), "no oxygen level is given for the ground tests"
+    assert d.loc["SAF2-2-6-UG", "material"] == "Cotton-fiberglass fabric (SIBAL)"     # blank cell, row above
+
+
+def test_bass_run_list_flags_impossible_dates():
+    _, res, df = _load("bass")
+    d = df.set_index("test_id")
+    assert len(df) == 122 and df.test_id.is_unique
+    assert pd.isna(d.loc["BASS-104-50", "mission_date"])
+    why = next(p for p in res.provenance if p["test_id"] == "BASS-104-50" and p["variable"] == "mission_date")
+    assert "2103" in why["steps"][0]["detail"] and "not corrected" in why["steps"][0]["detail"]
+    soot = df[df.test_end.fillna("").str.startswith("Soot")]
+    assert len(soot) == 1 and soot.material.isna().all()
+
+
+def test_no_real_solid_test_reaches_moon_base_oxygen():
+    """The fact the Moon-base answer rests on: real solid tests stop at 22.2 % O2."""
+    from backend.core.store import get_store
+    t = get_store().tests
+    solids = t[t.dataset.isin(["bass2", "bass", "saffire1", "saffire2", "saffire3"])]
+    assert solids.o2_frac.max() == pytest.approx(0.222)
