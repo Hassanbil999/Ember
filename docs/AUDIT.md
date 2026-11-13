@@ -115,4 +115,5 @@ Screenshots: `after/scene_*.png` (captured with the GPU scene forced on through 
 - Replay of a real FLEX test (`scene_droplet_replay_mid.png`, `scene_droplet_replay_end.png`): the readout shows the test id, time since ignition and droplet diameter, then how the test ended, in the record's own terms.
 
 Checked automatically: the replay starts from the nearest real test and returns to the simulator; sound is off by default; no page errors with the scene running.
-Not verified: appearance and smoothness on a real graphics card; how the sound feels. Both need a person at a real machine.
+Verified afterwards in real Chrome on the build laptop (Intel UHD graphics): the GPU scene is active, sharp, and holds 120 fps live and during a replay.
+Not verified: how the sound feels, and how the scene looks to a person in motion. Both need someone at the machine.

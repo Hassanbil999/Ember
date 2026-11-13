@@ -23,7 +23,7 @@ Stated plainly, because honest limits are part of the product.
 - The next-experiment advisor proposes points of maximum predictive uncertainty. It is a **research aid**, does not model test cost or hardware limits, and holds gravity at µg (the nearest testable proxy).
 - **The flame's look is art; its behaviour is data.** Size, colour family, lean, stretch and whether it is lit follow the model; in a replay the droplet's size over time and the moment and manner of the ending follow the test's measured burning rate, extinction diameter and burn time. The flicker, glow and exact shape are drawn, not simulated. Replays longer than 12 s are sped up and say so.
 - The sound is generated in the browser from the same numbers. The breathing sound follows the inspired-oxygen limits of the NASA brief; it is a cue, not a physiological model.
-- The GPU scene could only be inspected here through a software renderer in a headless browser. On machines without a GPU the app uses the flat flame instead. Smoothness and look on a real graphics card are not verified.
+- The GPU scene was measured on one machine only (Intel UHD integrated graphics, Chrome): 120 fps live and during a replay. On machines without a GPU the app uses the flat flame instead. Other graphics cards, browsers and phones are not tested.
 - The simulator's flame is an **illustration driven by the model's outputs** (chance of burning, predicted rate) and by simple rules for shape and colour. It is not a combustion simulation and is labelled as such on screen.
 - The simulator interpolates a precomputed grid (37 × 13 × 11 points per material). Between grid points the value is a linear blend, so it can differ slightly from a direct model call.
 - In the demo fixture the solid-material model finds almost no difference between materials, so the four materials receive nearly identical estimates.
@@ -51,5 +51,5 @@ Stated plainly, because honest limits are part of the product.
 ## Engineering
 - Docker Compose files are provided but were not run on the build machine (no Docker available). The verified path is `python run.py start`.
 - The Studio report lives in the browser's localStorage. It is per-browser and not shared.
-- The simulator animation measured 44–55 fps in a headless browser without a GPU; 60 fps on real hardware is expected but not verified (`docs/PERF.md`).
+- In the headless test browser (no GPU) the simulator falls back to the flat flame and measures 44–60 fps depending on machine load; in real Chrome on this laptop the GPU scene holds 120 fps (`docs/PERF.md`).
 - Desktop-first. Not tuned for phones or for widths below ~1200 px.

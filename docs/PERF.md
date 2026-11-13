@@ -95,3 +95,14 @@ python run.py test             # 85 backend tests + browser acceptance test
 
 Interactions: home card → answer 23 ms, material 27 ms, navigation → Explore 72 ms, open experiment 15 ms, open test record 23 ms. Explore animations 60 fps.
 Simulator animation in this run: idle 59 fps, preset 60 fps, slider drag 57.5 fps. Earlier runs on the same build measured 35–52 fps while other work was running on the laptop, so the figure depends on machine load; it is still unverified on a GPU-backed browser.
+
+## Round 4: the flame scene on a real graphics card
+
+Measured in the user's own Chrome (Intel UHD Graphics, Direct3D 11, display scale 1.25) with `requestAnimationFrame` gaps:
+
+| State | Frame rate | Median frame | Worst frame |
+|---|---|---|---|
+| Droplet flame, live | 120 fps | 8.3 ms | 16.8 ms |
+| Real-test replay running | 120 fps | 8.3 ms | 8.7 ms |
+
+The scene rendered at full resolution (it did not have to lower it). This closes the earlier open item "simulator animation unverified on a GPU" for this machine. The headless acceptance run uses the flat fallback (no GPU): idle 56 fps, preset 58 fps, slider drag 57 fps.
