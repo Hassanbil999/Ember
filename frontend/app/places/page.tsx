@@ -20,8 +20,8 @@ function Pips({ part, label }: { part: any; label: string }) {
   return (
     <span className="inline-flex items-center gap-1" role="img" aria-label={`${label}: ${word}`} title={part.why}>
       {[0, 1, 2].map((i) => (
-        <span key={i} className="h-3 w-3 rounded-[2px]" style={i < part.score
-          ? { background: part.unknown || part.demo ? "transparent" : "var(--text)", border: part.unknown || part.demo ? "1.5px dashed var(--text-3)" : "1.5px solid var(--text)" }
+        <span key={i} className="h-3 w-3 rounded-[2px]" style={part.unknown ? { border: "1.5px dashed var(--text-3)" }
+          : i < part.score ? { background: part.demo ? "transparent" : "var(--text)", border: part.demo ? "1.5px dashed var(--text-3)" : "1.5px solid var(--text)" }
           : { border: "1.5px solid var(--line-strong)" }} />
       ))}
     </span>
@@ -145,7 +145,7 @@ function Places() {
             </table>
           </div>
           {d.rows.length > 7 && <button className="btn ghost mt-2 h-9" onClick={() => setAll(!all)} data-rank-all>{all ? "Show the top 7" : `Show all ${d.rows.length}`}</button>}
-          <p className="mt-3 max-w-[70ch] text-sm text-ink-3">Each column is scored 0 to 3 by a written rule, not by a model. Dashed boxes mean the atlas does not know or holds only demo data. Select a row for the reasons.</p>
+          <p className="mt-3 max-w-[70ch] text-sm text-ink-3">Each column is scored 0 to 3 by a written rule, not by a model. Dashed boxes mean the value is not known to the atlas and counts as zero. Select a row for the reasons.</p>
 
           <section className="mt-7" data-gaps>
             <h2 className="text-lg font-semibold text-ink">What was never tested for this place</h2>

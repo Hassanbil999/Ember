@@ -54,7 +54,7 @@ export function EnvelopeViz({ v, height = 380 }: { v: any; height?: number }) {
   const [ref, { w }] = useSize<HTMLDivElement>();
   const openProv = useUI((s) => s.openProv);
   const m = { l: 62, r: 20, t: 16, b: 48 };
-  const xs = v.points.map((p: any) => p.o2_frac * 100).concat(v.box.o2_frac.map((x: number) => x * 100));
+  const xs = v.points.map((p: any) => p.o2_frac * 100).concat(v.box.o2_frac.map((x: number) => x * 100), (v.band?.o2_frac ?? []).map((x: number) => x * 100));
   const ys = v.points.map((p: any) => p.pressure_kpa).concat(v.box.pressure_kpa);
   const x0 = Math.max(0, Math.floor((Math.min(...xs) - 2) / 5) * 5), x1 = Math.ceil((Math.max(...xs) + 2) / 5) * 5;
   const y0 = Math.floor((Math.min(...ys) - 5) / 20) * 20, y1 = Math.ceil((Math.max(...ys) + 5) / 20) * 20;
@@ -71,6 +71,16 @@ export function EnvelopeViz({ v, height = 380 }: { v: any; height?: number }) {
           {xt.map((t) => <text key={t} x={sx(t)} y={height - m.b + 20} textAnchor="middle" {...T}>{t}%</text>)}
           <text x={(m.l + w - m.r) / 2} y={height - 6} textAnchor="middle" {...T}>Oxygen in the atmosphere</text>
           <text transform={`translate(16 ${(m.t + height - m.b) / 2}) rotate(-90)`} textAnchor="middle" {...T}>Total pressure (kPa)</text>
+          {v.band && (() => {
+            // tests known by oxygen only (no pressure recorded): an oxygen band over the full height
+            const x0b = sx(v.band.o2_frac[0] * 100), x1b = Math.max(x0b + 3, sx(v.band.o2_frac[1] * 100));
+            return (<g data-band>
+              <rect x={x0b} y={m.t} width={x1b - x0b} height={height - m.t - m.b} fill="var(--text-3)" opacity={0.12} />
+              <line x1={x1b} x2={x1b} y1={m.t} y2={height - m.b} stroke="var(--text-2)" strokeDasharray="3 3" />
+              <text x={x1b - 6} y={m.t + 14} textAnchor="end" fontSize={13} fill="var(--text-2)">{v.band.label}</text>
+              <text x={x1b - 6} y={m.t + 30} textAnchor="end" fontSize={13} fill="var(--text-3)">up to {(v.band.o2_frac[1] * 100).toFixed(1)}% O₂</text>
+            </g>);
+          })()}
           <rect x={bx} y={by} width={bw} height={bh} fill="var(--flame-soft)" stroke="var(--flame)" strokeWidth={1.5} strokeDasharray="6 4" rx={4} />
           <text x={bx + bw / 2} y={by - 8} textAnchor="middle" fontSize={14} fontWeight={600} fill="var(--flame)">{v.box.label}</text>
           {v.points.map((p: any) => (
@@ -83,6 +93,7 @@ export function EnvelopeViz({ v, height = 380 }: { v: any; height?: number }) {
       <p className="mt-1 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-ink-2">
         <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-flame" />Burned</span>
         <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-ext" />Went out</span>
+        {v.band && <span className="flex items-center gap-2"><span className="h-3 w-5 rounded-sm" style={{ background: "var(--text-3)", opacity: 0.35 }} />{v.band.label}</span>}
         <span className="text-ink-3">Select a dot to open that test.</span>
       </p>
     </div>

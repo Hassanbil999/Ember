@@ -1,0 +1,8 @@
+# Raw source data is stored byte for byte: no line-ending conversion.
+# The PSI tables are checksum-verified (scripts/fetch_psi.py); converting CRLF would break that,
+# and converting PDFs corrupts them.
+data/raw/** -text
+*.pdf binary
+*.xlsx binary
+*.png binary
+*.mp4 binary

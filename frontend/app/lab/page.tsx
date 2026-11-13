@@ -10,19 +10,21 @@ import FlameScene, { SceneOverride } from "@/components/lab/FlameScene";
 import { useFlameSound } from "@/components/lab/useFlameSound";
 
 /* Simulate: one hero flame, three sliders, one sentence. The model grid is fetched once per
-   material; every slider move is answered in the browser by interpolating it (immediate feedback).
-   The same scene can replay a real test: the droplet shrinks at its measured burning rate and the
-   flame ends the way, and when, the test record says it did. Sound is optional and off by default. */
+   fuel; every slider move is answered in the browser by interpolating it (immediate feedback).
+   Both modes run on real NASA PSI tests: gas flames on a spherical burner (CFI-G) and fuel droplets
+   (FLEX). The same scene can replay a real droplet test: the droplet shrinks at its measured burning
+   rate and the flame ends the way, and when, the record says it did. Sound is optional and off by default. */
 
-type Mode = "solid" | "droplet";
+type Mode = "gas" | "droplet";
 type Grid = { axes: { var: string; values: number[] }[]; p: number[]; rate: number[]; dist: number[]; inside: number; edge: number;
-  tested: Record<string, [number, number]>; tests: any[]; rate_label: string; rate_unit: string; gravity_is_feature: boolean;
-  demo: boolean; cv: { accuracy: number; baseline: number; auc: number | null; scheme: string; rows: number } };
+  tested: Record<string, [number, number]>; tests: any[]; rate_label: string | null; rate_unit: string | null; gravity_is_feature: boolean;
+  source: string; demo: boolean; cv: { accuracy: number; baseline: number; auc: number | null; scheme: string; rows: number } };
 const GRAV = [{ v: 0, l: "Microgravity" }, { v: 0.165, l: "Moon" }, { v: 0.38, l: "Mars" }, { v: 1, l: "Earth" }];
-const THIRD: Record<Mode, { var: string; label: string; unit: string; min: number; max: number; step: number }> = {
-  solid: { var: "flow_cm_s", label: "Airflow", unit: "cm/s", min: 0, max: 40, step: 0.5 },
-  droplet: { var: "d0_mm", label: "Droplet size", unit: "mm", min: 1, max: 6, step: 0.1 },
+const THIRD: Record<Mode, { var: string; label: string; unit: string; min: number; max: number; step: number; digits: number }> = {
+  gas: { var: "fuel_flow_mg_s", label: "Fuel flow", unit: "mg/s", min: 0.1, max: 3.3, step: 0.05, digits: 2 },
+  droplet: { var: "d0_mm", label: "Droplet size", unit: "mm", min: 1, max: 6, step: 0.1, digits: 1 },
 };
+const BURNER = 0.45;      // the CFI-G spherical burner, drawn like a droplet of fixed size
 
 function bracket(vals: number[], x: number) {
   let i = 0;
@@ -63,11 +65,11 @@ function Inner() {
   const meta = useMeta();
   const openProv = useUI((s) => s.openProv);
   const [items, setItems] = useState<any>(null);
-  const [mode, setMode] = useState<Mode>(sp.get("mode") === "droplet" ? "droplet" : "solid");
-  const [item, setItem] = useState<string | null>(sp.get("item") ?? (sp.get("mode") === "droplet" ? null : "PMMA"));
+  const [mode, setMode] = useState<Mode>(sp.get("mode") === "droplet" ? "droplet" : "gas");
+  const [item, setItem] = useState<string | null>(sp.get("item") ?? (sp.get("mode") === "droplet" ? null : "30% butane"));
   const [o2, setO2] = useState(0.21);
   const [pk, setPk] = useState(101.3);
-  const [third, setThird] = useState(10);
+  const [third, setThird] = useState(sp.get("mode") === "droplet" ? 3 : 1);
   const [gravity, setGravity] = useState(0);
   const [diluent, setDiluent] = useState("N2");
   const [preset, setPreset] = useState<string | null>(null);
@@ -83,15 +85,13 @@ function Inner() {
   useEffect(() => {
     if (!items) return;
     const list: string[] = items[mode];
-    if (!item || !list.includes(item)) setItem(list.includes("PMMA") ? "PMMA" : list[list.length - 1]);
-    if (mode === "droplet" && (third > 6 || third < 1)) setThird(3);
+    if (!item || !list.includes(item)) setItem(list[0]);
+    const t = THIRD[mode];
+    if (third > t.max || third < t.min) setThird(mode === "droplet" ? 3 : 1);
   }, [items, mode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const presets: any[] = meta?.presets.presets ?? [];
-  const apply = (p: any) => {
-    setPreset(p.id); setO2(p.o2_frac); setPk(p.pressure_kpa); setGravity(p.gravity_g);
-    if (mode === "solid") setThird(p.flow_cm_s);
-  };
+  const apply = (p: any) => { setPreset(p.id); setO2(p.o2_frac); setPk(p.pressure_kpa); setGravity(p.gravity_g); };
   useEffect(() => {
     const p = presets.find((x) => x.id === sp.get("preset"));
     if (p) apply(p);
@@ -99,12 +99,9 @@ function Inner() {
 
   useEffect(() => {
     if (!item || (items && !items[mode].includes(item))) return;      // do not wait for the item list: start with the default
-    const g = mode === "solid" ? gravity : 0;
-    get(`/lab/grid?mode=${mode}&item=${encodeURIComponent(item)}&gravity=${g}&diluent=${diluent}`).then(setGrid).catch(() => {});
-    // once the screen is up, warm the other gravity regimes so the chips and presets answer instantly
-    const t = setTimeout(() => { if (mode === "solid") GRAV.forEach((x) => get(`/lab/grid?mode=solid&item=${encodeURIComponent(item)}&gravity=${x.v}&diluent=${diluent}`).catch(() => {})); }, 400);
-    return () => clearTimeout(t);
-  }, [mode, item, gravity, diluent, items]);
+    // every real test was in microgravity and no model takes gravity as an input: one grid per fuel
+    get(`/lab/grid?mode=${mode}&item=${encodeURIComponent(item)}&gravity=0&diluent=${diluent}`).then(setGrid).catch(() => {});
+  }, [mode, item, diluent, items]);
 
   const th = THIRD[mode];
   const maxRate = useMemo(() => (grid ? grid.rate.reduce((a, b) => Math.max(a, b), 0) || 1 : 1), [grid]);
@@ -131,7 +128,9 @@ function Inner() {
       ].filter((x) => x.n > 0.02).sort((a, b) => b.n - a.n).slice(0, 2);
       away = parts.length ? parts.map((x) => x.s).join(" and ") + " away" : "at the same conditions";
     }
-    return { p, rate, status, conf, best, away, partial, heat: Math.min(1, rate / (maxRate * 0.7)) };
+    // heat drives the drawing only: the droplet's predicted burning rate, or for a gas flame its fuel supply
+    const heat = grid.rate_label ? Math.min(1, rate / (maxRate * 0.7)) : Math.min(1, (third - th.min) / (th.max - th.min) + 0.15);
+    return { p, rate, status, conf, best, away, partial, heat };
   }, [grid, o2, pk, third, gravity, th, maxRate]);
 
   // breathing: the oxygen that reaches the lungs at this pressure and oxygen level (limits from NASA OCHMO-TB-003)
@@ -166,12 +165,13 @@ function Inner() {
     raf = requestAnimationFrame(step);
   };
 
-  const conds = `${(o2 * 100).toFixed(0)}% O₂ and ${(pk / PSI).toFixed(1)} psi${mode === "solid" ? ` with ${third.toFixed(0)} cm/s airflow` : `, ${third.toFixed(1)} mm droplet`}`;
+  const conds = `${(o2 * 100).toFixed(0)}% O₂ and ${(pk / PSI).toFixed(1)} psi${mode === "gas" ? ` with ${third.toFixed(2)} mg/s of fuel` : `, ${third.toFixed(1)} mm droplet`}`;
+  const what = mode === "gas" ? `a ${item ?? ""} gas flame` : `a ${item ?? ""} droplet`;
   const burns = !!out && out.p >= 0.5;
   const tone = !out || out.status === "outside" ? "var(--nodata)" : burns ? "var(--flame)" : "var(--ext)";
   const set = <T,>(fn: (v: T) => void) => (v: T) => { stopReplay.current(); setPreset(null); fn(v); };
   const live = out && out.status !== "outside" ? Math.min(1, Math.max(0, (out.p - 0.2) / 0.45)) : 0;
-  useFlameSound(sound, { life: rp ? (rp.done ? 0 : 1) : live, heat: out?.heat ?? 0, flow: mode === "solid" && !rp ? third / 40 : 0, strain });
+  useFlameSound(sound, { life: rp ? (rp.done ? 0 : 1) : live, heat: out?.heat ?? 0, flow: 0, strain });
 
   return (
     <div className="flex h-full min-h-[640px]" data-ready={out ? "lab" : undefined}>
@@ -183,7 +183,7 @@ function Inner() {
 
         {/* the scene is a window into a dark cabin in both themes */}
         <div data-theme="void" className="relative mt-4 min-h-0 flex-1 overflow-hidden rounded-md" style={{ background: "#05070C", border: "1px solid var(--line)" }}>
-          {out && <FlameScene override={override} state={{ mode, p: out.p, heat: out.heat, o2, flow: mode === "solid" ? third / 40 : 0, gravity, known: out.status !== "outside", drop: dropOf(third) }} />}
+          {out && <FlameScene override={override} state={{ mode: "droplet", p: out.p, heat: out.heat, o2, flow: 0, gravity, known: out.status !== "outside", drop: mode === "gas" ? BURNER : dropOf(third) }} />}
           <button className="btn absolute right-4 top-4 h-9" style={{ background: "rgba(5,7,12,.6)" }} aria-pressed={sound} onClick={() => setSound(!sound)} data-sound>
             <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden><path d="M2 6h2.5L8 3v10L4.5 10H2z" fill="currentColor" />{sound ? <path d="M10.5 5.5a3.5 3.5 0 010 5M12.3 3.6a6 6 0 010 8.8" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /> : <path d="M10.5 6l4 4m0-4l-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />}</svg>
             {sound ? "Sound on" : "Sound off"}
@@ -208,16 +208,16 @@ function Inner() {
             </div>
           )}
           <p className="pointer-events-none absolute bottom-4 left-6 right-6 flex flex-wrap items-end justify-between gap-2 text-sm text-ink-3">
-            <span>{mode === "solid" ? `Sample: ${item ?? ""}${third > 0.5 ? `, airflow ${third.toFixed(0)} cm/s from the left` : ", still air"}` : `Droplet: ${item ?? ""}, ${third.toFixed(1)} mm`} · {gravityLabel(gravity)}{breath ? ` · Air: ${breath}` : ""}</span>
+            <span>{mode === "gas" ? `Spherical burner: ${item ?? ""}, ${third.toFixed(2)} mg/s` : `Droplet: ${item ?? ""}, ${third.toFixed(1)} mm`} · {gravityLabel(gravity)}{breath ? ` · Air: ${breath}` : ""}</span>
             <span>{rp ? "Illustration timed by the test's measurements, not footage" : "Illustration driven by the model, not footage"}</span>
           </p>
         </div>
 
         <p className="lead mt-4 min-h-[58px] text-ink" aria-live="polite" data-sentence>
           {out && (out.status === "outside" ? (
-            <>At {conds}, there is no real test close enough to predict what {item} does. </>
+            <>At {conds}, there is no real test close enough to predict what {what} does. </>
           ) : (
-            <>At {conds}, {item} is predicted to <span style={{ color: tone }} className="font-semibold">{burns ? "keep burning" : "go out"}</span> (confidence: {out.conf}). </>
+            <>At {conds}, {what} is predicted to <span style={{ color: tone }} className="font-semibold">{burns ? "keep burning" : "go out"}</span> (confidence: {out.conf}). </>
           ))}
           {out?.best && (
             <span className="text-ink-2">Nearest real test: <button className="mono underline decoration-dotted underline-offset-4 hover:text-ink" onClick={() => openProv({ testId: out.best.test_id, label: out.best.test_id })}>{out.best.test_id}</button>, {out.away}; it {out.best.burned == null ? "has no recorded outcome" : out.best.burned ? "burned" : "went out"}.{mode === "droplet" && <> <button className="font-medium text-flame underline decoration-dotted underline-offset-4" data-replay onClick={() => replay(out.best.test_id)}>Watch it burn</button>.</>} </span>
@@ -235,16 +235,17 @@ function Inner() {
           <label htmlFor="item" className="text-sm text-ink-3">What is burning</label>
           <select id="item" className="mt-1.5 h-10 w-full" value={`${mode}:${item ?? ""}`} data-item
             onChange={(e) => { const [m, ...r] = e.target.value.split(":"); setMode(m as Mode); setItem(r.join(":")); if (m !== mode) setGrid(null); }}>
-            <optgroup label="Solid materials">{(items?.solid ?? []).map((m: string) => <option key={m} value={`solid:${m}`}>{m}</option>)}</optgroup>
-            <optgroup label="Fuel droplets">{(items?.droplet ?? []).map((m: string) => <option key={m} value={`droplet:${m}`}>{m}</option>)}</optgroup>
+            <optgroup label="Gas flames on a burner (CFI-G)">{(items?.gas ?? []).map((m: string) => <option key={m} value={`gas:${m}`}>{m}</option>)}</optgroup>
+            <optgroup label="Fuel droplets (FLEX)">{(items?.droplet ?? []).map((m: string) => <option key={m} value={`droplet:${m}`}>{m}</option>)}</optgroup>
           </select>
+          <p className="mt-1.5 text-xs text-ink-3">Real NASA tests. Solid materials have no simulator: their tables record no pressure. <Link className="underline decoration-dotted underline-offset-4 hover:text-ink" href="/answer?topic=moon-base">What is known about them</Link>.</p>
         </div>
         <Slider id="o2" label="Oxygen" value={o2} min={0.1} max={1} step={0.005} onChange={set(setO2)} tested={grid?.tested.o2_frac}
           text={<span className="mono text-xl">{(o2 * 100).toFixed(1)}<span className="text-sm text-ink-3"> %</span></span>} />
-        <Slider id="pressure" label="Pressure" value={pk} min={20} max={mode === "solid" ? 140 : 320} step={0.5} onChange={set(setPk)} tested={grid?.tested.pressure_kpa}
+        <Slider id="pressure" label="Pressure" value={pk} min={20} max={320} step={0.5} onChange={set(setPk)} tested={grid?.tested.pressure_kpa}
           text={<><span className="mono text-xl">{(pk / PSI).toFixed(1)}<span className="text-sm text-ink-3"> psi</span></span><span className="mono ml-2 text-sm text-ink-3">{pk.toFixed(0)} kPa</span></>} />
         <Slider id="third" label={th.label} value={third} min={th.min} max={th.max} step={th.step} onChange={set(setThird)} tested={grid?.tested[th.var]}
-          text={<span className="mono text-xl">{third.toFixed(mode === "solid" ? 0 : 1)}<span className="text-sm text-ink-3"> {th.unit}</span></span>} />
+          text={<span className="mono text-xl">{third.toFixed(th.digits)}<span className="text-sm text-ink-3"> {th.unit}</span></span>} />
 
         <p className="-mt-3 text-xs text-ink-3">The grey bar under each slider is the range covered by real tests.</p>
         <details>
@@ -253,7 +254,7 @@ function Inner() {
             <div>
               <p className="text-sm text-ink-3">Gravity</p>
               <div className="seg mt-1.5 w-full">{GRAV.map((g) => <button key={g.v} className="flex-1 px-2" aria-pressed={gravity === g.v} data-gravity={g.v} onClick={() => set(setGravity)(g.v)}>{g.l}</button>)}</div>
-              {mode === "droplet" && gravity > 0.02 && <p className="mt-1.5 text-xs" style={{ color: "var(--warn)" }}>All droplet tests were in microgravity, so the gravity setting does not change this prediction.</p>}
+              {gravity > 0.02 && <p className="mt-1.5 text-xs" style={{ color: "var(--warn)" }}>All {mode === "gas" ? "gas-flame" : "droplet"} tests were in microgravity, so the gravity setting does not change this prediction.</p>}
             </div>
             {mode === "droplet" && (
               <div>
@@ -266,10 +267,10 @@ function Inner() {
 
         {grid && out && (
           <div className="rule-t mt-auto pt-4 text-sm text-ink-2">
-            {out.status !== "outside" && burns && <p>Predicted {grid.rate_label}: <span className="mono text-ink">{out.rate.toFixed(2)} {grid.rate_unit}</span></p>}
+            {out.status !== "outside" && burns && grid.rate_label && <p>Predicted {grid.rate_label}: <span className="mono text-ink">{out.rate.toFixed(2)} {grid.rate_unit}</span></p>}
             <p className="mt-1.5">How far to trust this: the model is right <span className="mono text-ink">{Math.round(grid.cv.accuracy * 100)}%</span> of the time on test campaigns it has not seen{grid.cv.accuracy > grid.cv.baseline + 0.005
               ? <>, against <span className="mono text-ink">{Math.round(grid.cv.baseline * 100)}%</span> for always guessing the commonest outcome.</>
-              : <>, which is <span style={{ color: "var(--warn)" }}>no better than always guessing the commonest outcome</span> (<span className="mono text-ink">{Math.round(grid.cv.baseline * 100)}%</span>){grid.cv.auc ? <>; it does rank risk better than chance (AUC <span className="mono text-ink">{grid.cv.auc.toFixed(2)}</span>, 0.5 is chance)</> : null}.</>} It learned from {grid.cv.rows} {grid.demo ? "synthetic demo" : "real FLEX"} tests and knows no physics.</p>
+              : <>, which is <span style={{ color: "var(--warn)" }}>no better than always guessing the commonest outcome</span> (<span className="mono text-ink">{Math.round(grid.cv.baseline * 100)}%</span>){grid.cv.auc ? <>; it does rank risk better than chance (AUC <span className="mono text-ink">{grid.cv.auc.toFixed(2)}</span>, 0.5 is chance)</> : null}.</>} It learned from {grid.cv.rows} {grid.demo ? "synthetic demo" : grid.source} tests and knows no physics.</p>
             <p className="mt-2"><Link className="underline decoration-dotted underline-offset-4 hover:text-ink" href="/trade">See this against breathing and spacewalk limits</Link></p>
           </div>
         )}

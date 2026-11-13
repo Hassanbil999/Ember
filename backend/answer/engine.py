@@ -29,9 +29,14 @@ def _metric_for(q: str, ds: str) -> str:
             return "extinction_d_mm"
         if re.search(r"\brate\b|\bk\b|d2|d²|burning rate|how fast", ql):
             return "burn_rate_k_mm2_s"
-    if ds == "bass2_demo" and re.search(r"spread|rate|how fast", ql):
+    if ds == "solids" and re.search(r"spread|rate|how fast", ql):
         return "spread_rate_mm_s"
     return "burned"
+
+
+# solid-material tests in orbit with an oxygen level (BASS-II, SAFFIRE); BASS has none and is only a run list
+SOLID_DS = ["bass2", "saffire1", "saffire2", "saffire3"]
+DATASETS = {"solids": SOLID_DS}
 
 
 def _datasets_for(p, q: str) -> list[str]:
@@ -39,11 +44,19 @@ def _datasets_for(p, q: str) -> list[str]:
     out = []
     if "fuel" in p.categories or re.search(r"droplet|drop\b|liquid|fuel|flex|heptane|methanol|decane|ethanol|d2|d²", ql):
         out.append("flex")
-    if "material" in p.categories or re.search(r"solid|material|spread|fabric|pmma|bass|flow|ventilat|cotton|nomex|acetal", ql):
-        out.append("bass2_demo")
+    if "material" in p.categories or re.search(r"solid|material|spread|fabric|pmma|acrylic|bass|saffire|flow|ventilat|cotton|nomex|silicone|sibal", ql):
+        out.append("solids")
+    if re.search(r"\bgas\b|gaseous|burner|\bjet\b|ethylene|propane|butane|ethane|methane|cfi-?g|acme|cool flame", ql):
+        out.append("cfig_normal")
     if not out and (p.conditions or p.categories):
-        out = ["bass2_demo", "flex"]
+        out = ["solids", "flex", "cfig_normal"]
     return out
+
+
+# what each dataset's tests are called, and what burned = 1 means for them
+DATASET_NOUN = {"flex": "droplet", "solids": "real solid-material", "cfig_normal": "gas-flame (CFI-G)"}
+SUSTAINED = {"cfig_normal": "were still burning when the fuel flow was stopped (the rest went out by themselves)",
+             "solids": "burned the whole sample"}
 
 
 def _best_sentences(text: str, core: set[str], k: int = 2) -> list[str]:
@@ -80,15 +93,38 @@ def answer(q: str, role: str = "researcher") -> dict:
     tests = st.tests
 
     # ---------------- data evidence
+    gaps: list[dict] = []
     for ds in _datasets_for(p, q):
         metric = _metric_for(q, ds)
-        dst = st.usable_tests(ds)
+        sel_ds = DATASETS.get(ds, ds)
+        dst = st.usable_tests(sel_ds)
         cats = {k: v for k, v in p.categories.items() if k in dst.columns and (dst[k] == v).any()}
         conds = {k: v for k, v in p.conditions.items() if k in dst.columns and dst[k].notna().any() and k != "gravity_g"}
         if conds:
-            near = tests_near(tests, conds, cats, k=40, dataset=ds)
+            near = tests_near(tests, conds, cats, k=40, dataset=sel_ds)
             close_d = config.models_cfg().get("applicability", {}).get("close_conditions_distance", 1.0)
             rows = [r for r in near if r["distance"] <= close_d]
+            # a named material or fuel is a filter, not a preference: never count another one's tests for it
+            rows = [r for r in rows if all(tests.loc[r["test_id"], k] == v for k, v in cats.items())]
+            o2q = conds.get("o2_frac")
+            if ds == "solids" and o2q is not None and not any(abs(tests.loc[r["test_id"], "o2_frac"] - o2q) <= 0.02 for r in rows):
+                # no solid test at this oxygen level: say where solid testing stopped (a verified fact, not a refusal)
+                pool = dst if not cats else dst[(dst[list(cats)] == pd.Series(cats)).all(axis=1)]
+                pool = pool[pool.o2_frac.notna()]
+                if len(pool):
+                    who = " ".join(str(v) for v in cats.values()) or "solid material"
+                    edge = "highest" if o2q > pool.o2_frac.max() else "lowest" if o2q < pool.o2_frac.min() else None
+                    if edge:
+                        val = pool.o2_frac.max() if edge == "highest" else pool.o2_frac.min()
+                        ids = pool.test_id.tolist()
+                        gaps.append({"text": f"No real {who} test in orbit was run near O₂ {o2q * 100:.0f}%: the {edge} oxygen level "
+                                             f"among the {len(ids)} loaded {who} tests is {val * 100:.1f}%.",
+                                     "citations": [{"kind": "aggregate", "op": "max" if edge == "highest" else "min", "field": "o2_frac",
+                                                    "rows": ids, "display": f"{val * 100:.1f}"},
+                                                   {"kind": "aggregate", "op": "count", "field": "o2_frac", "rows": ids, "display": str(len(ids))},
+                                                   {"kind": "query", "text": f"O₂ {o2q * 100:.0f}%"}],
+                                     "role": "key", "dataset": ds})
+                rows = []
             sel_grade = "Measured" if rows and min(r["distance"] for r in rows) <= MEASURED_D else ("Close conditions" if rows else None)
             ids = [r["test_id"] for r in rows][:25]
         elif cats:
@@ -107,6 +143,15 @@ def answer(q: str, role: str = "researcher") -> dict:
         vals = sub[metric].dropna()
         ids_m = vals.index.tolist()
         if not ids_m:
+            if ds == "solids":                       # real tests exist here, but their tables give no outcome
+                sentences.append({"text": f"{len(ids)} {DATASET_NOUN[ds]} tests in orbit were run near "
+                                          f"{', '.join(c['text'] for c in p.chips if c['var'] in conds or c['var'] in cats) or 'these conditions'}; "
+                                          "their tables do not record whether the flame kept burning.",
+                                  "citations": [{"kind": "aggregate", "op": "count", "field": "o2_frac", "rows": ids, "display": str(len(ids))},
+                                                {"kind": "query", "text": q}],
+                                  "role": "key", "dataset": ds})
+                data_blocks.append({"dataset": ds, "metric": "test_id", "test_ids": ids, "grade": sel_grade, "demo": False})
+                grade = sel_grade if grade == "No data" or sel_grade == "Measured" else grade
             continue
         cond_txt = ", ".join(c["text"] for c in p.chips if c["var"] in conds or c["var"] in cats)
         if p.environment:
@@ -115,10 +160,10 @@ def answer(q: str, role: str = "researcher") -> dict:
             cond_txt = f"{p.environment} conditions ({env})" if env else f"{p.environment} conditions"
         cond_txt = cond_txt or "the matched conditions"
         qcite = {"kind": "query", "text": cond_txt + " " + q}
-        dlabel = {"flex": "droplet", "bass2_demo": "solid-material"}[ds]
+        dlabel = DATASET_NOUN.get(ds, "")
         if metric == "burned":
             nb = int(vals.sum())
-            s = {"text": f"{nb} of {len(ids_m)} {dlabel} tests near {cond_txt} sustained burning.",
+            s = {"text": f"{nb} of {len(ids_m)} {dlabel} tests near {cond_txt} {SUSTAINED.get(ds, 'sustained burning')}.",
                  "citations": [{"kind": "aggregate", "op": "count_true", "field": "burned", "rows": ids_m, "display": str(nb)},
                                {"kind": "aggregate", "op": "count", "field": "burned", "rows": ids_m, "display": str(len(ids_m))}, qcite],
                  "role": "key", "dataset": ds}
@@ -148,11 +193,16 @@ def answer(q: str, role: str = "researcher") -> dict:
         data_blocks.append({"dataset": ds, "metric": metric, "test_ids": ids_m, "grade": sel_grade,
                             "demo": bool(sub["demo"].any())})
         grade = sel_grade if grade == "No data" or sel_grade == "Measured" else grade
-        if chart is None:
+        if chart is None and ds != "solids":         # solid tables record no pressure: no oxygen–pressure chart for them
             xv = "o2_frac"
-            yv = "pressure_kpa" if ds == "flex" else "flow_cm_s"
+            yv = "pressure_kpa"
             chart = {"type": "scatter", "dataset": ds, "x": xv, "y": yv, "color": "burned" if metric == "burned" else metric,
                      "highlight": ids_m, "marker": {k: v for k, v in p.conditions.items() if k in (xv, yv)}}
+
+    if gaps:
+        sentences.extend(gaps)
+        if grade == "No data":
+            grade = "Not tested"
 
     # ---------------- passage evidence
     passage_blocks = []
@@ -196,8 +246,10 @@ def answer(q: str, role: str = "researcher") -> dict:
     if p.partial_gravity or (p.conditions.get("gravity_g") not in (None, 0.0, 1.0)):
         caveats.append({"kind": "partial_gravity",
                         "text": "No partial-gravity combustion data exist in PSI. Microgravity and 1g results only bound this case."})
-    if any(b["demo"] for b in data_blocks) or any(pb["demo"] for pb in passage_blocks):
+    if any(b["demo"] for b in data_blocks):
         caveats.append({"kind": "demo", "text": "Evidence comes from the demo fixture (synthetic) — not NASA results."})
+    elif any(pb["demo"] for pb in passage_blocks):
+        caveats.append({"kind": "notes", "text": "Some quoted passages come from context notes compiled by the platform authors, not from NASA documents."})
     if re.search(r"rocket|propellant|thruster|engine", q.lower()):
         caveats.append({"kind": "scope", "text": "Rockets and propellants are out of scope for this platform."})
 

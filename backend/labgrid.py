@@ -15,12 +15,13 @@ from .models import surrogate
 
 O2 = np.round(np.linspace(0.10, 1.00, 37), 4)
 AXES = {
-    "solid": {"burn": "solid_burn", "rate": "solid_spread", "dataset": "bass2_demo", "item": "material",
-              "axes": [("o2_frac", O2), ("pressure_kpa", np.linspace(20, 140, 13)), ("flow_cm_s", np.linspace(0, 40, 11))],
-              "rate_label": "flame spread", "rate_unit": "mm/s"},
+    # real CFI-G gas flames (spherical burner, ISS): oxygen, pressure and fuel flow; no rate model
+    "gas": {"burn": "gas_sustain", "rate": None, "dataset": "cfig_normal", "item": "fuel",
+            "axes": [("o2_frac", O2), ("pressure_kpa", np.linspace(20, 320, 13)), ("fuel_flow_mg_s", np.linspace(0.1, 3.3, 11))],
+            "rate_label": None, "rate_unit": None, "source": "real CFI-G gas-flame"},
     "droplet": {"burn": "droplet_burn", "rate": "droplet_k", "dataset": "flex", "item": "fuel",
                 "axes": [("o2_frac", O2), ("pressure_kpa", np.linspace(20, 320, 13)), ("d0_mm", np.linspace(1, 6, 11))],
-                "rate_label": "burning rate K", "rate_unit": "mm²/s"},
+                "rate_label": "burning rate K", "rate_unit": "mm²/s", "source": "real FLEX droplet"},
 }
 
 
@@ -35,20 +36,19 @@ def _knn_dist(X: np.ndarray, G: np.ndarray, k: int) -> np.ndarray:
 @lru_cache(maxsize=64)
 def grid(mode: str, item: str, gravity: float = 0.0, diluent: str = "N2") -> dict:
     spec = AXES[mode]
-    burn, rate = surrogate.load(spec["burn"]), surrogate.load(spec["rate"])
+    burn = surrogate.load(spec["burn"])
+    rate = surrogate.load(spec["rate"]) if spec["rate"] else None
     t = get_store().usable_tests(spec["dataset"])
     t = t[t[spec["item"]] == item]
     (a, av), (b, bv), (c, cv_) = spec["axes"]
     A, B, C = np.meshgrid(av, bv, cv_, indexing="ij")
     fixed = {spec["item"]: item}
-    if mode == "solid":
-        fixed.update({"thickness_mm": float(t.thickness_mm.median()) if len(t) else 0.5, "gravity_g": float(gravity)})
-    else:
+    if mode == "droplet":
         fixed.update({"co2_frac": 0.3 if diluent == "CO2" else 0.0, "he_frac": 0.3 if diluent == "He" else 0.0})
     df = pd.DataFrame({a: A.ravel(), b: B.ravel(), c: C.ravel(), **{k: v for k, v in fixed.items()}})
     Xb = burn["enc"].transform(df[burn["card"]["features"]])
     p = burn["model"].predict_proba(Xb)[:, 1]
-    mu = rate["model"].predict(rate["enc"].transform(df[rate["card"]["features"]]))
+    mu = rate["model"].predict(rate["enc"].transform(df[rate["card"]["features"]])) if rate else np.zeros(len(df))
     ad = burn["card"]["applicability"]
     dist = _knn_dist(burn["X"], Xb, ad["k"])
     cols = ["test_id", a, b, c, "burned"]
@@ -60,7 +60,7 @@ def grid(mode: str, item: str, gravity: float = 0.0, diluent: str = "N2") -> dic
         "inside": round(ad["inside"], 3), "edge": round(ad["edge"], 3),
         "tested": {k: v for k, v in burn["card"]["ranges"].items() if k in (a, b, c)},
         "gravity_is_feature": "gravity_g" in burn["card"]["features"],
-        "rate_label": spec["rate_label"], "rate_unit": spec["rate_unit"],
+        "rate_label": spec["rate_label"], "rate_unit": spec["rate_unit"], "source": spec["source"],
         "tests": t[cols].dropna(subset=[a, b, c]).round(4).to_dict("records"),
         "cv": {"accuracy": cv["metrics"]["accuracy"], "baseline": cv["baseline"]["accuracy"], "auc": cv["metrics"].get("auc"), "scheme": cv["scheme"], "rows": burn["card"]["rows"]},
     }
@@ -68,6 +68,6 @@ def grid(mode: str, item: str, gravity: float = 0.0, diluent: str = "N2") -> dic
 
 def items() -> dict:
     st = get_store()
-    return {"solid": sorted(st.usable_tests("bass2_demo").material.dropna().unique().tolist()),
+    return {"gas": sorted(st.usable_tests("cfig_normal").fuel.dropna().unique().tolist()),
             "droplet": sorted(st.usable_tests("flex").fuel.dropna().unique().tolist()),
             "diluents": ["N2", "CO2", "He"]}

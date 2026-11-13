@@ -10,6 +10,7 @@ investigations:
     platform: ISS / MSG
     years: [2011, 2012]
     objectives: Flammability and extinguishment of thin and thick solid materials in a controlled flow duct in microgravity.
+    datasets: [bass]
   - id: BASS-II
     name: Burning and Suppression of Solids II
     pillars: [prevention, suppression]
@@ -18,7 +19,7 @@ investigations:
     platform: ISS / MSG
     years: [2012, 2013]
     objectives: Extend BASS with varied oxygen, pressure and flow speed to map flammability limits of solids.
-    datasets: [bass2_demo]
+    datasets: [bass2]
   - id: Saffire-I
     name: Spacecraft Fire Safety Experiment I
     pillars: [prevention]
@@ -27,6 +28,7 @@ investigations:
     platform: Cygnus (uncrewed, after ISS departure)
     years: [2016, 2016]
     objectives: Large-scale flame spread over a cotton-fiberglass fabric in a spacecraft-sized flow.
+    datasets: [saffire1]
   - id: Saffire-II
     name: Spacecraft Fire Safety Experiment II
     pillars: [prevention]
@@ -35,6 +37,7 @@ investigations:
     platform: Cygnus
     years: [2016, 2016]
     objectives: Ignition and flammability of nine material samples at spacecraft scale.
+    datasets: [saffire2]
   - id: Saffire-III
     name: Spacecraft Fire Safety Experiment III
     pillars: [prevention]
@@ -43,6 +46,7 @@ investigations:
     platform: Cygnus
     years: [2017, 2017]
     objectives: Large-sample flame spread, repeat of Saffire-I with different flow conditions.
+    datasets: [saffire3]
   - id: SAME
     name: Smoke Aerosol Measurement Experiment
     pillars: [detection]
@@ -108,6 +112,7 @@ investigations:
     platform: ISS / CIR
     years: [2017, 2020]
     objectives: Six gas-flame experiments on soot, flame stability and efficiency, including CFI-G and E-FIELD Flames.
+    datasets: [flame_design_normal]
   - id: CFI-G
     name: Cool Flames Investigation with Gases
     pillars: [prevention]
@@ -117,6 +122,7 @@ investigations:
     years: [2021, 2022]
     parent: ACME
     objectives: Gaseous cool and hot diffusion flames at oxygen fractions up to 85% O₂.
+    datasets: [cfig_normal]
   - id: E-FIELD Flames
     name: Electric-Field Effects on Laminar Diffusion Flames
     pillars: [prevention]

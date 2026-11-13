@@ -15,8 +15,12 @@ INVESTIGATIONS = ["BASS-II", "BASS", "Saffire-III", "Saffire-II", "Saffire-I", "
 DILUENTS = {"helium": "He", "he": "He", "nitrogen": "N2", "n2": "N2", "co2": "CO2", "carbon dioxide": "CO2"}
 FUELS = {"heptane": "n-heptane", "n-heptane": "n-heptane", "methanol": "methanol", "decane": "n-decane",
          "n-decane": "n-decane", "ethanol": "ethanol"}
-MATERIALS = {"pmma": "PMMA", "acrylic": "PMMA", "cotton": "Cotton-fiberglass fabric", "sibal": "Cotton-fiberglass fabric",
-             "fiberglass": "Cotton-fiberglass fabric", "nomex": "Nomex-like fabric", "acetal": "Acetal", "delrin": "Acetal"}
+# names as the real PSI solid tables (BASS-II, BASS, SAFFIRE) are read by backend/adapters/psi_solids.py
+MATERIALS = {"pmma": "PMMA", "acrylic": "PMMA", "plexiglas": "PMMA", "cotton": "Cotton-fiberglass fabric (SIBAL)",
+             "sibal": "Cotton-fiberglass fabric (SIBAL)", "fiberglass": "Cotton-fiberglass fabric (SIBAL)",
+             "nomex": "Nomex III fabric", "silicone": "Silicone", "ultem": "Ultem (polyetherimide)",
+             "japan wax": "Japan wax", "paraffin": "Paraffin wax"}
+GAS_FUELS = {"propane": "propane", "ethane": "ethane", "butane": "30% butane"}
 PILLARS = {"prevention": "prevention", "prevent": "prevention", "flammability": "prevention", "detection": "detection",
            "detect": "detection", "smoke": "detection", "sensor": "detection", "suppression": "suppression",
            "suppress": "suppression", "extinguish": "suppression", "extinguishment": "suppression"}
@@ -121,7 +125,7 @@ def parse(q: str) -> Parsed:
             p.categories["diluent"] = val
             _chip(p, "diluent", f"diluent {val}")
             break
-    for word, val in FUELS.items():
+    for word, val in {**FUELS, **GAS_FUELS}.items():
         if re.search(rf"\b{re.escape(word)}\b", s):
             p.categories["fuel"] = val
             _chip(p, "fuel", val)

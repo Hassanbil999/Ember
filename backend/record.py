@@ -21,6 +21,7 @@ STATUS_LABEL = {"measured": "Measured", "derived": "Derived", "assumed": "Assume
 # (variable, plain label, group) in display order
 FIELDS = [
     ("material", "Material", "conditions"),
+    ("sample_shape", "Sample shape", "conditions"),
     ("fuel", "Fuel", "conditions"),
     ("o2_frac", "Oxygen in the atmosphere", "conditions"),
     ("n2_frac", "Nitrogen", "conditions"),
@@ -30,8 +31,11 @@ FIELDS = [
     ("pressure_kpa", "Total pressure", "conditions"),
     ("o2_pp_kpa", "Oxygen partial pressure", "conditions"),
     ("flow_cm_s", "Airflow past the sample", "conditions"),
+    ("flow_direction", "Flow direction", "conditions"),
     ("d0_mm", "Droplet size at ignition", "conditions"),
     ("thickness_mm", "Sample thickness", "conditions"),
+    ("diameter_mm", "Sample diameter", "conditions"),
+    ("fuel_flow_mg_s", "Fuel flow into the flame", "conditions"),
     ("gravity_g", "Gravity", "conditions"),
     ("test_end", "How the test ended", "results"),
     ("burned", "Outcome", "results"),
@@ -154,11 +158,16 @@ def test_record(test_id: str) -> dict | None:
         steps = json.loads(p.steps)
         ops = {s["op"] for s in steps}
         value, unit = display(var, row.get(var))
+        if var == "gravity_g" and value == "Microgravity (ISS)" and config.datasets()[ds].get("microgravity_label"):
+            value = config.datasets()[ds]["microgravity_label"]     # e.g. SAFFIRE flew on Cygnus, not the ISS
         note = None
         if var in invalid:
             status, value, unit, note = "flagged", None, "", invalid[var]
         elif "constant" in ops:
             status, note = "assumed", "Assumed (dataset setting), not a measurement from this test."
+        elif value is None and ops & {"derive", "not_reported"}:
+            # read from text that does not state it: say why it is blank, not "derived"
+            status, note = "blank", next(s["detail"] for s in steps if s["op"] in ("derive", "not_reported"))
         elif "derive" in ops:
             status = "derived"
         elif value is None:

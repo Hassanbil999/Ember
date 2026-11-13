@@ -130,8 +130,9 @@ def next_paths(nid: str, parsed: dict | None = None) -> list[dict]:
                               "node": f"ds:{n['datasets'][0]}", "conditions": conds})
             else:
                 chips.append({"label": "tests in this dataset", "kind": "node", "node": f"ds:{n['datasets'][0]}"})
-            chips.append({"label": "what-if in Scenario Lab", "kind": "route",
-                          "href": f"/lab?mode={'droplet' if 'flex' in n['datasets'][0] else 'solid'}"})
+            lab = {"flex": "droplet", "cfig_normal": "gas"}.get(n["datasets"][0])   # only datasets the Lab simulates
+            if lab:
+                chips.append({"label": "what-if in Scenario Lab", "kind": "route", "href": f"/lab?mode={lab}"})
         for p in n["pillars"]:
             rel = [o for o in atlas()["nodes"] if o["type"] == "investigation" and p in o["pillars"] and o["id"] != nid]
             if rel:

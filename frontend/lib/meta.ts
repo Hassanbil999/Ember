@@ -13,7 +13,7 @@ export interface Meta {
   presets: { presets: any[]; targets: any[] };
   models: Record<string, any>;
   categories: Record<string, string[]>;
-  datasets: Record<string, { title: string; demo: boolean; adapter: string }>;
+  datasets: Record<string, { title: string; demo: boolean; adapter: string; enabled: boolean }>;
 }
 
 let cached: Meta | null = null;

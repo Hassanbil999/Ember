@@ -147,3 +147,11 @@ New: `/places`. Checks: 3 new backend tests (every place ranks every investigati
 What the ranking says on today's data: for the Moon base, 12 of FLEX's 273 real tests were run in that air; for the pressurized rover, none. For every place the solid-material investigations (BASS, Saffire) rank on their catalogue description alone, because their tables are not loaded.
 
 Open: ranks will move when more PSI tables are loaded; the crew-spacecraft and Mars-base atmospheres are marked "assumed"; the rules' weights are a judgement, stated in `config/places.yaml`.
+
+## 9. Pull request #1 merged: real PSI tables (mohamad-755)
+
+Reviewed before merging: the download script contacts only psi.nasa.gov, uses the standard library, and checks every file against a pinned SHA-256; no other added code touches the network. All 16 committed tables match their pinned checksums (checked offline). The checksums were pinned by the contributor; they were not re-verified against PSI from this machine.
+
+Result: 932 usable real tests from 8 tables (FLEX, BASS, BASS-II, Saffire-I/II/III, CFI-G, ACME Flame Design); no demo rows remain. One conflict (the "go deeper" links on the place answers), resolved by keeping both sides' intent.
+
+Found while checking: the BASS, BASS-II and Saffire tables record no cabin pressure (BASS records no oxygen either). The place ranking was reading that as "0 tests in this air". It now matches such tables on oxygen alone, capped at 2 of 3 and labelled, and scores "not known" as zero. Tests: 123 backend (one outdated test rewritten, one added) and the browser acceptance test pass.

@@ -44,7 +44,7 @@ export default function TradePage() {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [mode, ...rest] = sel.split(":");
   const item = rest.join(":");
-  const third = mode === "solid" ? 10 : 3;                  // cabin airflow 10 cm/s, or a 3 mm droplet
+  const third = mode === "gas" ? 1 : 3;                     // 1 mg/s of gas to the burner, or a 3 mm droplet
 
   useEffect(() => { get("/atmosphere").then(setAtm); get("/lab/items").then(setItems); }, []);
   useEffect(() => { setGrid(null); get(`/lab/grid?mode=${mode}&item=${encodeURIComponent(item)}&gravity=0&diluent=N2`).then(setGrid).catch(() => {}); }, [mode, item]);
@@ -118,8 +118,8 @@ export default function TradePage() {
     return { pio2, pre, f, iss, best, breath, conf };
   }, [grid, phys, pt, C, third]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const demoItem = mode === "solid" ? meta?.datasets?.bass2_demo?.demo : meta?.datasets?.flex?.demo;
-  const what = mode === "solid" ? item : `${item} droplets`;
+  const demoItem = mode === "gas" ? meta?.datasets?.cfig_normal?.demo : meta?.datasets?.flex?.demo;
+  const what = mode === "gas" ? `${item} gas flames` : `${item} droplets`;
   const tone = !now ? "var(--text)" : !now.f.known ? "var(--nodata)" : now.f.p >= 0.5 ? "var(--flame)" : "var(--ext)";
 
   return (
@@ -202,10 +202,11 @@ export default function TradePage() {
           <label htmlFor="trade-item" className="text-sm text-ink-3">Fire layer: what is burning</label>
           <select id="trade-item" className="mt-1.5 h-10 w-full" value={sel} onChange={(e) => setSel(e.target.value)} data-trade-item>
             <optgroup label="Fuel droplets: real NASA data (FLEX)">{(items?.droplet ?? []).map((x: string) => <option key={x} value={`droplet:${x}`}>{x}</option>)}</optgroup>
-            <optgroup label="Solid materials: demo data">{(items?.solid ?? []).map((x: string) => <option key={x} value={`solid:${x}`}>{x}</option>)}</optgroup>
+            <optgroup label="Gas flames: real NASA data (CFI-G)">{(items?.gas ?? []).map((x: string) => <option key={x} value={`gas:${x}`}>{x}</option>)}</optgroup>
           </select>
           <p className="mt-1.5 text-xs" style={{ color: demoItem ? "var(--warn)" : "var(--text-3)" }}>
-            {demoItem ? "Synthetic demo data: an example of the method, not a NASA result." : "Real FLEX tests from NASA PSI."} {mode === "solid" ? "Airflow fixed at 10 cm/s." : "Droplet fixed at 3 mm, in nitrogen."}
+            {demoItem ? "Synthetic demo data: an example of the method, not a NASA result." : mode === "gas" ? "Real CFI-G tests from NASA PSI." : "Real FLEX tests from NASA PSI."}{" "}
+            {mode === "gas" ? "Fuel flow fixed at 1 mg/s." : "Droplet fixed at 3 mm, in nitrogen."} Solid materials are not on this map: their tables record no pressure.
           </p>
         </div>
 

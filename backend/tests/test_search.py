@@ -75,5 +75,6 @@ def test_api_smoke():
     assert r.status_code == 200 and (time.perf_counter() - t0) < 0.15
     r = c.post("/api/scenario", json={"mode": "droplet", "scenario": {"o2_frac": 0.21, "pressure_kpa": 101.3, "d0_mm": 3, "co2_frac": 0, "he_frac": 0, "fuel": "n-heptane", "gravity_g": 0}})
     assert r.status_code == 200 and r.json()["burn"]["domain"]["status"] == "inside"
-    csv = c.post("/api/export/csv", json={"ids": ["BS-001"]}).text
-    assert "DEMO FIXTURE" in csv and "source" in csv.splitlines()[5]
+    csv = c.post("/api/export/csv", json={"ids": ["BASS2-O4", "SAF2-2-1-UG"]}).text
+    assert "DEMO FIXTURE" not in csv and "source" in csv.splitlines()[4]
+    assert "PSI-25_Experimental table_BASS-II.csv:row" in csv and "Did not spread" in csv

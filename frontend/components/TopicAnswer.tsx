@@ -14,6 +14,7 @@ export const GRADE_WHY: Record<string, { tone: string; why: string }> = {
   Measured: { tone: "text", why: "Real test data at these conditions." },
   "Close conditions": { tone: "warn", why: "The nearest real tests, not the exact conditions asked about." },
   Documented: { tone: "text-2", why: "Report text only; no matching test rows." },
+  "Not tested": { tone: "warn", why: "No real test was run at these conditions. The answer says where testing stopped." },
   "No data": { tone: "nodata", why: "Not covered by the loaded data." },
 };
 

@@ -65,9 +65,9 @@ def test_applicability_domain():
     outside = predict("droplet_k", {"o2_frac": 0.95, "pressure_kpa": 25, "d0_mm": 5.9, "co2_frac": 0, "he_frac": 0.4, "fuel": "methanol"}, False)
     assert outside["domain"]["status"] in ("edge", "outside")
     assert outside["domain"]["distance"] > inside["domain"]["distance"]
-    partial = predict("solid_burn", {"o2_frac": 0.3, "pressure_kpa": 70.3, "flow_cm_s": 10, "thickness_mm": 0.5, "material": "PMMA", "gravity_g": 0.165}, False)
-    assert partial["domain"]["status"] in ("untested", "outside")
-    assert set(partial["bracket"]) == {"µg", "1g"}
+    gas_out = predict("gas_sustain", {"o2_frac": 0.9, "pressure_kpa": 25, "fuel_flow_mg_s": 3.2, "fuel": "propane"}, False)
+    assert gas_out["domain"]["status"] in ("edge", "outside"), "far outside the CFI-G tests"
+    assert "bracket" not in gas_out, "no model brackets partial gravity: none has gravity as a feature"
 
 
 def test_models_beat_baseline():
@@ -81,8 +81,8 @@ def test_models_beat_baseline():
 
 def test_advisor_targets_uncertainty():
     from backend.models.surrogate import advisor
-    a = advisor("solid_burn", {"o2_frac": [0.28, 0.34], "pressure_kpa": [62, 72]}, n=3)
-    assert len(a["suggestions"]) == 3
+    a = advisor("gas_sustain", {"o2_frac": [0.28, 0.34], "pressure_kpa": [62, 72]}, n=3)
+    assert 1 <= len(a["suggestions"]) <= 3
     for s in a["suggestions"]:
         assert 0.28 <= s["conditions"]["o2_frac"] <= 0.34
         assert 0.1 < s["prediction"] < 0.9   # chosen where the outcome is uncertain

@@ -57,8 +57,8 @@ def _warm():
                 api_topic(tid)
                 for m in topics.topic(tid)["materials"]:
                     api_topic(tid, m["material"])
-            for g in (0.0, 0.165, 0.38, 1.0):
-                api_lab_grid("solid", "PMMA", g, "N2")
+            api_lab_grid("gas", labgrid.items()["gas"][0], 0.0, "N2")
+            api_lab_grid("droplet", "n-heptane", 0.0, "N2")
         except Exception as e:                      # warming is an optimisation, never a reason to fail to start
             print("warm-up skipped:", e)
     threading.Thread(target=work, daemon=True).start()
@@ -125,7 +125,8 @@ def _meta():
         "variables": config.variables(), "glossary": st.glossary,
         "concepts": json.loads(st.concepts.to_json(orient="records")),
         "presets": config.presets(), "models": cards, "categories": cats,
-        "datasets": {k: {"title": v["title"], "demo": v.get("demo", False), "adapter": v["adapter"]}
+        "datasets": {k: {"title": v["title"], "demo": v.get("demo", False), "adapter": v["adapter"],
+                         "enabled": bool(v.get("enabled", True))}
                      for k, v in config.datasets().items()},
     }
 
@@ -156,7 +157,7 @@ def navigate(q: str, k: int = 12):
     if p.conditions and best and not best.startswith("ds:"):
         paths = [c for c in paths if not c["label"].startswith("tests near")]
         bn = views.node(best) or {}
-        ds = (bn.get("datasets") or [None])[0] or             ("bass2_demo" if ("material" in p.categories or "flow_cm_s" in p.conditions) else "flex")
+        ds = (bn.get("datasets") or [None])[0] or             ("bass2" if ("material" in p.categories or "flow_cm_s" in p.conditions) else "flex")
         paths.insert(0, {"label": "tests near " + ", ".join(c["text"] for c in p.chips if c["var"] in p.conditions),
                          "kind": "node", "node": f"ds:{ds}", "conditions": p.conditions})
     if p.question:
@@ -223,7 +224,7 @@ def api_lab_items():
 
 
 @app.get("/api/lab/grid")
-def api_lab_grid(mode: str = "solid", item: str = "PMMA", gravity: float = 0.0, diluent: str = "N2"):
+def api_lab_grid(mode: str = "gas", item: str = "30% butane", gravity: float = 0.0, diluent: str = "N2"):
     if mode not in labgrid.AXES:
         raise HTTPException(404, "unknown mode")
     return cached(("grid", mode, item, round(gravity, 3), diluent), lambda: labgrid.grid(mode, item, round(gravity, 3), diluent))
@@ -343,10 +344,11 @@ def api_scenario(body: Scenario):
         burn = surrogate.predict("droplet_burn", sc)
         rate = surrogate.predict("droplet_k", sc)
         rep = surrogate.replay(sc)
+    elif body.mode == "gas":
+        burn = surrogate.predict("gas_sustain", sc)
+        rate, rep = None, None          # no rate model for the gas flames: the PSI table has no burning rate
     else:
-        burn = surrogate.predict("solid_burn", sc)
-        rate = surrogate.predict("solid_spread", sc)
-        rep = None
+        raise HTTPException(404, "unknown mode: use 'droplet' or 'gas'")
     nearest_ids = [n["test_id"] for n in burn["nearest"]]
     rows = json.loads(st.tests.loc[nearest_ids].drop(columns=["flags"]).to_json(orient="records"))
     for r, n in zip(rows, burn["nearest"]):
@@ -479,7 +481,8 @@ def api_export_csv(body: CsvReq):
     st = get_store()
     t = st.tests.loc[[i for i in body.ids if i in st.tests.index]]
     cols = body.columns or ["test_id", "dataset", "investigation_id", "campaign", "o2_frac", "pressure_kpa", "o2_pp_kpa",
-                            "flow_cm_s", "d0_mm", "thickness_mm", "gravity_g", "fuel", "material", "diluent", "burned",
+                            "flow_cm_s", "flow_direction", "d0_mm", "thickness_mm", "diameter_mm", "fuel_flow_mg_s", "gravity_g",
+                            "fuel", "material", "sample_shape", "diluent", "burned", "test_end",
                             "burn_rate_k_mm2_s", "extinction_d_mm", "spread_rate_mm_s"]
     cols = [c for c in cols if c in t.columns]
     buf = io.StringIO()

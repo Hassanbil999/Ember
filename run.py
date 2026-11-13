@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Task runner (same targets as the Makefile, works where `make` is not installed).
 
-    python run.py setup | fixture | ingest | train | start | dev | api | web | test | audit | all | demo on|off
+    python run.py setup | fetch | fixture | ingest | train | start | dev | api | web | test | audit | all | demo on|off
 
 `start` builds the web app once and serves the fast production build (use this to show the app).
 `dev` runs the slower hot-reload servers for development.
@@ -13,6 +13,10 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+for _s in (sys.stdout, sys.stderr):        # Windows consoles/redirects default to cp1252 and choke on "→", "›"
+    if hasattr(_s, "reconfigure"):
+        _s.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = Path(__file__).resolve().parent
 PY = sys.executable
@@ -28,6 +32,11 @@ def sh(cmd, cwd=ROOT, **kw):
 def setup():
     sh([PY, "-m", "pip", "install", "-r", "requirements.txt"])
     sh([NPM, "install", "--no-audit", "--no-fund"], cwd=ROOT / "frontend")
+
+
+def fetch():
+    """Download the real NASA PSI tables (checksum-verified) into data/raw/."""
+    sh([PY, str(ROOT / "scripts" / "fetch_psi.py"), *sys.argv[2:]])
 
 
 def fixture():
@@ -110,7 +119,7 @@ def demo(state: str):
 
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "start"
-    fns = {"setup": setup, "fixture": fixture, "ingest": ingest, "train": train, "dev": dev, "start": start, "audit": audit, "api": api, "web": web,
+    fns = {"setup": setup, "fetch": fetch, "fixture": fixture, "ingest": ingest, "train": train, "dev": dev, "start": start, "audit": audit, "api": api, "web": web,
            "test": test, "all": all_}
     if cmd == "demo":
         demo(sys.argv[2] if len(sys.argv) > 2 else "on")

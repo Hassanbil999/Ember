@@ -1,7 +1,7 @@
 """Browser acceptance test. Run with the API on :8000 and the web app on :3000 (python run.py start).
 
 Checks the things a reviewer would check by eye, on every run:
-  - every screen renders with no page errors and shows the demo-data notice
+  - every screen renders with no page errors and, with only real data loaded, shows no demo-data notice
   - navigation has at most four items, in plain words
   - no text under 13 px, no clipped (truncated) text, no overlapping labels
   - Explore never shows more than 15 nodes, in any grouping, with any cluster opened
@@ -34,7 +34,7 @@ SCREENS = [
     ("/studio", "[data-ready=studio]"),
     ("/studio?chart=gap", "text=Moon base"),
     ("/data", "[data-ready=data]"),
-    ("/data?dataset=bass2_demo", "[data-ready=data]"),
+    ("/data?dataset=bass2", "[data-ready=data]"),
     ("/image", "text=TEST PATTERN"),
 ]
 
@@ -99,7 +99,7 @@ with sync_playwright() as p:
             continue
         page.wait_for_timeout(500)
         check(not errors, f"{path}: page errors {errors[:2]}")
-        check(page.locator("header [role=status]").is_visible(), f"{path}: demo-data notice missing")
+        check(page.locator("header [role=status]").count() == 0, f"{path}: demo-data notice shown, but only real data is loaded")
         mf = page.evaluate(MIN_FONT)
         check(mf["min"] >= 13, f"{path}: text at {mf['min']}px (“{mf['who']}”)")
         clipped = page.evaluate(CLIPPED)

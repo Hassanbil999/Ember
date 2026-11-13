@@ -11,7 +11,7 @@ import Passage from "@/components/Passage";
    folded into one cluster per group that opens on click. Positions come from a slot grid, so two
    labels can never share space, and nothing is simulated or recomputed while the pointer moves. */
 
-type Inv = { id: string; label: string; name: string; pillars: string[]; burns: string; fuel_phase: string; platform: string; hardware: string; years: number[] | null; n_tests: number; objectives: string };
+type Inv = { id: string; label: string; name: string; pillars: string[]; burns: string; fuel_phase: string; platform: string; hardware: string; years: number[] | null; n_tests: number; objectives: string; datasets: string[] };
 type Node = { id: string; kind: "inv" | "cluster"; label: string; sub: string; group: string; r: number; inv?: Inv; members?: string[]; x: number; y: number };
 type Grouping = "burns" | "goal" | "era";
 
@@ -105,8 +105,10 @@ function Detail({ id, data, onSelect }: { id: string; data: any; onSelect: (id: 
       )}
       {inv.n_tests > 0 && (
         <div className="mt-5 flex flex-wrap gap-2.5">
-          <Link className="btn primary" href={`/lab?mode=${inv.fuel_phase === "solid" ? "solid" : "droplet"}`}>Simulate it</Link>
-          <Link className="btn" href={`/data?dataset=${inv.fuel_phase === "solid" ? "bass2_demo" : "flex"}`}>Open its tests</Link>
+          {/* only the droplet and gas-flame tables can drive the simulator; solid tables record no pressure */}
+          {({ flex: "droplet", cfig_normal: "gas" } as Record<string, string>)[inv.datasets?.[0]] && (
+            <Link className="btn primary" href={`/lab?mode=${({ flex: "droplet", cfig_normal: "gas" } as Record<string, string>)[inv.datasets[0]]}`}>Simulate it</Link>)}
+          {inv.datasets?.[0] && <Link className="btn" href={`/data?dataset=${inv.datasets[0]}`}>Open its tests</Link>}
         </div>
       )}
 

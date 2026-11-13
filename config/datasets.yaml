@@ -39,6 +39,175 @@ datasets:
     # Disruption (the droplet broke apart) decides nothing about burning vs extinction, so it maps to no outcome.
     outcome_map: { "completion": 1, "extinction": 0 }
 
+  cfig_normal:
+    title: CFI-G gas flames (NASA PSI-159 experimental table, normal flames)
+    adapter: psi_gas_flames
+    enabled: true
+    demo: false
+    investigations: [CFI-G]
+    files: ["PSI-159_Experimental table_CFI-G_Normal Flames.csv"]
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-159. See the PSI terms of use."
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    id_prefix: "CFIG-"
+    # Gas fed through a spherical porous burner into a closed chamber of known O2 and pressure (ACME hardware, ISS).
+    # "Test id", "Campaign", "Date", "Investigation", "Outcome" and "Test end" are helper columns built by the
+    # adapter from the file's own columns; they are recorded as derived.
+    columns:
+      "Test id": test_id
+      "Campaign": campaign
+      "Investigation": investigation_id
+      "Fuel": fuel
+      "XO2 before test": o2_frac
+      "approx p (bar)": pressure_kpa
+      "mHC (mg/s)": fuel_flow_mg_s
+      "burn time (sec)": burn_time_s
+      "Outcome": burned
+      "Test end": test_end
+      "Date": mission_date
+    units: { "approx p (bar)": bar, "mHC (mg/s)": "mg/s" }
+    constants: { gravity_g: 0.0 }
+    outcome:
+      column: "Self-ext or flow term"
+      ignition_column: "Hot ignition"
+      cool_column: "Cool flame?"
+    # FT: the flame was still burning when the fuel flow was stopped (sustained). SE: it went out by itself.
+    # "-" (no hot ignition) decides nothing about sustained burning and maps to no outcome.
+    outcome_map: { "ft": 1, "se": 0 }
+
+  flame_design_normal:
+    title: ACME Flame Design gas flames (NASA PSI-10 experimental table, normal flames)
+    adapter: psi_gas_flames
+    enabled: true
+    demo: false
+    investigations: [ACME]
+    files: ["PSI-10_Experimental table_Flame Design_Normal Flame.csv"]
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-10. See the PSI terms of use."
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    id_prefix: "FD-"
+    # This table records conditions only; it has no outcome column, so nothing is claimed about burning.
+    # "RAMP"/"RAMPED" fuel cells (flow changed during the test) are read as no single value.
+    columns:
+      "Test id": test_id
+      "Campaign": campaign
+      "Investigation": investigation_id
+      "Fuel": fuel
+      "XO2 (init)": o2_frac
+      "pinit (atm)": pressure_kpa
+      "mfuel (mg/s)": fuel_flow_mg_s
+      "Date": mission_date
+    units: { "pinit (atm)": atm, "mfuel (mg/s)": "mg/s" }
+    constants: { gravity_g: 0.0 }
+
+  bass2:
+    title: BASS-II solid-material tests (NASA PSI-25 experimental table)
+    adapter: psi_bass2
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    investigations: [BASS-II]
+    files: ["PSI-25_Experimental table_BASS-II.csv"]
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-25. See the PSI terms of use."
+    # Every column below except O2 and Date is a helper the adapter reads from free text (sample description,
+    # test notes); each is recorded as derived with its source text. The table has no burned/went-out column.
+    columns:
+      "Test id": test_id
+      "Campaign": campaign
+      "Investigation": investigation_id
+      "Material": material
+      "Shape": sample_shape
+      "Thickness": thickness_mm
+      "Diameter": diameter_mm
+      "Flow direction": flow_direction
+      "O2": o2_frac
+      "Test end": test_end
+      "Date": mission_date
+    units: { "O2": "%" }
+    constants: { gravity_g: 0.0 }
+
+  bass:
+    title: BASS solid-material run list (NASA PSI-26 experimental table)
+    adapter: psi_bass
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    investigations: [BASS]
+    files: ["PSI-26_Experimental table_BASS.csv"]
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-26. See the PSI terms of use."
+    # The PSI table lists what was burned and when; it records no oxygen level, airflow or outcome.
+    columns:
+      "Test id": test_id
+      "Investigation": investigation_id
+      "Material": material
+      "Shape": sample_shape
+      "Diameter": diameter_mm
+      "Flow direction": flow_direction
+      "Test end": test_end
+      "Date": mission_date
+    constants: { gravity_g: 0.0 }
+
+  saffire1:
+    title: SAFFIRE-1 large-sample fire (NASA PSI-98 experimental table)
+    adapter: psi_saffire
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    investigations: [Saffire-I]
+    files: ["PSI-98_Experimental table_SAFFIRE-1.csv"]
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-98. See the PSI terms of use."
+    microgravity_label: "Microgravity (Cygnus vehicle, after leaving the ISS)"
+    id_prefix: SAF1
+    columns: &saffire_cols
+      "Test id": test_id
+      "Campaign": campaign
+      "Investigation": investigation_id
+      "Material": material
+      "Shape": sample_shape
+      "Thickness": thickness_mm
+      "Airflow": flow_cm_s
+      "Flow direction": flow_direction
+      "O2": o2_frac
+      "Gravity": gravity_g
+      "Burn time": burn_time_s
+      "Burned": burned
+      "Test end": test_end
+      "Spread rate": spread_rate_mm_s
+    outcome_map: { "1": 1, "0": 0 }
+
+  saffire2:
+    title: SAFFIRE-2 material fires, flight and 1g ground (NASA PSI-99 experimental table)
+    adapter: psi_saffire
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    investigations: [Saffire-II]
+    files: ["PSI-99_Experimental table_SAFFIRE-2.csv"]
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-99. See the PSI terms of use."
+    microgravity_label: "Microgravity (Cygnus vehicle, after leaving the ISS)"
+    id_prefix: SAF2
+    columns: *saffire_cols
+    outcome_map: { "1": 1, "0": 0 }
+
+  saffire3:
+    title: SAFFIRE-3 large-sample fire (NASA PSI-100 experimental table)
+    adapter: psi_saffire
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    investigations: [Saffire-III]
+    files: ["PSI-100_Experimental table_SAFFIRE-3.csv"]
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-100. See the PSI terms of use."
+    microgravity_label: "Microgravity (Cygnus vehicle, after leaving the ISS)"
+    id_prefix: SAF3
+    columns: *saffire_cols
+    outcome_map: { "1": 1, "0": 0 }
+
   flex_demo:        # synthetic stand-in used before the real table was loaded; kept for the adapter tests
     title: Droplet combustion tests (FLEX-shaped demo fixture)
     adapter: flex_droplets
@@ -66,10 +235,10 @@ datasets:
     constants: { gravity_g: 0.0, flow_cm_s: 0.0 }
     outcome_map: { "burned": 1, "burned to completion": 1, "flame extinction": 0, "extinguished": 0, "no ignition": 0 }
 
-  bass2_demo:
+  bass2_demo:        # synthetic stand-in used before the real BASS-II table was loaded; kept for the adapter tests
     title: Solid-material flammability tests (BASS-II-shaped demo fixture)
     adapter: bass2_solids
-    enabled: true
+    enabled: false
     demo: true
     investigations: [BASS-II]
     files: [bass2_flammability.xlsx]
@@ -97,9 +266,11 @@ datasets:
     adapter: pdf_reports
     enabled: true
     demo: true
-    # the synthetic droplet report is left out now that the real FLEX table is loaded: it would contradict it
-    files: [bass2_demo_report.pdf, detection_suppression_notes.pdf, fire_safety_context.pdf]
-    license: "Demo fixture text and compiled catalog notes — CC0."
+    # The synthetic droplet and solid reports are left out: they would contradict the real tables.
+    # What remains are two context notes compiled by the platform authors from the challenge brief;
+    # they are not NASA documents and keep the "demo" label until NASA documents replace them.
+    files: [detection_suppression_notes.pdf, fire_safety_context.pdf]
+    license: "Compiled context notes (platform authors, not NASA) — CC0."
 
 # Validation rules, applied to every tabular dataset after normalization.
 # Flag, never silently fix. action: flag | exclude

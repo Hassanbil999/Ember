@@ -52,20 +52,33 @@ def _score(inv: dict, place: dict, tests) -> dict:
     mine = tests[tests.investigation_id == iid]
     box, ids = _box(place), []
     if earth:
-        parts["air"] = {"score": 1, "unknown": True, "why": "Run in microgravity to remove buoyancy; the air is not the point of comparison on Earth."}
+        parts["air"] = {"score": 0, "unknown": True, "why": "Run in microgravity to remove buoyancy; the air is not the point of comparison on Earth."}
     elif len(mine) and box:
-        near = mine[mine.o2_frac.between(*box["o2_frac"]) & mine.pressure_kpa.between(*box["pressure_kpa"])]
-        ids, n = near.test_id.tolist(), len(near)
-        parts["air"] = {"score": 3 if n >= 10 else 2 if n >= 3 else 1 if n else 0,
-                        "why": f"{n} of its {len(mine)} loaded tests were run in this place's air"
-                               f" ({box['o2_frac'][0] * 100:.0f}–{box['o2_frac'][1] * 100:.0f}% oxygen, "
-                               f"{box['pressure_kpa'][0] / PSI:.1f}–{box['pressure_kpa'][1] / PSI:.1f} psi)."}
+        o2r = f"{box['o2_frac'][0] * 100:.0f}–{box['o2_frac'][1] * 100:.0f}% oxygen"
+        both = mine[mine.o2_frac.notna() & mine.pressure_kpa.notna()]
+        o2_only = mine[mine.o2_frac.notna() & mine.pressure_kpa.isna()]
+        if len(both):
+            near = both[both.o2_frac.between(*box["o2_frac"]) & both.pressure_kpa.between(*box["pressure_kpa"])]
+            ids, n = near.test_id.tolist(), len(near)
+            parts["air"] = {"score": 3 if n >= 10 else 2 if n >= 3 else 1 if n else 0,
+                            "why": f"{n} of its {len(both)} tests with a recorded oxygen level and pressure were run in this place's air"
+                                   f" ({o2r}, {box['pressure_kpa'][0] / PSI:.1f}–{box['pressure_kpa'][1] / PSI:.1f} psi)."}
+        elif len(o2_only):
+            near = o2_only[o2_only.o2_frac.between(*box["o2_frac"])]
+            ids, n = near.test_id.tolist(), len(near)
+            # a match on oxygen alone is weaker evidence than a match on the whole atmosphere: capped at 2
+            parts["air"] = {"score": 2 if n >= 3 else 1 if n else 0, "o2_only": True,
+                            "why": f"{n} of its {len(o2_only)} tests with a recorded oxygen level were run at this place's oxygen level ({o2r}). "
+                                   "Its table does not record pressure, so this is a match on oxygen only."}
+        else:
+            parts["air"] = {"score": 0, "unknown": True,
+                            "why": "Its table is loaded but records neither the oxygen level nor the pressure of each test, so it cannot be placed in this air."}
     elif iid in c["documented_air"]:
         d = c["documented_air"][iid]
         ok = d["o2_max"] >= place["air"]["o2_frac"]
         parts["air"] = {"score": 2 if ok else 1, "why": d["why"] + ("; its test table is not loaded here." if ok else "."), "source": _src(d["source"])}
     else:
-        parts["air"] = {"score": 1, "unknown": True, "why": "Its test table is not loaded here, so its oxygen and pressure range is not known to this atlas."}
+        parts["air"] = {"score": 0, "unknown": True, "why": "Its test table is not loaded here, so its oxygen and pressure range is not known to this atlas."}
 
     if partial or earth:
         note = c["gravity_notes"].get(iid)
@@ -117,7 +130,7 @@ def rank(pid: str) -> dict | None:
     else:
         name = place["label"].replace(" today", "")
         reading = f"For {'the ' if name[0].isupper() and name != 'Mars base' and name != 'Crew spacecraft' else 'a '}{name if name[:3] in ('ISS', 'Moo') else name.lower() if name != 'Mars base' else name}, {top['label']} ranks first."
-        if top["parts"]["air"]["score"] >= 2 and not top["parts"]["air"].get("unknown"):
+        if top["parts"]["air"]["score"] >= 1 and not top["parts"]["air"].get("unknown"):
             reading += " " + top["parts"]["air"]["why"]
         if partial:
             reading += f" No investigation has ever burned anything at {gname}, so every result here is a bound, not a test."
@@ -127,9 +140,16 @@ def rank(pid: str) -> dict | None:
         gaps.append({"text": f"{gravity_label(g)}: {n_g} tests in the loaded data, and no partial-gravity combustion data in PSI at all.", "source": _src("challenge")})
         gaps.append({"text": "Expected to fill it: " + "; ".join(f"{p['id']} ({p['name']})" for p in c["planned"]) + ".", "source": _src("combustion")})
     if box:
-        gaps.append({"text": (f"{len(real_inside)} real and {len(inside) - len(real_inside)} demo tests sit inside this place's oxygen and pressure range."
-                              if len(inside) else "No loaded test sits inside this place's oxygen and pressure range."),
+        n_demo = len(inside) - len(real_inside)
+        gaps.append({"text": ((f"{len(real_inside)} real and {n_demo} demo tests sit" if n_demo else f"{len(real_inside)} real tests sit")
+                              + " inside this place's oxygen and pressure range." if len(inside)
+                              else "No loaded test sits inside this place's oxygen and pressure range."),
                      "citation": {"kind": "aggregate", "op": "count", "field": "burned", "rows": inside.test_id.tolist()} if len(inside) else None})
+    if box:
+        no_p = int(tests.pressure_kpa.isna().sum())
+        if no_p:
+            gaps.append({"text": f"{no_p} of the {len(tests)} loaded tests do not record cabin pressure, so they cannot be placed in this range. "
+                                 "Most are solid-material tests (BASS, BASS-II, Saffire)."})
     not_loaded = [r["label"] for r in rows if r["n_tests"] == 0 and r["parts"]["burns"]["score"] == 3]
     if not_loaded:
         gaps.append({"text": "Directly relevant but not loaded here: " + ", ".join(not_loaded) + ". Their ranks rest on the catalogue description alone."})

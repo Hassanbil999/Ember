@@ -29,7 +29,8 @@ def explore() -> dict:
         invs.append({"id": f"inv:{r.id}", "label": r.id, "name": r.name, "pillars": json.loads(r.pillars),
                      "fuel_phase": r.fuel_phase, "burns": PHASE_WORD.get(r.fuel_phase, r.fuel_phase),
                      "hardware": r.hardware, "platform": r.platform, "years": years, "parent": r.parent,
-                     "n_tests": int(counts.get(r.id, 0)), "objectives": r.objectives})
+                     "n_tests": int(counts.get(r.id, 0)), "objectives": r.objectives,
+                     "datasets": json.loads(r.datasets) if r.datasets else []})
     by_id = {i["label"]: i for i in invs}
 
     # link strength between two investigations, with the reasons spelled out
