@@ -62,7 +62,8 @@ export default function HeroFlame({ state }: { state: FlameState }) {
       ctx.clearRect(0, 0, w, h);
       const cx = w / 2, base = h * 0.7, unit = Math.min(w, h) / 4.6;
       const flick = still ? 0 : Math.sin(t * 9) * 0.03 + Math.sin(t * 23.7) * 0.02;
-      const body = mix(BLUE, AMBER, clamp(cur.warm));
+      // two colour families, as in the GPU scene: blue when starved, amber when vigorous, a short crossing and no grey in between
+      const wk = clamp((cur.warm - 0.36) / 0.28), body = mix(BLUE, AMBER, wk * wk * (3 - 2 * wk));
 
       // airflow streaks (solids): speed and density follow the slider
       if (s.mode === "solid" && cur.flow > 0.01) {
@@ -105,8 +106,10 @@ export default function HeroFlame({ state }: { state: FlameState }) {
         // a dying ember when the flame is out
         glow(cx, base, unit * 0.5, [200, 90, 40], 0.5 * (1 - cur.life) * cur.known);
       } else {
-        ctx.fillStyle = ink; ctx.beginPath(); ctx.arc(cx, base - unit * 1.2, unit * 0.42, 0, 7); ctx.fill();
+        // the fibre, then the liquid: a dark sphere lit on its rim by its own flame
         ctx.strokeStyle = line; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx - unit * 2.4, base - unit * 1.2); ctx.lineTo(cx + unit * 2.4, base - unit * 1.2); ctx.stroke();
+        ctx.fillStyle = "#0A111E"; ctx.beginPath(); ctx.arc(cx, base - unit * 1.2, unit * 0.42, 0, 7); ctx.fill();
+        ctx.strokeStyle = `rgba(${body.join(",")},${0.25 + 0.6 * cur.life})`; ctx.lineWidth = 2; ctx.stroke();
       }
       // no nearby data: say so on the picture itself instead of drawing a confident flame
       if (cur.known < 0.5) {

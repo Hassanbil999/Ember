@@ -10,7 +10,7 @@ export default {
         flame: v("flame"), ext: v("ext"), unc: v("unc"), nodata: v("nodata"), warn: v("warn"),
         prevention: v("prevention"), detection: v("detection"), suppression: v("suppression"),
       },
-      fontFamily: { sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"], mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"] },
+      fontFamily: { sans: ["var(--font-archivo)", "system-ui", "sans-serif"], mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"] },
       borderRadius: { sm: "var(--r-sm)", DEFAULT: "var(--r-sm)", md: "var(--r-md)" },
       // nothing in the interface is set below 13 px
       fontSize: { "2xs": ["13px", "18px"], xs: ["13px", "18px"], sm: ["14px", "21px"], base: ["15px", "23px"], lg: ["18px", "26px"], xl: ["22px", "29px"] },

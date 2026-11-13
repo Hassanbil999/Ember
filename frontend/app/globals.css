@@ -7,7 +7,7 @@ html, body { height: 100%; }
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-archivo), system-ui, sans-serif;
   font-size: 15px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -27,8 +27,9 @@ body {
     radial-gradient(1px 1px at 91% 57%, rgba(255,255,255,.35) 50%, transparent 51%),
     radial-gradient(1px 1px at 6% 84%, rgba(255,255,255,.3) 50%, transparent 51%);
 }
-/* monospace is reserved for numbers and the technical trail */
-.mono, code, kbd, .num { font-family: var(--font-geist-mono), ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+/* numbers are set in the text face with equal-width digits; monospace is kept for code and the technical trail */
+.mono, .num { font-variant-numeric: tabular-nums; }
+code, kbd, [data-trail] { font-family: var(--font-geist-mono), ui-monospace, monospace; font-variant-numeric: tabular-nums; }
 .tnum { font-variant-numeric: tabular-nums; }
 ::selection { background: var(--highlight); }
 
@@ -47,15 +48,18 @@ button:disabled { cursor: default; opacity: .45; }
 .rule { border: 1px solid var(--line); }
 
 /* type scale: one thing big, the rest quiet */
-.display { font-size: clamp(34px, 4.4vw, 56px); line-height: 1.04; letter-spacing: -0.035em; font-weight: 600; }
-.title { font-size: 28px; line-height: 1.15; letter-spacing: -0.025em; font-weight: 600; }
+.display { font-size: clamp(34px, 4.4vw, 56px); line-height: 1.08; letter-spacing: -0.02em; font-weight: 600; font-stretch: 122%; text-wrap: balance; }
+.title { font-size: 28px; line-height: 1.18; letter-spacing: -0.015em; font-weight: 600; font-stretch: 114%; }
 .lead { font-size: 20px; line-height: 1.45; letter-spacing: -0.01em; }
 .eyebrow { font-size: 13px; font-weight: 500; letter-spacing: .02em; color: var(--text-3); }
 
 @layer components {
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); }
-.card-hover { transition: border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease), background var(--t-fast); }
-.card-hover:hover { border-color: var(--line-strong); background: var(--surface-2); transform: translateY(-2px); }
+.card-hover { transition: border-color var(--t-fast) var(--ease), background var(--t-fast); }
+.card-hover:hover { border-color: var(--line-strong); background: var(--surface-2); }
+/* a starting point on the home list: the title lights when pointed at, and the flame beside it answers */
+.start h2 { transition: color var(--t-fast) var(--ease); }
+.start:hover h2, .start:focus-visible h2 { color: var(--flame); }
 
 }
 

@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
-import { GeistSans } from "geist/font/sans";
+import { Archivo } from "next/font/google";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import Shell from "@/components/Shell";
+
+// Archivo carries a width axis: headings are set wide, like lettering on a spacecraft hull;
+// text and numbers use the normal width of the same family.
+const archivo = Archivo({ subsets: ["latin"], axes: ["wdth"], variable: "--font-archivo", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Freefall Atlas",
@@ -11,7 +15,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="void" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
+    <html lang="en" data-theme="void" className={`${archivo.variable} ${GeistMono.variable}`} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{

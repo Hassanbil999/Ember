@@ -106,3 +106,13 @@ Measured in the user's own Chrome (Intel UHD Graphics, Direct3D 11, display scal
 | Real-test replay running | 120 fps | 8.3 ms | 8.7 ms |
 
 The scene rendered at full resolution (it did not have to lower it). This closes the earlier open item "simulator animation unverified on a GPU" for this machine. The headless acceptance run uses the flat fallback (no GPU): idle 56 fps, preset 58 fps, slider drag 57 fps.
+
+## Round 5: home with the live flame, new typeface
+
+| Screen | Cold | Warm |
+|---|---|---|
+| Home (now carries the flame scene) | 439 ms | 120 ms |
+| Others | 109–314 ms | 124–280 ms |
+
+Interactions: home line → answer 17 ms, material 16 ms, navigation → Explore 32 ms, open test record 8 ms. Explore and Simulate animations 60 fps in the headless run.
+Not re-measured: the home flame's frame rate on the real graphics card. It is the same scene that measured 120 fps on Simulate; the browser window was in the background during this round, which pauses drawing, so no figure was taken.

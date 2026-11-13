@@ -123,7 +123,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen flex-col">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50">Skip to content</a>
       <header className="rule-b z-30 flex h-14 shrink-0 items-center gap-6 px-6" style={{ background: "var(--bg)" }}>
-        <Link href="/" className="flex shrink-0 items-center gap-2.5 whitespace-nowrap text-[17px] font-semibold tracking-tight" aria-label="Freefall Atlas home">
+        <Link href="/" className="flex shrink-0 items-center gap-2.5 whitespace-nowrap text-[17px] font-semibold" style={{ fontStretch: "118%" }} aria-label="Freefall Atlas home">
           <Logo /> Freefall Atlas
         </Link>
         <nav aria-label="Primary" className="flex h-full shrink-0 items-stretch gap-1">

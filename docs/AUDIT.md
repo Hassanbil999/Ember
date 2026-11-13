@@ -117,3 +117,23 @@ Screenshots: `after/scene_*.png` (captured with the GPU scene forced on through 
 Checked automatically: the replay starts from the nearest real test and returns to the simulator; sound is off by default; no page errors with the scene running.
 Verified afterwards in real Chrome on the build laptop (Intel UHD graphics): the GPU scene is active, sharp, and holds 120 fps live and during a replay.
 Not verified: how the sound feels, and how the scene looks to a person in motion. Both need someone at the machine.
+
+## 7. Round 5: design pass against the frontend-design skill
+
+The skill lists habits that make a page look generated. Checked against the app:
+
+| Habit | Found | Now |
+|---|---|---|
+| One coloured phrase in the headline | Home ("fire in space") | Removed |
+| Content cut into identical rounded cards | Home's four starting cards + a bordered band | A plain list; one flame window is the only framed object |
+| Arrow appended to link text | Home ("See the answer →", "Open the atmosphere trade →") | Removed; the whole line is the link |
+| Label above content that needs none | Home ("Or start here") | Removed |
+| Hover lift on every card | All cards | Border change only |
+| Monospace for small data labels | Numbers app-wide | Text face with equal-width digits |
+| Default typeface | Geist | Archivo, wide headings |
+| Hero that describes instead of shows | Home | The simulator's flame |
+| Near-black with one bright accent | Yes | Kept on purpose: the brief asks for space-dark with amber and blue, and both colours carry meaning |
+
+Still present, by choice: small section labels inside the provenance panel, Studio and image screens (they name groups of fields); middle dots in dense meta lines on the Studio and image screens (not redesigned).
+
+Screenshots: `after/home.png`, `after/light_home.png` (captured without a GPU, so they show the flat fallback flame). Tests: 90 backend tests and the browser acceptance test pass; no overlap, no clipped text, nothing under 13 px with the new face.

@@ -4,233 +4,233 @@
  "screens": {
   "home": {
    "cold": {
-    "usable_ms": 709,
-    "fcp_ms": 408,
-    "lcp_ms": 408,
+    "usable_ms": 439,
+    "fcp_ms": 264,
+    "lcp_ms": 264,
     "ok": true
    },
    "warm": {
-    "usable_ms": 286,
-    "fcp_ms": 152,
-    "lcp_ms": 152,
+    "usable_ms": 120,
+    "fcp_ms": 88,
+    "lcp_ms": 88,
     "ok": true
    }
   },
   "answer_moon_base": {
    "cold": {
-    "usable_ms": 477,
-    "fcp_ms": 208,
-    "lcp_ms": 416,
+    "usable_ms": 288,
+    "fcp_ms": 112,
+    "lcp_ms": 240,
     "ok": true
    },
    "warm": {
-    "usable_ms": 1123,
-    "fcp_ms": 960,
-    "lcp_ms": 1064,
+    "usable_ms": 165,
+    "fcp_ms": 92,
+    "lcp_ms": 140,
     "ok": true
    }
   },
   "answer_iss": {
    "cold": {
-    "usable_ms": 313,
-    "fcp_ms": 120,
-    "lcp_ms": 244,
+    "usable_ms": 176,
+    "fcp_ms": 92,
+    "lcp_ms": 148,
     "ok": true
    },
    "warm": {
-    "usable_ms": 324,
-    "fcp_ms": 124,
-    "lcp_ms": 256,
+    "usable_ms": 155,
+    "fcp_ms": 68,
+    "lcp_ms": 120,
     "ok": true
    }
   },
   "answer_microgravity": {
    "cold": {
-    "usable_ms": 251,
-    "fcp_ms": 96,
-    "lcp_ms": 224,
+    "usable_ms": 180,
+    "fcp_ms": 72,
+    "lcp_ms": 160,
     "ok": true
    },
    "warm": {
-    "usable_ms": 276,
-    "fcp_ms": 112,
-    "lcp_ms": 236,
+    "usable_ms": 136,
+    "fcp_ms": 76,
+    "lcp_ms": 132,
     "ok": true
    }
   },
   "answer_untested": {
    "cold": {
-    "usable_ms": 313,
-    "fcp_ms": 108,
-    "lcp_ms": 284,
+    "usable_ms": 152,
+    "fcp_ms": 88,
+    "lcp_ms": 152,
     "ok": true
    },
    "warm": {
-    "usable_ms": 275,
-    "fcp_ms": 136,
-    "lcp_ms": 244,
+    "usable_ms": 134,
+    "fcp_ms": 84,
+    "lcp_ms": 132,
     "ok": true
    }
   },
   "answer_question": {
    "cold": {
-    "usable_ms": 351,
-    "fcp_ms": 120,
-    "lcp_ms": 316,
+    "usable_ms": 150,
+    "fcp_ms": 80,
+    "lcp_ms": 144,
     "ok": true
    },
    "warm": {
-    "usable_ms": 334,
-    "fcp_ms": 124,
-    "lcp_ms": 272,
+    "usable_ms": 140,
+    "fcp_ms": 88,
+    "lcp_ms": 140,
     "ok": true
    }
   },
   "explore": {
    "cold": {
-    "usable_ms": 276,
-    "fcp_ms": 124,
-    "lcp_ms": 264,
+    "usable_ms": 148,
+    "fcp_ms": 68,
+    "lcp_ms": 136,
     "ok": true
    },
    "warm": {
-    "usable_ms": 324,
-    "fcp_ms": 100,
-    "lcp_ms": 268,
+    "usable_ms": 136,
+    "fcp_ms": 84,
+    "lcp_ms": 124,
     "ok": true
    }
   },
   "trade": {
    "cold": {
-    "usable_ms": 470,
-    "fcp_ms": 156,
-    "lcp_ms": 456,
+    "usable_ms": 324,
+    "fcp_ms": 96,
+    "lcp_ms": 284,
     "ok": true
    },
    "warm": {
-    "usable_ms": 485,
-    "fcp_ms": 140,
-    "lcp_ms": 460,
+    "usable_ms": 297,
+    "fcp_ms": 92,
+    "lcp_ms": 300,
     "ok": true
    }
   },
   "simulate": {
    "cold": {
-    "usable_ms": 411,
-    "fcp_ms": 108,
-    "lcp_ms": 344,
+    "usable_ms": 243,
+    "fcp_ms": 88,
+    "lcp_ms": 232,
     "ok": true
    },
    "warm": {
-    "usable_ms": 433,
-    "fcp_ms": 112,
-    "lcp_ms": 340,
+    "usable_ms": 252,
+    "fcp_ms": 68,
+    "lcp_ms": 236,
     "ok": true
    }
   },
   "insights": {
    "cold": {
-    "usable_ms": 374,
-    "fcp_ms": 132,
-    "lcp_ms": 316,
+    "usable_ms": 159,
+    "fcp_ms": 100,
+    "lcp_ms": 144,
     "ok": true
    },
    "warm": {
-    "usable_ms": 357,
-    "fcp_ms": 144,
-    "lcp_ms": 296,
+    "usable_ms": 170,
+    "fcp_ms": 96,
+    "lcp_ms": 152,
     "ok": true
    }
   },
   "studio": {
    "cold": {
-    "usable_ms": 398,
-    "fcp_ms": 188,
-    "lcp_ms": 236,
+    "usable_ms": 247,
+    "fcp_ms": 72,
+    "lcp_ms": 108,
     "ok": true
    },
    "warm": {
-    "usable_ms": 392,
-    "fcp_ms": 152,
-    "lcp_ms": 200,
+    "usable_ms": 174,
+    "fcp_ms": 84,
+    "lcp_ms": 92,
     "ok": true
    }
   },
   "data": {
    "cold": {
-    "usable_ms": 349,
-    "fcp_ms": 108,
-    "lcp_ms": 328,
+    "usable_ms": 217,
+    "fcp_ms": 72,
+    "lcp_ms": 188,
     "ok": true
    },
    "warm": {
-    "usable_ms": 340,
-    "fcp_ms": 104,
-    "lcp_ms": 248,
+    "usable_ms": 203,
+    "fcp_ms": 88,
+    "lcp_ms": 172,
     "ok": true
    }
   },
   "image": {
    "cold": {
-    "usable_ms": 235,
-    "fcp_ms": 120,
-    "lcp_ms": 168,
+    "usable_ms": 118,
+    "fcp_ms": 92,
+    "lcp_ms": 104,
     "ok": true
    },
    "warm": {
-    "usable_ms": 214,
-    "fcp_ms": 112,
-    "lcp_ms": 152,
+    "usable_ms": 115,
+    "fcp_ms": 76,
+    "lcp_ms": 96,
     "ok": true
    }
   }
  },
  "interactions": {
-  "home_to_answer_ms": 33,
-  "answer_pick_material_ms": 32,
-  "inp_answer_ms": 104,
-  "nav_to_explore_ms": 81,
-  "explore_open_node_ms": 12,
+  "home_to_answer_ms": 17,
+  "answer_pick_material_ms": 16,
+  "inp_answer_ms": 48,
+  "nav_to_explore_ms": 32,
+  "explore_open_node_ms": 6,
   "explore_switch_view_frames": {
    "frames": 42,
    "median_ms": 16.7,
-   "p95_ms": 16.7,
+   "p95_ms": 16.8,
    "worst_ms": 16.8,
    "fps": 60.0
   },
   "explore_open_cluster_frames": {
-   "frames": 43,
+   "frames": 42,
    "median_ms": 16.7,
    "p95_ms": 16.7,
    "worst_ms": 16.7,
    "fps": 60.0
   },
-  "inp_explore_ms": 72,
+  "inp_explore_ms": 48,
   "lab_idle_frames": {
-   "frames": 56,
+   "frames": 60,
    "median_ms": 16.7,
-   "p95_ms": 33.3,
-   "worst_ms": 33.4,
-   "fps": 56.0
+   "p95_ms": 16.8,
+   "worst_ms": 16.8,
+   "fps": 60.0
   },
   "lab_preset_frames": {
-   "frames": 53,
+   "frames": 54,
    "median_ms": 16.7,
-   "p95_ms": 16.8,
-   "worst_ms": 33.3,
-   "fps": 57.8
+   "p95_ms": 16.7,
+   "worst_ms": 16.8,
+   "fps": 60.0
   },
   "lab_slider_drag_frames": {
-   "frames": 70,
+   "frames": 72,
    "median_ms": 16.7,
-   "p95_ms": 16.8,
-   "worst_ms": 50,
-   "fps": 56.8
+   "p95_ms": 16.7,
+   "worst_ms": 16.8,
+   "fps": 60.0
   },
-  "inp_lab_ms": 88,
-  "open_provenance_ms": 18,
-  "provenance_open_row_ms": 8,
-  "inp_data_ms": 136
+  "inp_lab_ms": 40,
+  "open_provenance_ms": 8,
+  "provenance_open_row_ms": 3,
+  "inp_data_ms": 56
  },
  "page_errors": []
 }
