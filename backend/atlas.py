@@ -176,7 +176,7 @@ def tests_near(tests: pd.DataFrame, conditions: dict, categories: dict | None = 
                dataset: str | None = None) -> list[dict]:
     t = tests[~tests.excluded]
     if dataset:
-        t = t[t.dataset == dataset]
+        t = t[t.dataset.isin(dataset)] if isinstance(dataset, (list, tuple)) else t[t.dataset == dataset]
     vars_ = [v for v in conditions if v in NUMERIC and v != "gravity_g"]
     if not vars_:
         return []

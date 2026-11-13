@@ -65,7 +65,7 @@ def test_flagged_input_blocks_the_derived_value():
 
 def test_dataset_rows_with_impossible_values(st):
     bad = st.tests[st.tests["invalid"].map(bool)]
-    assert {"FLEX-114", "BS-023"} <= set(bad.index)      # one in the real FLEX table, one in the demo solids
+    assert "FLEX-114" in set(bad.index)                  # "0" pressure in the real FLEX table
     for tid, r in bad.iterrows():
         assert r["excluded"], f"{tid} must be excluded from charts and models"
         assert "impossible_value" in r["flags"]
@@ -143,15 +143,23 @@ def test_topics_separate_measured_inferred_untested(api, tid):
         assert t[k]["summary"] and isinstance(t[k]["items"], list)
     assert t["untested"]["items"], "every answer states what was never tested"
     assert t["sources"], "every answer cites a source passage"
-    assert t["demo"] is True
+    assert t["demo"] is False, "no synthetic test data is loaded any more"
 
 
 def test_moon_base_answer_for_one_material(api):
     t = api.get("/api/topic/moon-base", params={"material": "PMMA"}).json()
-    assert t["material"] == "PMMA" and "PMMA" in t["finding"]
-    assert t["grade"]["label"] == "Model estimate"           # lunar gravity has no data: never graded as measured
+    assert t["material"] == "PMMA" and "PMMA" in t["finding"] and "22.2%" in t["finding"]
+    assert t["grade"]["label"] == "Not tested"               # no PMMA test at Moon-base oxygen, no test at lunar gravity
     assert any("Moon gravity" in i["text"] for i in t["untested"]["items"])
-    assert all(m["confidence"] == "low" for m in t["materials"]), "untested gravity caps confidence at low"
+    assert all(m["verdict"].startswith("tested only at") for m in t["materials"]), "no real solid test reaches 30 % O2"
+
+
+def test_moon_base_answer_uses_only_real_data(api):
+    t = api.get("/api/topic/moon-base").json()
+    assert "No solid material has ever been burned in orbit" in t["finding"]
+    pts = t["visual"]["points"]
+    assert pts and {p["dataset"] for p in pts} <= {"flex", "cfig_normal"}
+    assert t["visual"]["band"]["o2_frac"][1] == pytest.approx(0.222)
 
 
 def test_explore_and_insights_payloads(api):
@@ -167,7 +175,8 @@ def test_explore_and_insights_payloads(api):
 
 
 def test_lab_grid_shape_and_domain(api):
-    g = api.get("/api/lab/grid", params={"mode": "solid", "item": "PMMA"}).json()
+    g = api.get("/api/lab/grid", params={"mode": "gas", "item": "30% butane"}).json()
+    assert g["source"] == "real CFI-G gas-flame" and g["rate_label"] is None
     n = 1
     for a in g["axes"]:
         n *= len(a["values"])

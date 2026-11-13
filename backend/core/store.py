@@ -60,8 +60,10 @@ class Store:
         from . import config
         return config.variables()
 
-    def usable_tests(self, dataset: str | None = None) -> pd.DataFrame:
+    def usable_tests(self, dataset: str | list | None = None) -> pd.DataFrame:
         t = self.tests[~self.tests["excluded"]]
+        if isinstance(dataset, (list, tuple)):
+            return t[t["dataset"].isin(dataset)]
         return t[t["dataset"] == dataset] if dataset else t
 
 

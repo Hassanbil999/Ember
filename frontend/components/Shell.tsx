@@ -99,7 +99,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const t = setTimeout(() => {
       import("@/app/answer/page"); import("@/app/explore/page"); import("@/app/lab/page"); import("@/app/insights/page"); import("@/app/data/page"); import("@/app/trade/page");
-      ["/explore", "/insights", "/refinery", "/lab/items", "/atmosphere", "/lab/grid?mode=solid&item=PMMA&gravity=0&diluent=N2"].forEach((u) => get(u).catch(() => {}));
+      ["/explore", "/insights", "/refinery", "/lab/items", "/atmosphere", "/lab/grid?mode=gas&item=30%25%20butane&gravity=0&diluent=N2"].forEach((u) => get(u).catch(() => {}));
     }, 900);
     return () => clearTimeout(t);
   }, []);

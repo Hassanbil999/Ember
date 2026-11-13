@@ -24,35 +24,50 @@ const TYPES: { id: ChartType; label: string; hint: string }[] = [
 const NUMS = ["o2_frac", "pressure_kpa", "o2_pp_kpa", "flow_cm_s", "d0_mm", "thickness_mm", "burn_rate_k_mm2_s", "extinction_d_mm", "spread_rate_mm_s", "img_burn_rate_k_mm2_s"];
 const COLORS = ["burned", "fuel", "material", "diluent", "campaign", "o2_frac", "pressure_kpa", "dataset"];
 
+/* starting chart and model per dataset; every dataset here is real NASA PSI data */
+type DsDefault = { x: string; y: string; logX: boolean; facet: string; model: string; title: string;
+  envelope?: { x: string; y: string; fixed: Record<string, any> } };
+const SOLID: DsDefault = { x: "o2_frac", y: "thickness_mm", logX: false, facet: "material", model: "gas_sustain",
+  title: "Solid-material tests in orbit: oxygen and sample thickness" };
+const DS_DEFAULTS: Record<string, DsDefault> = {
+  flex: { x: "o2_frac", y: "burn_rate_k_mm2_s", logX: false, facet: "fuel", model: "droplet_burn", title: "Burning-rate constant vs oxygen",
+    envelope: { x: "pressure_kpa", y: "o2_frac", fixed: { fuel: "n-heptane", co2_frac: 0, he_frac: 0, d0_mm: 3 } } },
+  cfig_normal: { x: "o2_frac", y: "pressure_kpa", logX: false, facet: "fuel", model: "gas_sustain", title: "Gas flames: still burning or went out, by oxygen and pressure",
+    envelope: { x: "pressure_kpa", y: "o2_frac", fixed: { fuel: "30% butane", fuel_flow_mg_s: 1.0 } } },
+  bass2: SOLID, saffire1: SOLID, saffire2: SOLID, saffire3: SOLID,
+};
+const dsDefault = (ds: string) => DS_DEFAULTS[ds] ?? SOLID;
+
 function StudioInner() {
   const sp = useSearchParams();
   const meta = useMeta();
   const { openProv, addReport, report, removeReport, clearReport } = useUI();
-  const [dataset, setDataset] = useState(sp.get("dataset") || "bass2_demo");
+  const [dataset, setDataset] = useState(sp.get("dataset") || "flex");
+  const d0 = dsDefault(sp.get("dataset") || "flex");
   const [type, setType] = useState<ChartType>((sp.get("chart") as ChartType) || "scatter");
   const [rows, setRows] = useState<any[]>([]);
   const [allRows, setAllRows] = useState<any[]>([]);
-  const [x, setX] = useState("flow_cm_s");
-  const [y, setY] = useState("o2_frac");
+  const [x, setX] = useState(d0.x);
+  const [y, setY] = useState(d0.y);
   const [color, setColor] = useState("burned");
   const [size, setSize] = useState("");
-  const [logX, setLogX] = useState(true);
+  const [logX, setLogX] = useState(d0.logX);
   const [logY, setLogY] = useState(false);
   const [palette, setPalette] = useState<PaletteName>("default");
-  const [title, setTitle] = useState("Flame spread vs extinction across flow speed");
+  const [title, setTitle] = useState(d0.title);
   const [ann, setAnn] = useState<Annotation[]>([]);
   const [annMode, setAnnMode] = useState(false);
   const [pending, setPending] = useState<{ x: number; y: number } | null>(null);
   const [annText, setAnnText] = useState("");
   const [sel, setSel] = useState<string[] | null>(null);
-  const [facet, setFacet] = useState("material");
+  const [facet, setFacet] = useState(d0.facet);
   const [grid, setGrid] = useState<any>(null);
   const [rel, setRel] = useState<any>(null);
   const [metric, setMetric] = useState<"spearman" | "mutual_info">("spearman");
   const [pvars, setPvars] = useState<string[]>([]);
   const [gap, setGap] = useState<any>(null);
   const [adv, setAdv] = useState<any>(null);
-  const [advModel, setAdvModel] = useState("solid_burn");
+  const [advModel, setAdvModel] = useState(d0.model);
   const [advTarget, setAdvTarget] = useState("moon_base");
   const [cite, setCite] = useState<any>(null);
   const [showTable, setShowTable] = useState(false);
@@ -73,16 +88,17 @@ function StudioInner() {
       else setRows(r);
     });
     get(`/relationships/${dataset}`).then((r) => { setRel(r); setPvars(r.order.map((i: number) => r.vars[i]).filter((v: string) => v !== "burned")); });
-    if (dataset === "flex") { setX("o2_frac"); setY("burn_rate_k_mm2_s"); setLogX(false); setFacet("fuel"); setAdvModel("droplet_burn"); if (type === "scatter") setTitle("Burning-rate constant vs oxygen"); }
-    else { setX("flow_cm_s"); setY("o2_frac"); setLogX(true); setFacet("material"); setAdvModel("solid_burn"); if (type === "scatter") setTitle("Flame spread vs extinction across flow speed"); }
+    const d = dsDefault(dataset);
+    setX(d.x); setY(d.y); setLogX(d.logX); setFacet(d.facet); setAdvModel(d.model);
+    if (type === "scatter") setTitle(d.title);
     setSel(null); setAnn([]);
   }, [dataset, groupFilter]);
 
   useEffect(() => {
     if (type !== "envelope") return;
-    const model = dataset === "flex" ? "droplet_burn" : "solid_burn";
-    const [ex, ey, lx] = dataset === "flex" ? ["pressure_kpa", "o2_frac", false] : ["flow_cm_s", "o2_frac", true];
-    get(`/envelope?model=${model}&x=${ex}&y=${ey}&logx=${lx}&fixed=${encodeURIComponent(JSON.stringify(dataset === "flex" ? { fuel: "n-heptane", co2_frac: 0, he_frac: 0, d0_mm: 3 } : { material: "PMMA", thickness_mm: 0.5, gravity_g: 0, pressure_kpa: 101.3 }))}`).then(setGrid);
+    // solid-material tables have no model (no pressure, and BASS-II no outcome): show the droplet envelope for them
+    const d = dsDefault(dataset), env = d.envelope ?? DS_DEFAULTS.flex.envelope!, model = d.envelope ? d.model : "droplet_burn";
+    get(`/envelope?model=${model}&x=${env.x}&y=${env.y}&logx=false&fixed=${encodeURIComponent(JSON.stringify(env.fixed))}`).then(setGrid);
   }, [type, dataset]);
   useEffect(() => { if (type === "gap" && !gap) get("/gapmap").then(setGap); }, [type, gap]);
   useEffect(() => { if (type === "advisor") post("/advisor", { model: advModel, target: advTarget }).then(setAdv); }, [type, advModel, advTarget]);
@@ -126,7 +142,8 @@ ${body}<h2>References</h2><pre>${c.text}</pre><h2>BibTeX</h2><pre>${c.bibtex}</p
         <div>
           <p className="eyebrow">Data</p>
           <select className="mt-2 w-full" value={dataset} onChange={(e) => setDataset(e.target.value)} aria-label="Dataset">
-            <option value="bass2_demo">Solid tests (BASS-II-shaped demo)</option><option value="flex">Droplet tests (FLEX, NASA PSI-69)</option>
+            {Object.entries(meta?.datasets ?? {}).filter(([, d]) => d.adapter !== "pdf_reports" && d.enabled)
+              .map(([id, d]) => <option key={id} value={id}>{d.title.replace(" experimental table", "")}</option>)}
           </select>
           <p className="mono mt-1.5 text-2xs text-ink-3">{plotted.length} tests{groupFilter ? ` · group ${groupFilter.split(":").at(-1)}` : ""}{sel ? ` · ${sel.length} brushed` : ""}</p>
           {sel && <button className="btn mt-2 h-6 text-xs" onClick={() => setSel(null)}>clear selection</button>}

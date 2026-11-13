@@ -23,21 +23,8 @@ models:
     features: [o2_frac, pressure_kpa, d0_mm, co2_frac, he_frac, fuel]
     group: campaign
     only_when: { burned: 0 }
-  solid_burn:
-    dataset: bass2_demo
-    label: Solid — flame spread vs extinction
-    type: gp_classifier
-    target: burned
-    features: [o2_frac, pressure_kpa, flow_cm_s, thickness_mm, gravity_g, material]
-    group: campaign
-  solid_spread:
-    dataset: bass2_demo
-    label: Solid — flame spread rate
-    type: gp_regressor
-    target: spread_rate_mm_s
-    features: [o2_frac, pressure_kpa, flow_cm_s, thickness_mm, gravity_g, material]
-    group: campaign
-    only_when: { burned: 1 }
+  # No solid-material model: the real solid tables (BASS-II, SAFFIRE) record no pressure, and BASS-II
+  # has no burned / went-out column. The synthetic fixture that trained solid_burn / solid_spread is off.
   gas_sustain:
     dataset: cfig_normal
     label: Gas flame (CFI-G) — still burning vs self-extinguished

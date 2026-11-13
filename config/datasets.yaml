@@ -235,10 +235,10 @@ datasets:
     constants: { gravity_g: 0.0, flow_cm_s: 0.0 }
     outcome_map: { "burned": 1, "burned to completion": 1, "flame extinction": 0, "extinguished": 0, "no ignition": 0 }
 
-  bass2_demo:
+  bass2_demo:        # synthetic stand-in used before the real BASS-II table was loaded; kept for the adapter tests
     title: Solid-material flammability tests (BASS-II-shaped demo fixture)
     adapter: bass2_solids
-    enabled: true
+    enabled: false
     demo: true
     investigations: [BASS-II]
     files: [bass2_flammability.xlsx]
@@ -266,9 +266,11 @@ datasets:
     adapter: pdf_reports
     enabled: true
     demo: true
-    # the synthetic droplet report is left out now that the real FLEX table is loaded: it would contradict it
-    files: [bass2_demo_report.pdf, detection_suppression_notes.pdf, fire_safety_context.pdf]
-    license: "Demo fixture text and compiled catalog notes — CC0."
+    # The synthetic droplet and solid reports are left out: they would contradict the real tables.
+    # What remains are two context notes compiled by the platform authors from the challenge brief;
+    # they are not NASA documents and keep the "demo" label until NASA documents replace them.
+    files: [detection_suppression_notes.pdf, fire_safety_context.pdf]
+    license: "Compiled context notes (platform authors, not NASA) — CC0."
 
 # Validation rules, applied to every tabular dataset after normalization.
 # Flag, never silently fix. action: flag | exclude
