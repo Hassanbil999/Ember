@@ -19,7 +19,7 @@ from .core import config
 from .core.config import ARTIFACTS, PROCESSED
 
 W, H = 1700, 1040
-NUMERIC = ["o2_frac", "pressure_kpa", "o2_pp_kpa", "flow_cm_s", "d0_mm", "thickness_mm", "gravity_g"]
+NUMERIC = ["o2_frac", "pressure_kpa", "o2_pp_kpa", "flow_cm_s", "d0_mm", "thickness_mm", "fuel_flow_mg_s", "gravity_g"]
 OUTCOMES = ["burned", "burn_rate_k_mm2_s", "extinction_d_mm", "spread_rate_mm_s"]
 PILLAR_ORDER = ["prevention", "detection", "suppression"]
 
@@ -49,6 +49,14 @@ def group_tests(tests: pd.DataFrame, dataset: str, mode: str = "regime", max_gro
         return groups
     feats = [c for c in NUMERIC if t[c].notna().mean() > 0.9 and t[c].nunique() > 1]
     cats = [c for c in ["diluent", "fuel", "material"] if t[c].notna().mean() > 0.9 and t[c].nunique() > 1]
+    if t["burned"].dropna().nunique() < 2:
+        # no outcome to split on (a conditions-only table): group by what burned, else by campaign
+        if not cats:
+            return group_tests(tests, dataset, "campaign", max_groups)
+        c = cats[0]
+        label = config.variables().get(c, {}).get("label", c)
+        return [_group_summary(g, f"{label}: {val}", [f"{c} = {val}"], dataset, f"{dataset}:{c}:{val}")
+                for val, g in sorted(t.groupby(c), key=lambda kv: -len(kv[1]))[:max_groups]]
     X = t[feats].copy()
     for c in cats:
         for val in sorted(t[c].dropna().unique()):

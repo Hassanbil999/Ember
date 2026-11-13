@@ -17,6 +17,7 @@ SPEED = {"cm/s": 1.0, "mm/s": 0.1, "m/s": 100.0, "ft/min": 0.508}
 TIME = {"s": 1.0, "ms": 0.001, "min": 60.0}
 RATE_AREA = {"mm^2/s": 1.0, "mm2/s": 1.0, "mm²/s": 1.0, "cm^2/s": 100.0, "m^2/s": 1e6}
 SPREAD = {"mm/s": 1.0, "cm/s": 10.0, "m/s": 1000.0}
+MASS_RATE = {"mg/s": 1.0, "g/s": 1000.0, "mg/min": 1 / 60}
 
 CANON_TABLE = {
     "pressure_kpa": ("kPa", PRESSURE),
@@ -27,6 +28,7 @@ CANON_TABLE = {
     "flow_cm_s": ("cm/s", SPEED),
     "burn_rate_k_mm2_s": ("mm²/s", RATE_AREA),
     "spread_rate_mm_s": ("mm/s", SPREAD),
+    "fuel_flow_mg_s": ("mg/s", MASS_RATE),
 }
 
 # Physical limits in canonical units: (lower bound, lower bound allowed?, upper bound or None, plain reason).
@@ -46,6 +48,7 @@ PHYSICAL = {
     "co2_frac": (0.0, True, 1.0, "A gas fraction must lie between 0 and 1."),
     "he_frac": (0.0, True, 1.0, "A gas fraction must lie between 0 and 1."),
     "burn_time_s": (0.0, True, None, "A burn time cannot be negative."),
+    "fuel_flow_mg_s": (0.0, True, None, "A fuel flow rate cannot be negative."),
 }
 
 

@@ -39,6 +39,67 @@ datasets:
     # Disruption (the droplet broke apart) decides nothing about burning vs extinction, so it maps to no outcome.
     outcome_map: { "completion": 1, "extinction": 0 }
 
+  cfig_normal:
+    title: CFI-G gas flames (NASA PSI-159 experimental table, normal flames)
+    adapter: psi_gas_flames
+    enabled: true
+    demo: false
+    investigations: [CFI-G]
+    files: ["PSI-159_Experimental table_CFI-G_Normal Flames.csv"]
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-159. See the PSI terms of use."
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    id_prefix: "CFIG-"
+    # Gas fed through a spherical porous burner into a closed chamber of known O2 and pressure (ACME hardware, ISS).
+    # "Test id", "Campaign", "Date", "Investigation", "Outcome" and "Test end" are helper columns built by the
+    # adapter from the file's own columns; they are recorded as derived.
+    columns:
+      "Test id": test_id
+      "Campaign": campaign
+      "Investigation": investigation_id
+      "Fuel": fuel
+      "XO2 before test": o2_frac
+      "approx p (bar)": pressure_kpa
+      "mHC (mg/s)": fuel_flow_mg_s
+      "burn time (sec)": burn_time_s
+      "Outcome": burned
+      "Test end": test_end
+      "Date": mission_date
+    units: { "approx p (bar)": bar, "mHC (mg/s)": "mg/s" }
+    constants: { gravity_g: 0.0 }
+    outcome:
+      column: "Self-ext or flow term"
+      ignition_column: "Hot ignition"
+      cool_column: "Cool flame?"
+    # FT: the flame was still burning when the fuel flow was stopped (sustained). SE: it went out by itself.
+    # "-" (no hot ignition) decides nothing about sustained burning and maps to no outcome.
+    outcome_map: { "ft": 1, "se": 0 }
+
+  flame_design_normal:
+    title: ACME Flame Design gas flames (NASA PSI-10 experimental table, normal flames)
+    adapter: psi_gas_flames
+    enabled: true
+    demo: false
+    investigations: [ACME]
+    files: ["PSI-10_Experimental table_Flame Design_Normal Flame.csv"]
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-10. See the PSI terms of use."
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    id_prefix: "FD-"
+    # This table records conditions only; it has no outcome column, so nothing is claimed about burning.
+    # "RAMP"/"RAMPED" fuel cells (flow changed during the test) are read as no single value.
+    columns:
+      "Test id": test_id
+      "Campaign": campaign
+      "Investigation": investigation_id
+      "Fuel": fuel
+      "XO2 (init)": o2_frac
+      "pinit (atm)": pressure_kpa
+      "mfuel (mg/s)": fuel_flow_mg_s
+      "Date": mission_date
+    units: { "pinit (atm)": atm, "mfuel (mg/s)": "mg/s" }
+    constants: { gravity_g: 0.0 }
+
   flex_demo:        # synthetic stand-in used before the real table was loaded; kept for the adapter tests
     title: Droplet combustion tests (FLEX-shaped demo fixture)
     adapter: flex_droplets

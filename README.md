@@ -2,7 +2,7 @@
 
 What NASA knows about fire in space, and what it doesn't: microgravity combustion experiments (NASA PSI) with their evidence and their gaps in one place. Ask a question or pick a starting point, get a finding with its sources, and see what was measured, what a model infers and what was never tested.
 
-> **What is real and what is not.** The droplet data is the real FLEX experimental table from NASA PSI (PSI-69, 274 tests), loaded as published. The solid-material tests and the three reports are still a **synthetic demo fixture** shaped like BASS-II; every screen that uses them says so, and they are never presented as NASA results. Breathing and spacewalk limits on the atmosphere map come from NASA medical technical briefs, cited on the screen.
+> **What is real and what is not.** Three NASA PSI experimental tables are loaded as published: FLEX droplets (PSI-69, 274 tests), CFI-G gas flames (PSI-159, 179 tests at 18–40 % O₂ and 0.5–3 bar, with whether each flame went out by itself) and ACME Flame Design gas flames (PSI-10, 207 tests, conditions only). `python run.py fetch` downloads them and 13 more PSI tables, checksum-verified. The solid-material tests and the three reports are still a **synthetic demo fixture** shaped like BASS-II; every screen that uses them says so, and they are never presented as NASA results. Breathing and spacewalk limits on the atmosphere map come from NASA medical technical briefs, cited on the screen.
 
 ## Run it (local, verified)
 

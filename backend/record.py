@@ -32,6 +32,7 @@ FIELDS = [
     ("flow_cm_s", "Airflow past the sample", "conditions"),
     ("d0_mm", "Droplet size at ignition", "conditions"),
     ("thickness_mm", "Sample thickness", "conditions"),
+    ("fuel_flow_mg_s", "Fuel flow into the flame", "conditions"),
     ("gravity_g", "Gravity", "conditions"),
     ("test_end", "How the test ended", "results"),
     ("burned", "Outcome", "results"),

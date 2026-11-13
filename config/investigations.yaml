@@ -108,6 +108,7 @@ investigations:
     platform: ISS / CIR
     years: [2017, 2020]
     objectives: Six gas-flame experiments on soot, flame stability and efficiency, including CFI-G and E-FIELD Flames.
+    datasets: [flame_design_normal]
   - id: CFI-G
     name: Cool Flames Investigation with Gases
     pillars: [prevention]
@@ -117,6 +118,7 @@ investigations:
     years: [2021, 2022]
     parent: ACME
     objectives: Gaseous cool and hot diffusion flames at oxygen fractions up to 85% O₂.
+    datasets: [cfig_normal]
   - id: E-FIELD Flames
     name: Electric-Field Effects on Laminar Diffusion Flames
     pillars: [prevention]

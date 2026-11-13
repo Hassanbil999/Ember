@@ -41,9 +41,16 @@ def _datasets_for(p, q: str) -> list[str]:
         out.append("flex")
     if "material" in p.categories or re.search(r"solid|material|spread|fabric|pmma|bass|flow|ventilat|cotton|nomex|acetal", ql):
         out.append("bass2_demo")
+    if re.search(r"\bgas\b|gaseous|burner|\bjet\b|ethylene|propane|butane|ethane|methane|cfi-?g|acme|cool flame", ql):
+        out.append("cfig_normal")
     if not out and (p.conditions or p.categories):
-        out = ["bass2_demo", "flex"]
+        out = ["bass2_demo", "flex", "cfig_normal"]
     return out
+
+
+# what each dataset's tests are called, and what burned = 1 means for them
+DATASET_NOUN = {"flex": "droplet", "bass2_demo": "solid-material", "cfig_normal": "gas-flame (CFI-G)"}
+SUSTAINED = {"cfig_normal": "were still burning when the fuel flow was stopped (the rest went out by themselves)"}
 
 
 def _best_sentences(text: str, core: set[str], k: int = 2) -> list[str]:
@@ -115,10 +122,10 @@ def answer(q: str, role: str = "researcher") -> dict:
             cond_txt = f"{p.environment} conditions ({env})" if env else f"{p.environment} conditions"
         cond_txt = cond_txt or "the matched conditions"
         qcite = {"kind": "query", "text": cond_txt + " " + q}
-        dlabel = {"flex": "droplet", "bass2_demo": "solid-material"}[ds]
+        dlabel = DATASET_NOUN.get(ds, "")
         if metric == "burned":
             nb = int(vals.sum())
-            s = {"text": f"{nb} of {len(ids_m)} {dlabel} tests near {cond_txt} sustained burning.",
+            s = {"text": f"{nb} of {len(ids_m)} {dlabel} tests near {cond_txt} {SUSTAINED.get(ds, 'sustained burning')}.",
                  "citations": [{"kind": "aggregate", "op": "count_true", "field": "burned", "rows": ids_m, "display": str(nb)},
                                {"kind": "aggregate", "op": "count", "field": "burned", "rows": ids_m, "display": str(len(ids_m))}, qcite],
                  "role": "key", "dataset": ds}
@@ -150,7 +157,7 @@ def answer(q: str, role: str = "researcher") -> dict:
         grade = sel_grade if grade == "No data" or sel_grade == "Measured" else grade
         if chart is None:
             xv = "o2_frac"
-            yv = "pressure_kpa" if ds == "flex" else "flow_cm_s"
+            yv = "flow_cm_s" if ds == "bass2_demo" else "pressure_kpa"
             chart = {"type": "scatter", "dataset": ds, "x": xv, "y": yv, "color": "burned" if metric == "burned" else metric,
                      "highlight": ids_m, "marker": {k: v for k, v in p.conditions.items() if k in (xv, yv)}}
 

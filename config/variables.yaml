@@ -115,8 +115,17 @@ variables:
     label: Fuel
     kind: category
     role: condition
-    description: Liquid fuel of the droplet.
-    synonyms: [fuel, heptane, n-heptane, methanol, decane, n-decane, ethanol]
+    description: Fuel burned in the test (the droplet's liquid, or the gas fed to a burner).
+    synonyms: [fuel, heptane, n-heptane, methanol, decane, n-decane, ethanol, ethylene, propane, butane, ethane, methane, gas flame]
+  fuel_flow_mg_s:
+    label: Fuel flow rate
+    short: ṁ
+    unit: mg/s
+    kind: number
+    role: condition
+    description: Mass flow of fuel fed to a gas flame (spherical burner); more fuel means a larger flame.
+    synonyms: [fuel flow, fuel flow rate, mass flow, burner flow]
+    valid_range: [0, 100]
   material:
     label: Material
     kind: category

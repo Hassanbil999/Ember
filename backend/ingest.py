@@ -17,7 +17,7 @@ from .core.validate import validate
 TEST_COLS = ["test_id", "dataset", "investigation_id", "campaign", "fuel", "material", "diluent", "o2_frac",
              "n2_frac", "co2_frac", "he_frac", "burn_time_s", "test_end",
              "pressure_kpa", "o2_pp_kpa", "flow_cm_s", "d0_mm", "thickness_mm", "gravity_g", "burned",
-             "burn_rate_k_mm2_s", "extinction_d_mm", "spread_rate_mm_s", "mission_date", "flags", "invalid", "excluded", "demo", "_row"]
+             "burn_rate_k_mm2_s", "extinction_d_mm", "spread_rate_mm_s", "fuel_flow_mg_s", "mission_date", "flags", "invalid", "excluded", "demo", "_row"]
 
 
 def run() -> dict:
@@ -88,7 +88,7 @@ def run() -> dict:
     tests["invalid"] = tests["invalid"].map(lambda d: json.dumps(d if isinstance(d, dict) else {}, ensure_ascii=False))
     tests["image_derived"] = "[]"
     for c in ["n2_frac", "co2_frac", "he_frac", "burn_time_s", "o2_frac", "pressure_kpa", "o2_pp_kpa", "flow_cm_s", "d0_mm", "thickness_mm", "gravity_g", "burned",
-              "burn_rate_k_mm2_s", "extinction_d_mm", "spread_rate_mm_s"]:
+              "burn_rate_k_mm2_s", "extinction_d_mm", "spread_rate_mm_s", "fuel_flow_mg_s"]:
         tests[c] = pd.to_numeric(tests[c], errors="coerce")
     for c in ["campaign", "fuel", "material", "diluent", "mission_date", "investigation_id", "test_end"]:
         tests[c] = tests[c].astype("string")

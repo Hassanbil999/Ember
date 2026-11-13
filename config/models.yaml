@@ -38,6 +38,13 @@ models:
     features: [o2_frac, pressure_kpa, flow_cm_s, thickness_mm, gravity_g, material]
     group: campaign
     only_when: { burned: 1 }
+  gas_sustain:
+    dataset: cfig_normal
+    label: Gas flame (CFI-G) — still burning vs self-extinguished
+    type: gp_classifier
+    target: burned
+    features: [o2_frac, pressure_kpa, fuel_flow_mg_s, fuel]
+    group: campaign
 
 applicability:
   k_neighbors: 5
