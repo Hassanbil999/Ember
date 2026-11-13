@@ -26,6 +26,8 @@ SCREENS = [
     ("/answer?q=burning%20rate%20of%20heptane%20droplets%20in%20helium", "[data-ready=answer]"),
     ("/explore", "[data-ready=explore]"),
     ("/trade", "[data-ready=trade]"),
+    ("/places", "[data-ready=places]"),
+    ("/places?place=earth", "[data-spinoffs]"),
     ("/lab", "[data-ready=lab]"),
     ("/lab?mode=droplet", "[data-ready=lab]"),
     ("/insights", "[data-ready=insights]"),

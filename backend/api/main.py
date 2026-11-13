@@ -17,7 +17,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response
 from pydantic import BaseModel
 
-from .. import atmosphere, explore as explore_mod, insights as insights_mod, labgrid, record, topics
+from .. import atmosphere, explore as explore_mod, insights as insights_mod, labgrid, record, relevance, topics
 from ..answer.engine import answer
 from ..atlas import tests_near
 from ..core import config
@@ -192,6 +192,19 @@ def api_topic(tid: str, material: str | None = None):
 @app.get("/api/atmosphere")
 def api_atmosphere():
     return J(atmosphere.payload())
+
+
+@app.get("/api/places")
+def api_places():
+    return relevance.places()
+
+
+@app.get("/api/places/{pid}")
+def api_place(pid: str):
+    out = cached(("place", pid), lambda: relevance.rank(pid))
+    if out is None:
+        raise HTTPException(404, "unknown place")
+    return out
 
 
 @app.get("/api/explore")
@@ -537,7 +550,7 @@ def admin_reload():
     _meta.cache_clear()
     surrogate.clear_cache()
     _json_cache.clear()
-    for fn in (topics.topic, explore_mod.explore, insights_mod.insights, labgrid.grid, record._raw_table):
+    for fn in (topics.topic, explore_mod.explore, insights_mod.insights, labgrid.grid, record._raw_table, relevance.rank):
         fn.cache_clear()
     from ..search.index import reload
     reload()

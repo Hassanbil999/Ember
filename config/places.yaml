@@ -1,0 +1,119 @@
+# Places people live or will live, used to rank the investigations for each one.
+# Every statement carries the id of its source (see `sources`). Values marked `assumed: true`
+# are this project's working assumption, not a published figure, and are shown as such.
+
+sources:
+  challenge: { label: "NASA Space Apps 2026, Flame in Freefall challenge text", url: "https://www.spaceappschallenge.org/2026/challenges/flame-in-freefall/" }
+  apollo1: { label: "NASA Safety and Mission Assurance: Apollo 1", url: "https://sma.nasa.gov/sma-disciplines/accllp/apollo-1" }
+  mir: { label: "NASA History: 25 Years Ago, Fire Aboard Space Station Mir", url: "https://www.nasa.gov/history/25-years-ago-fire-aboard-space-station-mir/" }
+  combustion: { label: "NASA Glenn: Combustion Science", url: "https://www.nasa.gov/glenn/glenn-expertise-space-exploration/physical-sciences-program/combustion-science/" }
+  detector: { label: "NASA Spinoff 1978: Fire Detector", url: "https://spinoff.nasa.gov/node/9407" }
+  tanks: { label: "NASA Spinoff 1976: Fireman's Air Tanks", url: "https://spinoff.nasa.gov/node/9582" }
+  attire: { label: "NASA Spinoff 1982: New Technology for the Fire Attire", url: "https://spinoff.nasa.gov/node/9918" }
+  ochmo: { label: "NASA OCHMO technical briefs (exploration atmosphere)", url: "https://www.nasa.gov/ochmo/" }
+
+# how strongly each kind of fuel bears on a fire in a crew cabin (0-3), with the reason shown to the reader
+fuel_relevance:
+  solid: { score: 3, why: "Burns solid materials, the fabrics and plastics a cabin is made of", source: challenge }
+  smoke: { score: 3, why: "Measures smoke, which is what a detector has to recognise", source: challenge }
+  dust: { score: 2, why: "Measures cabin dust, which smoke detectors must tell apart from smoke", source: challenge }
+  liquid droplet: { score: 2, why: "Burns fuel droplets to test how diluting the air puts a flame out", source: challenge }
+  gas: { score: 1, why: "Burns gas flames: relevant to fire safety, but less directly", source: challenge }
+fuel_overrides:
+  ACME: { score: 2, why: "Gas flames, but its Burning Rate Emulator studied how flammable materials are in still air", source: challenge }
+  E-FIELD Flames: { score: 1, why: "Gas flames shaped by an electric field", source: challenge }
+
+# what the catalogue says about oxygen when no test table is loaded
+documented_air:
+  CFI-G: { o2_max: 0.85, why: "Ran with up to 85% oxygen, the highest of any microgravity test", source: challenge }
+
+gravity_notes:
+  E-FIELD Flames: { bonus: 1, why: "Its electric field pulls on the flame the way partial gravity would", source: challenge }
+
+planned:
+  - { id: LUCI, name: "Lunar-g Combustion Investigation", what: "partial-gravity combustion", source: challenge }
+  - { id: FM2, name: "Flammability of Materials on the Moon", what: "materials burned at one-sixth gravity, on the Moon itself", source: combustion }
+
+places:
+  - id: iss
+    label: ISS today
+    target: iss
+    preset: iss
+    air: { o2_frac: 0.21, pressure_kpa: 101.3 }
+    gravity_g: 0.0
+    flame: { mode: solid, p: 0.8, heat: 0.4, o2: 0.21, flow: 0.3, gravity: 0, known: true }
+    history:
+      - title: "Mir, 24 February 1997"
+        text: "An oxygen generator canister ignited and threw a three-foot flame across the module. Six people were aboard. Foam extinguishers were used, the flame went out on its own after several minutes, and smoke took hours to clear."
+        lesson: "Suppression and smoke clearing, not only prevention, decide how a station fire ends."
+        source: mir
+  - id: spacecraft
+    label: Crew spacecraft
+    target: iss
+    preset: iss
+    air: { o2_frac: 0.21, pressure_kpa: 101.3, assumed: true }
+    gravity_g: 0.0
+    flame: { mode: solid, p: 0.8, heat: 0.45, o2: 0.21, flow: 0.15, gravity: 0, known: true }
+    history:
+      - title: "Artemis II"
+        text: "A smoke alarm went off on the way to the Moon. The commander said it gets attention really quickly when you are about 80,000 miles from home."
+        lesson: "A small cabin far from help makes detection, and avoiding false alarms, the first line of defence."
+        source: challenge
+      - title: "Apollo 1, 27 January 1967"
+        text: "A flash fire in a cabin pressurized with 100% oxygen killed the crew during a ground test. The hatch needed 90 seconds to open under ideal conditions."
+        lesson: "Afterwards the amount and location of combustible materials were severely restricted."
+        source: apollo1
+  - id: moon_base
+    label: Moon base
+    target: moon_base
+    preset: moon_base
+    air: { o2_frac: 0.30, pressure_kpa: 70.3 }
+    air_note: "30% oxygen or more at 10.2 psi or less"
+    air_source: challenge
+    gravity_g: 0.165
+    flame: { mode: solid, p: 0.9, heat: 0.6, o2: 0.34, flow: 0.08, gravity: 0.165, known: true }
+    history:
+      - title: "Apollo 1, 27 January 1967"
+        text: "A flash fire in a cabin pressurized with 100% oxygen killed the crew during a ground test."
+        lesson: "The Moon base plans over 40% more oxygen than Earth's air. Oxygen-rich cabins are where material choice matters most."
+        source: apollo1
+  - id: rover
+    label: Pressurized rover
+    target: rover
+    preset: rover
+    air: { o2_frac: 0.34, pressure_kpa: 56.5, assumed: true }
+    air_note: "between a spacesuit and Earth's air; 34% at 8.2 psi is used here"
+    air_source: ochmo
+    gravity_g: 0.165
+    flame: { mode: solid, p: 1, heat: 0.75, o2: 0.34, flow: 0.05, gravity: 0.165, known: true }
+    history:
+      - title: "Apollo 1, 27 January 1967"
+        text: "A flash fire in a cabin pressurized with 100% oxygen killed the crew during a ground test. The hatch needed 90 seconds to open."
+        lesson: "A rover is the smallest cabin with the richest air, and the crew cannot step outside quickly."
+        source: apollo1
+  - id: mars
+    label: Mars base
+    target: mars
+    preset: moon_base
+    air: { o2_frac: 0.30, pressure_kpa: 70.3, assumed: true }
+    air_note: "assumed to use the same oxygen-rich, low-pressure air as the Moon base"
+    air_source: challenge
+    gravity_g: 0.38
+    flame: { mode: solid, p: 0.9, heat: 0.65, o2: 0.3, flow: 0.08, gravity: 0.38, known: true }
+    history:
+      - title: "Apollo 13, April 1970"
+        text: "An oxygen tank exploded on the way to the Moon and the crew had to bring a crippled spacecraft home."
+        lesson: "On Mars there is no quick way home: a fire has to be prevented or beaten with what is on hand."
+        source: challenge
+  - id: earth
+    label: Back on Earth
+    target: null
+    preset: earth
+    air: { o2_frac: 0.21, pressure_kpa: 101.3 }
+    gravity_g: 1.0
+    flame: { mode: solid, p: 1, heat: 0.7, o2: 0.21, flow: 0, gravity: 1, known: true }
+    spinoffs:
+      - { title: "Fine water mist extinguishers", text: "Developed for the International Space Station, with practical uses on Earth.", source: challenge }
+      - { title: "Smoke detector that ignores dust (1978)", text: "An air-sampling detector first used in shuttle orbiters senses combustion particles before flame or smoke appears and tells them apart from dust. Used in mines, where many sensors report to one unit.", source: detector }
+      - { title: "Lighter firefighter air tanks (1976)", text: "Johnson Space Center and Scott Aviation: about 20 pounds for 30 minutes of air, 13 pounds lighter than conventional tanks, at double the pressure.", source: tanks }
+      - { title: "Firefighter clothing from spacesuit materials (1982)", text: "Project FIRES applied lightweight, fire-resistant materials first developed for spacesuits; fourteen fire departments took part in the field evaluation.", source: attire }

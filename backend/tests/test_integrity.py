@@ -222,3 +222,33 @@ def test_atmosphere_payload_cites_its_sources(api):
     assert {r["id"] for r in a["references"]} == {"iss", "campout", "exploration"}
     assert all(s["url"].startswith("https://") and "nasa.gov" in s["url"] for s in a["sources"])
     assert a["constants"]["pio2_floor_mmhg"] == 127 and a["constants"]["r_accept"] == 1.65 and a["caveats"]
+
+
+def test_every_place_ranks_every_investigation_with_reasons():
+    from backend import relevance
+    for p in relevance.places():
+        d = relevance.rank(p["id"])
+        scores = [r["score"] for r in d["rows"]]
+        assert scores == sorted(scores, reverse=True) and len(d["rows"]) >= 15
+        for r in d["rows"]:
+            assert set(r["parts"]) == {"burns", "air", "gravity", "evidence"}
+            assert all(0 <= part["score"] <= 3 and part["why"].endswith(".") for part in r["parts"].values())
+            assert r["score"] == sum(part["score"] for part in r["parts"].values())
+
+
+def test_partial_gravity_never_scores_as_tested():
+    from backend import relevance
+    for pid in ("moon_base", "rover", "mars"):
+        d = relevance.rank(pid)
+        assert not d["gravity_tested"]
+        assert all(r["parts"]["gravity"]["score"] <= 2 for r in d["rows"])
+        assert any("partial-gravity" in g["text"] for g in d["gaps"])
+    assert all(r["parts"]["gravity"]["score"] == 3 for r in relevance.rank("iss")["rows"])
+
+
+def test_demo_rows_never_count_as_real_evidence_in_the_ranking():
+    from backend import relevance
+    bass = next(r for r in relevance.rank("iss")["rows"] if r["label"] == "BASS-II")
+    assert bass["parts"]["evidence"]["score"] == 1 and bass["parts"]["evidence"]["demo"]
+    flex = next(r for r in relevance.rank("iss")["rows"] if r["label"] == "FLEX")
+    assert flex["parts"]["evidence"]["score"] == 3

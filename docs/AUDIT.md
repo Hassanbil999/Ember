@@ -137,3 +137,13 @@ The skill lists habits that make a page look generated. Checked against the app:
 Still present, by choice: small section labels inside the provenance panel, Studio and image screens (they name groups of fields); middle dots in dense meta lines on the Studio and image screens (not redesigned).
 
 Screenshots: `after/home.png`, `after/light_home.png` (captured without a GPU, so they show the flat fallback flame). Tests: 90 backend tests and the browser acceptance test pass; no overlap, no clipped text, nothing under 13 px with the new face.
+
+## 8. Round 6: the challenge resources, and ranking by place
+
+The published resources were read: the challenge text, NASA Glenn's combustion science page, the Apollo 1 and Mir history pages and the three spinoff pages. The PSI repository itself could not be read by script from this machine (the request was refused), so no new test tables were loaded; the only real table is still FLEX (PSI-69).
+
+New: `/places`. Checks: 3 new backend tests (every place ranks every investigation with a reason per part; partial gravity never scores as tested; demo rows never score as real evidence), 93 in total; the browser test covers `/places` and the Earth view for overlap, clipping and text size.
+
+What the ranking says on today's data: for the Moon base, 12 of FLEX's 273 real tests were run in that air; for the pressurized rover, none. For every place the solid-material investigations (BASS, Saffire) rank on their catalogue description alone, because their tables are not loaded.
+
+Open: ranks will move when more PSI tables are loaded; the crew-spacecraft and Mars-base atmospheres are marked "assumed"; the rules' weights are a judgement, stated in `config/places.yaml`.

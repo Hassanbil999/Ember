@@ -210,6 +210,7 @@ function Inner() {
               {VIEWS.map(([k, l]) => <button key={k} aria-pressed={grouping === k} data-view={k} onClick={() => { setGrouping(k); setOpen(null); }}>{l}</button>)}
             </div>
           </div>
+          <Link href="/places" className="btn h-[34px]" data-to-places>Rank them for a place</Link>
           <p className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-2">
             <span>Bigger circle = more test data</span>
             {Object.entries(GOAL_WORD).map(([k, w]) => <span key={k} className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full" style={{ background: GOAL_COLOR[k] }} />{w}</span>)}

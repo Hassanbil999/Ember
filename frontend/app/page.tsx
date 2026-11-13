@@ -108,6 +108,10 @@ export default function Home() {
             <h2 className="text-xl font-semibold leading-snug text-ink">What air should the crew breathe?</h2>
             <p className="mt-0.5 text-sm text-ink-2">Breathing, spacewalks and flammability on one map, and where the tests run out.</p>
           </Link>
+          <Link href="/places" data-start="places" {...point("moon-base")} className="start rule-b block py-3">
+            <h2 className="text-xl font-semibold leading-snug text-ink">Which experiments matter where?</h2>
+            <p className="mt-0.5 text-sm text-ink-2">Every investigation ranked for the station, a spacecraft, the Moon, a rover, Mars and Earth.</p>
+          </Link>
         </div>
       </div>
     </div>
