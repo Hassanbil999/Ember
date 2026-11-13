@@ -1,7 +1,8 @@
 # Same targets as run.py (use `python run.py <target>` where make is unavailable).
 PY ?= python
-.PHONY: setup fixture ingest train dev api web test all demo-off demo-on
+.PHONY: setup fetch fixture ingest train dev api web test all demo-off demo-on
 setup:    ; $(PY) run.py setup
+fetch:    ; $(PY) run.py fetch
 fixture:  ; $(PY) run.py fixture
 ingest:   ; $(PY) run.py ingest
 train:    ; $(PY) run.py train
