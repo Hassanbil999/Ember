@@ -15,7 +15,9 @@ python run.py start      # one command from a clean checkout → http://localhos
 | Task | Command |
 |---|---|
 | Dev servers (API with reload + Vite) | `python run.py dev` |
-| Load data | `python run.py ingest [canonical\|existing\|seed\|fit\|all]` |
+| Load data (offline, no key) | `python run.py ingest [canonical\|existing\|psi\|ntrs\|text\|seed\|curate\|fit\|index\|all]` |
+| Refresh a network snapshot (M5) | `python -m backend.ingest ntrs --fetch` (NASA NTRS records) · `text --fetch` (PDF text) · `psi --discover`, confirm `data/psi_map.csv`, then `psi --fetch` (public PSI bucket) |
+| Propose test points with AI (M5; needs `ANTHROPIC_API_KEY`, costs credits, not part of `all`) | `python -m backend.ingest extract`, then review on `/admin/verify` (needs `ADMIN_TOKEN`) |
 | Re-download the PSI tables and verify checksums | `python run.py fetch` |
 | Unit tests / browser smoke test / both | `python -m pytest backend/tests -q` / `python run.py e2e` / `python run.py test` |
 | Container | `docker compose up --build` |
@@ -65,3 +67,5 @@ Choices made where the brief was open. Newest last. The old site's data decision
 | U | **Ask with no API key returns 503 plus the matching NASA passages**, and the UI shows them, so the public demo still answers with evidence. Off-topic questions are refused before any AI call: a passage must share at least two of the question's content words. | SPEC §11 says 503; showing the evidence keeps the demo useful. The word gate stops spurious matches (e.g. "best" in a pizza question). |
 | V | `ai_cache` is a SQLite file next to the processed tables, keyed by sha256 of prompt version + model + context. | No database server (Decision E). A cache failure never fails a request. |
 | W | Retrieval for Ask uses the team's existing hybrid index (BM25 + local LSA). It is extended with the §5 resources, which are returned only when a caller asks for them. NASA passages only (Decision D). | Reuses the existing search instead of adding pgvector. The old site's search-quality tests still pass. |
+| X | The public `nasa-psi` bucket is read **directly over HTTPS** (its S3 listing and file URLs), not through Amazon's Python SDK. | The bucket is public, so no credentials or SDK are needed; one less dependency, and the request code is small enough to test with mocked responses. |
+| Y | **Every network step writes a committed snapshot** (`data/raw/ntrs/`, `data/raw/ntrs/text/`, `data/raw/psi_bucket/`), and `ingest all` reads only the snapshots. Each step's `--fetch` refreshes its snapshot. | A clean checkout, the tests and the container build run offline and give the same result every time; a network refresh is a deliberate, reviewable change. |
