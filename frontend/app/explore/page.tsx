@@ -11,7 +11,8 @@ import Passage from "@/components/Passage";
    folded into one cluster per group that opens on click. Positions come from a slot grid, so two
    labels can never share space, and nothing is simulated or recomputed while the pointer moves. */
 
-type Inv = { id: string; label: string; name: string; pillars: string[]; burns: string; fuel_phase: string; platform: string; hardware: string; years: number[] | null; n_tests: number; objectives: string; datasets: string[] };
+type Inv = { id: string; label: string; name: string; pillars: string[]; burns: string; fuel_phase: string; platform: string; hardware: string; years: number[] | null; n_tests: number; objectives: string; datasets: string[];
+  years_source?: string; psi?: { accession: string; file: string | null; url: string | null; rows: number | null }[] };
 type Node = { id: string; kind: "inv" | "cluster"; label: string; sub: string; group: string; r: number; inv?: Inv; members?: string[]; x: number; y: number };
 type Grouping = "burns" | "goal" | "era";
 
@@ -88,7 +89,13 @@ function Detail({ id, data, onSelect }: { id: string; data: any; onSelect: (id: 
       <dl className="mt-5 grid grid-cols-[110px_1fr] gap-y-2 text-sm">
         <dt className="text-ink-3">Burns</dt><dd className="text-ink">{inv.burns}</dd>
         <dt className="text-ink-3">Where</dt><dd className="text-ink">{inv.platform}</dd>
-        {inv.years && <><dt className="text-ink-3">Years</dt><dd className="mono text-ink">{inv.years[0]}{inv.years[1] !== inv.years[0] ? `–${inv.years[1]}` : ""}</dd></>}
+        {inv.years && <><dt className="text-ink-3">Years</dt><dd className="text-ink"><span className="mono">{inv.years[0]}{inv.years[1] !== inv.years[0] ? `–${inv.years[1]}` : ""}</span>
+          <span className="ml-2 text-xs text-ink-3">{inv.years_source === "PSI test dates" ? "from the test dates" : "approximate"}</span></dd></>}
+        {inv.psi && inv.psi.length > 0 && <><dt className="text-ink-3">NASA PSI</dt><dd className="text-ink" data-psi>
+          {inv.psi.map((p) => <span key={p.accession + (p.file ?? "")} className="mr-3 inline-block">
+            {p.url ? <a className="mono underline decoration-dotted underline-offset-4 hover:text-flame" href={p.url} target="_blank" rel="noreferrer"
+              title={`Download ${p.file} from NASA PSI (${p.rows} rows)`}>{p.accession}</a> : <span className="mono">{p.accession}</span>}</span>)}
+        </dd></>}
         <dt className="text-ink-3">Test data</dt>
         <dd className="text-ink">{inv.n_tests ? `${inv.n_tests} tests loaded` : "None loaded. This entry is a catalogue record only."}</dd>
       </dl>

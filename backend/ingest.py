@@ -97,7 +97,8 @@ def run() -> dict:
     for inv in inv_cfg:
         invs.append({**{k: None for k in ["psi_id", "doi", "parent"]}, **inv,
                      "pillars": json.dumps(inv["pillars"]), "years": json.dumps(inv.get("years")),
-                     "datasets": json.dumps(inv.get("datasets", [])),
+                     "datasets": json.dumps(inv.get("datasets", [])), "psi_ids": json.dumps(inv.get("psi_ids", [])),
+                     "years_source": inv.get("years_source", "approximate"),
                      "license": "See PSI terms of use", "source_urls": json.dumps(["https://psi.nasa.gov"])})
     inv_df = pd.DataFrame(invs)
     concepts = pd.DataFrame([{**c, "investigations": json.dumps(c["investigations"]), "terms": json.dumps(c["terms"])}

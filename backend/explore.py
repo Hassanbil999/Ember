@@ -8,12 +8,26 @@ from __future__ import annotations
 import json
 from functools import lru_cache
 
+from .core.config import RAW
 from .core.store import get_store
 
 BURNS = [("solid", "Solid materials", {"solid"}), ("droplet", "Fuel droplets", {"liquid droplet"}),
          ("gas", "Gas flames", {"gas"}), ("smoke", "Smoke and dust", {"smoke", "dust"})]
 GOALS = [("prevention", "Preventing fire"), ("detection", "Detecting fire"), ("suppression", "Putting fire out")]
 PHASE_WORD = {"solid": "solid materials", "liquid droplet": "fuel droplets", "gas": "gas flames", "smoke": "smoke", "dust": "dust"}
+
+
+@lru_cache(maxsize=1)
+def _manifest() -> dict:
+    p = RAW / "psi_manifest.json"
+    return json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+
+
+def psi_tables(accessions: list[str]) -> list[dict]:
+    """The downloaded PSI experimental tables of these studies: accession, file name and NASA download link."""
+    out = [{"accession": a, "file": m["file"], "url": m["url"], "rows": m["data_rows"]}
+           for a in accessions for m in _manifest().values() if m["psi_accession"] == a]
+    return out or [{"accession": a, "file": None, "url": None, "rows": None} for a in accessions]
 
 
 @lru_cache(maxsize=1)
@@ -30,7 +44,8 @@ def explore() -> dict:
                      "fuel_phase": r.fuel_phase, "burns": PHASE_WORD.get(r.fuel_phase, r.fuel_phase),
                      "hardware": r.hardware, "platform": r.platform, "years": years, "parent": r.parent,
                      "n_tests": int(counts.get(r.id, 0)), "objectives": r.objectives,
-                     "datasets": json.loads(r.datasets) if r.datasets else []})
+                     "datasets": json.loads(r.datasets) if r.datasets else [],
+                     "years_source": r.years_source, "psi": psi_tables(json.loads(r.psi_ids) if r.psi_ids else [])})
     by_id = {i["label"]: i for i in invs}
 
     # link strength between two investigations, with the reasons spelled out

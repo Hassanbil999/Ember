@@ -1,6 +1,7 @@
-# Investigation catalog — metadata only, seeded from the challenge brief.
-# psi_id / doi are intentionally null until filled from the PSI database (never invented).
-# years are approximate operation periods; verify against PSI before citing.
+# Investigation catalog, seeded from the challenge brief.
+# psi_ids: the NASA PSI study accession numbers whose experimental tables were downloaded (scripts/fetch_psi.py).
+# years: from the test dates inside those PSI tables where they have dates (years_source: PSI test dates);
+# otherwise approximate and labelled so. DOIs are not recorded (never invented).
 investigations:
   - id: BASS
     name: Burning and Suppression of Solids
@@ -8,18 +9,22 @@ investigations:
     hardware: MSG
     fuel_phase: solid
     platform: ISS / MSG
-    years: [2011, 2012]
+    years: [2012, 2013]
+    years_source: PSI test dates
     objectives: Flammability and extinguishment of thin and thick solid materials in a controlled flow duct in microgravity.
     datasets: [bass]
+    psi_ids: [PSI-26]
   - id: BASS-II
     name: Burning and Suppression of Solids II
     pillars: [prevention, suppression]
     hardware: MSG
     fuel_phase: solid
     platform: ISS / MSG
-    years: [2012, 2013]
+    years: [2014, 2018]
+    years_source: PSI test dates
     objectives: Extend BASS with varied oxygen, pressure and flow speed to map flammability limits of solids.
     datasets: [bass2]
+    psi_ids: [PSI-25]
   - id: Saffire-I
     name: Spacecraft Fire Safety Experiment I
     pillars: [prevention]
@@ -27,8 +32,10 @@ investigations:
     fuel_phase: solid
     platform: Cygnus (uncrewed, after ISS departure)
     years: [2016, 2016]
+    years_source: approximate (the PSI table gives no year)
     objectives: Large-scale flame spread over a cotton-fiberglass fabric in a spacecraft-sized flow.
     datasets: [saffire1]
+    psi_ids: [PSI-98]
   - id: Saffire-II
     name: Spacecraft Fire Safety Experiment II
     pillars: [prevention]
@@ -36,8 +43,10 @@ investigations:
     fuel_phase: solid
     platform: Cygnus
     years: [2016, 2016]
+    years_source: approximate (the PSI table gives no year)
     objectives: Ignition and flammability of nine material samples at spacecraft scale.
     datasets: [saffire2]
+    psi_ids: [PSI-99]
   - id: Saffire-III
     name: Spacecraft Fire Safety Experiment III
     pillars: [prevention]
@@ -45,8 +54,10 @@ investigations:
     fuel_phase: solid
     platform: Cygnus
     years: [2017, 2017]
+    years_source: approximate (the PSI table gives no year)
     objectives: Large-sample flame spread, repeat of Saffire-I with different flow conditions.
     datasets: [saffire3]
+    psi_ids: [PSI-100]
   - id: SAME
     name: Smoke Aerosol Measurement Experiment
     pillars: [detection]
@@ -54,7 +65,9 @@ investigations:
     fuel_phase: smoke
     platform: ISS / MSG
     years: [2007, 2008]
+    years_source: approximate (the PSI table gives no year)
     objectives: Characterize smoke particle size from overheated spacecraft materials to design detectors.
+    psi_ids: [PSI-102]
   - id: SAME-R
     name: Smoke Aerosol Measurement Experiment — Reflight
     pillars: [detection]
@@ -62,7 +75,9 @@ investigations:
     fuel_phase: smoke
     platform: ISS / MSG
     years: [2014, 2014]
+    years_source: approximate (the PSI table gives no year)
     objectives: Repeat and extend SAME smoke-particle measurements.
+    psi_ids: [PSI-101]
   - id: DAFT
     name: Dust and Aerosol measurement Feasibility Test
     pillars: [detection]
@@ -70,6 +85,7 @@ investigations:
     fuel_phase: dust
     platform: ISS
     years: [2004, 2005]
+    years_source: approximate (no PSI table loaded)
     objectives: Ambient dust measurements to understand background aerosol for smoke detectors; same instrument family as SAME.
   - id: DAFT-2
     name: Dust and Aerosol measurement Feasibility Test 2
@@ -78,6 +94,7 @@ investigations:
     fuel_phase: dust
     platform: ISS
     years: [2006, 2007]
+    years_source: approximate (no PSI table loaded)
     objectives: Follow-on dust measurements with the SAME instrument family.
   - id: FLEX
     name: Flame Extinguishment Experiment
@@ -86,8 +103,10 @@ investigations:
     fuel_phase: liquid droplet
     platform: ISS / CIR
     years: [2009, 2011]
+    years_source: PSI test dates
     objectives: Isolated fuel droplet burning and extinction in oxygen/diluent atmospheres to evaluate suppressants.
     datasets: [flex]
+    psi_ids: [PSI-69]
   - id: FLEX-2
     name: Flame Extinguishment Experiment 2
     pillars: [suppression, prevention]
@@ -95,43 +114,53 @@ investigations:
     fuel_phase: liquid droplet
     platform: ISS / CIR
     years: [2012, 2016]
+    years_source: approximate (the PSI table gives no year)
     objectives: Multi-component fuels, droplet pairs and arrays, and convective effects on droplet burning.
+    psi_ids: [PSI-68]
   - id: CFI
     name: Cool Flames Investigation
     pillars: [prevention]
     hardware: CIR / MDCA
     fuel_phase: liquid droplet
     platform: ISS / CIR
-    years: [2017, 2019]
+    years: [2017, 2017]
+    years_source: PSI test dates
     objectives: Low-temperature (cool flame) droplet burning chemistry in microgravity.
+    psi_ids: [PSI-39]
   - id: ACME
     name: Advanced Combustion via Microgravity Experiments
     pillars: [prevention]
     hardware: CIR
     fuel_phase: gas
     platform: ISS / CIR
-    years: [2017, 2020]
+    years: [2019, 2021]
+    years_source: PSI test dates
     objectives: Six gas-flame experiments on soot, flame stability and efficiency, including CFI-G and E-FIELD Flames.
     datasets: [flame_design_normal]
+    psi_ids: [PSI-10, PSI-20]
   - id: CFI-G
     name: Cool Flames Investigation with Gases
     pillars: [prevention]
     hardware: CIR
     fuel_phase: gas
     platform: ISS / CIR (ACME)
-    years: [2021, 2022]
+    years: [2021, 2021]
+    years_source: PSI test dates
     parent: ACME
     objectives: Gaseous cool and hot diffusion flames at oxygen fractions up to 85% O₂.
     datasets: [cfig_normal]
+    psi_ids: [PSI-159]
   - id: E-FIELD Flames
     name: Electric-Field Effects on Laminar Diffusion Flames
     pillars: [prevention]
     hardware: CIR
     fuel_phase: gas
     platform: ISS / CIR (ACME)
-    years: [2018, 2019]
+    years: [2018, 2018]
+    years_source: PSI test dates
     parent: ACME
     objectives: Use of electric fields to influence flame shape, soot and stability.
+    psi_ids: [PSI-22]
   - id: SPICE
     name: Smoke Point In Co-flow Experiment
     pillars: [prevention, detection]
@@ -139,7 +168,9 @@ investigations:
     fuel_phase: gas
     platform: ISS / MSG
     years: [2009, 2010]
+    years_source: approximate (the PSI table gives no year)
     objectives: Soot formation and smoke points of gas jet flames in a co-flow (MSG flow duct).
+    psi_ids: [PSI-107]
   - id: SLICE
     name: Structure and Liftoff In Combustion Experiment
     pillars: [prevention]
@@ -147,4 +178,5 @@ investigations:
     fuel_phase: gas
     platform: ISS / MSG
     years: [2012, 2012]
+    years_source: approximate (no PSI table loaded)
     objectives: Lifted and attached gas-jet flame structure in co-flow (MSG flow duct).
