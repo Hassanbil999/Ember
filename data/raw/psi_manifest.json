@@ -10,6 +10,28 @@
     "columns": 8,
     "retrieved_utc": "2026-11-13T18:53:43Z"
   },
+  "acme_cld": {
+    "psi_accession": "PSI-21",
+    "file": "PSI-21_Experimental table_CLD Flame.csv",
+    "path": "data/raw/acme_cld/PSI-21_Experimental table_CLD Flame.csv",
+    "url": "https://psi.nasa.gov/geode-py/ws/studies/PSI-21/download?file=PSI-21_Experimental%20table_CLD%20Flame.csv",
+    "sha256": "9fafbc5b3dddaf715ce8025ed9154ce297803f7b69a935f077ec26c8249e44c0",
+    "bytes": 2454,
+    "data_rows": 32,
+    "columns": 8,
+    "retrieved_utc": "2026-11-14T12:46:01Z"
+  },
+  "acme_sflame": {
+    "psi_accession": "PSI-23",
+    "file": "PSI-23_Experimental table_ACME s-Flame.csv",
+    "path": "data/raw/acme_sflame/PSI-23_Experimental table_ACME s-Flame.csv",
+    "url": "https://psi.nasa.gov/geode-py/ws/studies/PSI-23/download?file=PSI-23_Experimental%20table_ACME%20s-Flame.csv",
+    "sha256": "16cd10f50bd2e962887c8eb4077e5a9b3e790c78de8e0361c0b77e19300be7cf",
+    "bytes": 2456,
+    "data_rows": 18,
+    "columns": 9,
+    "retrieved_utc": "2026-11-14T12:46:01Z"
+  },
   "bass": {
     "psi_accession": "PSI-26",
     "file": "PSI-26_Experimental table_BASS.csv",
@@ -163,6 +185,17 @@
     "data_rows": 109,
     "columns": 10,
     "retrieved_utc": "2026-11-13T18:53:43Z"
+  },
+  "slice": {
+    "psi_accession": "PSI-106",
+    "file": "PSI-106_Experimental table_Slice.csv",
+    "path": "data/raw/slice/PSI-106_Experimental table_Slice.csv",
+    "url": "https://psi.nasa.gov/geode-py/ws/studies/PSI-106/download?file=PSI-106_Experimental%20table_Slice.csv",
+    "sha256": "89ef980810ca6d9aa8be817b42e36cd2adff23f5e9058361b5a33d18b4363f4d",
+    "bytes": 734,
+    "data_rows": 12,
+    "columns": 2,
+    "retrieved_utc": "2026-11-14T12:46:01Z"
   },
   "spice": {
     "psi_accession": "PSI-107",

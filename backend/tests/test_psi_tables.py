@@ -232,3 +232,27 @@ def test_researchers_guide_is_nasas_file_and_quoted_as_nasa():
     assert "Fire Safety" in set(ch.section) and "Solid-Fuel Combustion/Material Flammability" in set(ch.section)
 
 
+# ------------------------------------------------------------------ SLICE, ACME CLD Flame, ACME s-Flame
+def test_cld_never_uses_the_autofilled_fuel_bottle_column():
+    _, _, df = _load("acme_cld")
+    d = df.set_index("test_id")
+    assert len(df) == 32 and df.test_id.is_unique
+    assert d.loc["CLD-17324", "fuel"] == "methane"                     # bottle cell says "40% CH5": not a molecule
+    assert "'40% CH5'" in d.loc["CLD-17324", "notes"] and "auto-fill" in d.loc["CLD-17324", "notes"]
+    assert not df.fuel.fillna("").str.contains(r"ch\d|c2h\d", case=False).any()
+    assert d.loc["CLD-17319", "mission_date"] == "2017-11-15"           # YYDDD
+
+
+def test_sflame_keeps_oxygen_levels_and_rejects_autofilled_diluents():
+    _, _, df = _load("acme_sflame")
+    d = df.set_index("test_id")
+    assert set(df.o2_frac.round(2)) == {0.21, 0.30}
+    assert d.loc["SFLAME-19308-1", "o2_frac"] == pytest.approx(0.30) and d.loc["SFLAME-19308-1", "diluent"] == "N2"
+    assert pd.isna(d.loc["SFLAME-19256-1", "diluent"]) and "'N3' is not a gas" in d.loc["SFLAME-19256-1", "notes"]
+    assert d.loc["SFLAME-20006-1", "fuel"] == "44.4% H2 with CH4"        # a fuel mixture, kept as written
+    assert "pressure" in d.loc["SFLAME-19254-1", "notes"] and ("pressure_kpa" not in df or df.pressure_kpa.isna().all())
+
+
+def test_slice_test_days():
+    _, _, df = _load("slice")
+    assert len(df) == 12 and df.mission_date.min() == "2012-02-09" and df.mission_date.max() == "2012-03-23"

@@ -30,7 +30,7 @@ def test_every_usable_real_test_becomes_a_test_point(t):
     tests = pd.read_parquet(PROCESSED / "tests.parquet")
     usable = set(tests.loc[~tests.excluded.astype(bool), "test_id"])
     real = t["test_points"][t["test_points"].origin == "psi"]
-    assert set(real.code) == usable and len(real) == 1781
+    assert set(real.code) == usable and len(real) == 1848
     assert not set(tests.loc[tests.excluded.astype(bool), "test_id"]) & set(real.code), "excluded rows never reach the UI"
 
 
@@ -124,7 +124,7 @@ def test_type_filter_and_facets(api, t):
     r = api.get("/api/resources", params={"types": "paper"}).json()
     n_papers = int((t["resources"].type == "paper").sum())
     assert r["total"] == n_papers >= 4 and {i["type"] for i in r["items"]} == {"paper"}
-    assert r["facets"]["types"]["data"] == 16, "facets ignore the type filter itself"
+    assert r["facets"]["types"]["data"] == 19, "facets ignore the type filter itself"
 
 
 def test_cred_min_and_sort_by_credibility(api):

@@ -1,0 +1,18 @@
+# Evidence from outside NASA. Shown in its own clearly labelled card, never mixed with the NASA PSI
+# tests: it is not ingested into the test store, trains no model and never changes an evidence grade.
+# Every value shown comes from the pinned file below (scripts/fetch_psi.py checks its SHA-256).
+
+zarm_barriers:
+  label: "ZARM drop tower (Bremen, Germany)"
+  file: data/raw/external/zarm_metal_barriers_index.csv
+  doi: 10.5281/zenodo.18479713
+  url: https://zenodo.org/records/18479713
+  paper_doi: 10.1016/j.proci.2026.106483
+  citation: "Ries, Krieger, Meyer, Eigenbrod (2026). Flame Spread and Heat Transfer over Discrete Fuels separated by Metal Barriers under Microgravity. Zenodo dataset, Proceedings of the Combustion Institute."
+  funding: "German Space Agency at DLR (FLARE-G II and III)"
+  license: CC BY-NC 4.0
+  material: thin PMMA (acrylic plastic), 0.075 mm
+  limits:
+    - "Drop tower, not orbit: each test has only a few seconds of microgravity, so it shows how fast a flame spreads, not whether it keeps burning."
+    - "One material (thin acrylic sheet) with air blown against the flame at about 10 cm/s."
+    - "Not NASA data: shown as independent evidence only. It trains no model and does not change the evidence grade."

@@ -6,3 +6,6 @@ data/raw/** -text
 *.xlsx binary
 *.png binary
 *.mp4 binary
+
+# shell scripts run inside Linux containers: always LF
+*.sh text eol=lf

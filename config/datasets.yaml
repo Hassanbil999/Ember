@@ -348,6 +348,49 @@ datasets:
       ignition_column: "Hot ignition"
     outcome_map: { "ft": 1, "se": 0 }
 
+  slice:
+    title: SLICE test days (NASA PSI-106 experimental table)
+    adapter: psi_slice
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-106. See the PSI terms of use."
+    constants: { gravity_g: 0.0 }
+    investigations: [SLICE]
+    files: ["PSI-106_Experimental table_Slice.csv"]
+    # One row per test day: the fuel used that day, with the table's own notes. No per-flame results.
+    columns: { "Test id": test_id, "Investigation": investigation_id, "Fuel": fuel, "Date": mission_date, "Note": notes }
+
+  acme_cld:
+    title: ACME Coflow Laminar Diffusion Flame daily summary (NASA PSI-21 experimental table)
+    adapter: psi_cld
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-21. See the PSI terms of use."
+    constants: { gravity_g: 0.0 }
+    investigations: [CLD Flame]
+    files: ["PSI-21_Experimental table_CLD Flame.csv"]
+    columns: { "Test id": test_id, "Investigation": investigation_id, "Fuel": fuel, "Flames": flames_ignited,
+               "Date": mission_date, "Note": notes }
+
+  acme_sflame:
+    title: ACME s-Flame spherical flames daily summary (NASA PSI-23 experimental table)
+    adapter: psi_sflame
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-23. See the PSI terms of use."
+    constants: { gravity_g: 0.0 }
+    investigations: [s-Flame]
+    files: ["PSI-23_Experimental table_ACME s-Flame.csv"]
+    # One row per test day and oxygen level the table lists (approximate, "~21%" / "~30%"); no pressure is given.
+    columns: { "Test id": test_id, "Investigation": investigation_id, "Fuel": fuel, "O2": o2_frac, "Diluent": diluent,
+               "Flames": flames_ignited, "Date": mission_date, "Note": notes }
+
   flex_demo:        # synthetic stand-in used before the real table was loaded; kept for the adapter tests
     title: Droplet combustion tests (FLEX-shaped demo fixture)
     adapter: flex_droplets

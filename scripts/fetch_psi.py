@@ -54,12 +54,18 @@ TABLES = [
     ("flame_design_normal", "PSI-10", "PSI-10_Experimental table_Flame Design_Normal Flame.csv", "4a663292bd3f65201943cc71bd661a70383639276a9176f64105b285bf0b6deb"),
     ("efield", "PSI-22", "PSI-22_Experimental table_ACME E-FIELD Flames.csv", "69090c357b83ae38d161d29001d1d32b40fd77b13324ca6585ee990cdceef524"),
     ("spice", "PSI-107", "PSI-107_Experimental table_Spice.csv", "fb0d7e60cf5367afb429089e9901d27288f78038efd26c8de1db4fbe04117136"),
+    ("slice", "PSI-106", "PSI-106_Experimental table_Slice.csv", "89ef980810ca6d9aa8be817b42e36cd2adff23f5e9058361b5a33d18b4363f4d"),
+    ("acme_cld", "PSI-21", "PSI-21_Experimental table_CLD Flame.csv", "9fafbc5b3dddaf715ce8025ed9154ce297803f7b69a935f077ec26c8249e44c0"),
+    ("acme_sflame", "PSI-23", "PSI-23_Experimental table_ACME s-Flame.csv", "16cd10f50bd2e962887c8eb4077e5a9b3e790c78de8e0361c0b77e19300be7cf"),
 ]
 
 # NASA documents quoted by the answer engine: (folder, file name, pinned sha256, source URL)
 DOCUMENTS = [
     ("reports", "researchers_guide_combustion_science.pdf", "5fe046efe4e35e506023e27a9784d041e893026f19c9987591483614aea5d6b6",
      "https://www.nasa.gov/sites/default/files/atoms/files/np-2015-10-034-jsc_combustion_in_reduced_gravity-iss-mini-book-011116-508.pdf"),
+    # outside NASA, shown apart from the PSI tests (config/external.yaml); CC BY-NC 4.0, Zenodo md5 ee54b6e4…
+    ("external", "zarm_metal_barriers_index.csv", "77632b37f49260797f5cbb86b6e8bb40876801a482da38441b87e0e9e0afc6de",
+     "https://zenodo.org/records/18479713/files/index.csv?download=1"),
 ]
 
 
@@ -79,7 +85,8 @@ def fetch_documents(refresh: bool) -> int:
             print(f"FAIL  doc      {name}: {e}")
             problems += 1
             continue
-        if sha256(data) != pinned or not data.startswith(b"%PDF"):
+        wrong_kind = not data.startswith(b"%PDF") if name.endswith(".pdf") else looks_like_html(data)
+        if sha256(data) != pinned or wrong_kind:
             write_atomic(out.with_name(out.name + ".new"), data)
             print(f"DIFF  doc      {name}: NASA's file differs from the pinned checksum; saved as {name}.new for review")
             problems += 1
