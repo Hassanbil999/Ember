@@ -97,7 +97,23 @@ export type FireCheckMeta = Record<'gas' | 'droplet', ProblemMeta>;
 export interface Zarm { label: string; material: string; doi: string; url: string; citation: string; license: string; limits: string[];
   points: { id: string; o2_frac: number; pressure_kpa: number; flow_mm_s: number; thickness_mm: number; spread_mm_s: number; spread_std: number }[] }
 
+export interface PipelineView {
+  label: string; investigation: string; psi_id: string;
+  cleaning: { stage: string; n: number }[];
+  clusters: {
+    inputs: { key: string; label: string; unit: string }[]; k: number; bic: { k: number; bic: number }[]; ari_campaigns: number; n_campaigns: number;
+    groups: { id: number; n: number; kept_burning: number; mean: Record<string, number>; fuels: Record<string, number> }[];
+    points: { id: string; fuel: string; o2_pct: number; psi: number; group: number; burned: number }[];
+  };
+  surface: {
+    fuel: string; model: string | null; held: { label: string; value: number; unit: string }[]; o2: number[]; psi: number[]; chance: (number | null)[];
+    tests: { id: string; o2_pct: number; psi: number; burned: number }[]; outcome_yes: string; outcome_no: string;
+  };
+}
+export type Pipeline = Record<'gas' | 'droplet', PipelineView>;
+
 export const api = {
+  pipeline: () => get<Pipeline>('/api/fire-check/pipeline'),
   zarm: () => get<Zarm>('/api/outside/zarm'),
   fireCheckMeta: () => get<FireCheckMeta>('/api/fire-check/meta'),
   fireCheck: (r: FireCheckReq) => post<FireCheckRes>('/api/fire-check', r),

@@ -48,6 +48,16 @@ def meta():
     return service.meta()
 
 
+@router.get("/pipeline")
+def pipeline_view():
+    """Statistics page: cleaning counts, unsupervised clusters of the test conditions, and the Gaussian process's
+    chance map (empty where the fire check would say untested), per question."""
+    if not service.available():
+        raise HTTPException(503, "The fire-check models are not trained yet (python -m backend.ingest predict).")
+    from ..predict import pipeline
+    return pipeline.build()
+
+
 @router.post("")
 def check(body: CheckReq):
     return _run(body)

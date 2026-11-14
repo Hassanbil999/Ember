@@ -228,3 +228,29 @@ def test_report_has_the_line_and_the_next_tests(client):
     body = client.post("/api/fire-check/report", json=ISS_METHANOL).text
     assert "Where is the line?" in body and "<svg" in body and "50 % at" in body
     assert "Tests that would teach the model most" in body and "Query by committee" in body
+
+
+def test_statistics_pipeline_cleaning_clusters_and_chance_map():
+    """Statistics page: the funnel only shrinks and ends at the training set; every test is in one cluster; the
+    Gaussian process map carries a number only where the fire check would give one."""
+    from backend.predict import pipeline
+    out = pipeline.build()
+    for key in PROBLEMS:
+        v, card = out[key], service._bundle(key)["card"]
+        ns = [s["n"] for s in v["cleaning"]]
+        assert ns == sorted(ns, reverse=True) and ns[-1] == card["n_tests"]
+        c = v["clusters"]
+        assert c["k"] in range(2, 7) and len(c["groups"]) == c["k"] and sum(g["n"] for g in c["groups"]) == card["n_tests"]
+        assert {p["group"] for p in c["points"]} == set(range(1, c["k"] + 1)) and -1 <= c["ari_campaigns"] <= 1
+        s = v["surface"]
+        assert len(s["chance"]) == len(s["o2"]) * len(s["psi"])
+        nums = [x for x in s["chance"] if x is not None]
+        assert 0 < len(nums) < len(s["chance"]) and all(0 <= x <= 1 for x in nums)
+        # spot-check one numbered cell against a real fire check at the same inputs
+        i = s["chance"].index(nums[0])
+        o2, psi = s["o2"][i % len(s["o2"])], s["psi"][i // len(s["o2"])]
+        req = {"problem": key, "fuel": s["fuel"], "o2_pct": o2, "psi": psi}
+        for h in s["held"]:
+            req[{"Fuel flow (leak size)": "fuel_flow", "Drop size": "d0_mm", "CO₂ in the air": "co2_pct", "Helium in the air": "he_pct"}[h["label"]]] = h["value"]
+        res = service.check(req)
+        assert res["zone"] != "untested" and abs(res["estimate"]["probability"] - nums[0]) < 0.02
