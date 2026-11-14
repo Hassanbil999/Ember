@@ -290,11 +290,13 @@ from .routes_catalog import router as catalog_router  # noqa: E402
 from .routes_export import router as export_router  # noqa: E402
 from .routes_admin import router as admin_router  # noqa: E402
 from .routes_sim import router as sim_router  # noqa: E402
+from .routes_predict import router as predict_router
 
 app.include_router(catalog_router)
 app.include_router(ai_router)
 app.include_router(export_router)
 app.include_router(sim_router)
+app.include_router(predict_router)
 app.include_router(admin_router)
 
 

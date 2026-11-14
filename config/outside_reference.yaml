@@ -1,0 +1,15 @@
+# Reference values from outside NASA's PSI tables. Context only: shown next to the estimate, never used to
+# train a model, always labelled with their source. Add a value only with a source a reader can check.
+earth_limiting_oxygen:
+  meaning: >-
+    Lowest oxygen share (% by volume) at which a premixed fuel–air–inert mixture can burn on Earth.
+    A different measurement from NASA's microgravity flames, so it is a reference, not a comparison.
+  source:
+    label: "Perry's Chemical Engineers' Handbook, 8th ed. (Green & Perry, McGraw-Hill, 2007), §23, via Wikipedia: Limiting oxygen concentration"
+    url: https://en.wikipedia.org/wiki/Limiting_oxygen_concentration
+  conditions_note: The source does not state temperature or pressure.
+  values:          # fuel: {N2: %, CO2: %}
+    ethane: {N2: 11.0, CO2: 13.5}
+    propane: {N2: 11.5, CO2: 14.5}
+    butane: {N2: 12.0, CO2: 14.5}
+  missing_note: No verified Earth value is loaded for this fuel.

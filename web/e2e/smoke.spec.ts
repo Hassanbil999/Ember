@@ -86,3 +86,38 @@ test('Ask the Atlas: cites NASA passages or refuses (no API key in the demo)', a
   await expect(page.locator('#askAnswer')).toContainText(/API key|\d/);
   await expect(page.locator('.ask')).toContainText("A Researcher's Guide to: Combustion Science");
 });
+
+test('fire check: no number outside NASA tests, an estimate between them, a report, and the row in the table', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(String(e)));
+  page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+
+  await page.goto('/?g=0&o2=34&p=8.2&u=10&mat=fabric#simulate');
+  await page.locator('#toCheck').click();
+  const dlg = page.locator('#fireDlg');
+  await expect(dlg).toBeVisible();
+  // pure propane was only tested near 14 psi: at 8.2 psi there is no number
+  await expect(dlg.locator('#fcZone')).toHaveText('Untested');
+  await expect(dlg.locator('#fcProb')).toHaveCount(0);
+  await expect(dlg.locator('#fcNear tbody tr').first()).toBeVisible();
+
+  // a heptane drop between tests: an estimate with its range, from a model that beat the baseline
+  await dlg.locator('#fcDrop').click();
+  await dlg.locator('#fcO2').fill('19');
+  await dlg.locator('#fcP').fill('14.7');
+  await dlg.locator('#fcD0').fill('3');
+  await expect(dlg.locator('#fcZone')).toHaveText(/Estimated|Tested/);
+  await expect(dlg.locator('#fcProb')).toContainText('%');
+  await expect(dlg.locator('#fcModel')).toContainText('never saw');
+
+  const [dl] = await Promise.all([page.waitForEvent('download'), dlg.locator('#fcReport').click()]);
+  const html = readFileSync((await dl.path())!, 'utf8');
+  expect(dl.suggestedFilename()).toMatch(/^fire-check-droplet-.*\.html$/);
+  for (const s of ['Nearest NASA tests', 'Model and validation', 'PSI-69', 'IBM+Plex+Sans']) expect(html).toContain(s);
+
+  const code = await dlg.locator('#fcNear tbody tr').first().getAttribute('data-code');
+  await dlg.locator('#fcNear tbody tr').first().getByRole('button', { name: 'Open in table' }).click();
+  await expect(page.locator('#view-data')).toBeVisible();
+  await expect(page.locator(`#pt-${code}`)).toBeVisible({ timeout: 15000 });
+  expect(errors, errors.join('\n')).toEqual([]);
+});

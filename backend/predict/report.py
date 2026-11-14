@@ -1,0 +1,176 @@
+"""The engineering report: a fixed template filled from one fire-check result. No generated prose: every
+sentence is a template and every number comes from the result, the model card or a cited source.
+Self-contained HTML in the app's typefaces; prints to PDF from any browser (print styles included)."""
+from __future__ import annotations
+
+import html
+from datetime import datetime
+from functools import lru_cache
+
+
+
+
+
+e = lambda v: html.escape("" if v is None else str(v))  # noqa: E731
+
+ZONE = {"tested": ("Tested", "NASA tests at nearly these conditions"),
+        "estimated": ("Estimated", "Model estimate between NASA tests of this fuel"),
+        "untested": ("Untested", "Outside what NASA tested: no estimate")}
+
+
+@lru_cache(maxsize=1)
+def _dois() -> dict:
+    """investigation -> (PSI id, DOI), from the team's verified list in config/investigations.yaml."""
+    import yaml
+    from ..core.config import CONFIG
+    try:
+        y = yaml.safe_load((CONFIG / "investigations.yaml").read_text(encoding="utf-8"))
+        items = y.get("investigations", y) if isinstance(y, dict) else y
+        out = {}
+        for it in (items.values() if isinstance(items, dict) else items):
+            if isinstance(it, dict) and it.get("psi_ids"):
+                pid = it["psi_ids"][0]
+                out[it.get("id") or it.get("name")] = (pid, (it.get("dois") or {}).get(pid))
+        return out
+    except Exception:
+        return {}
+
+
+def _pct(p: float) -> str:
+    return f"{p * 100:.0f} %"
+
+
+def _table(head: list[str], rows: list[list[str]], num: set[int] = frozenset()) -> str:
+    th = "".join(f'<th class="{"n" if i in num else ""}">{h}</th>' for i, h in enumerate(head))
+    body = "".join("<tr>" + "".join(f'<td class="{"n" if i in num else ""}">{c}</td>' for i, c in enumerate(r)) + "</tr>" for r in rows)
+    return f"<table><thead><tr>{th}</tr></thead><tbody>{body}</tbody></table>"
+
+
+def verdict(res: dict) -> str:
+    """One template sentence; never more than the result supports."""
+    z, est, t = res["zone"], res["estimate"], res["tested"]
+    if z == "untested":
+        return "No estimate: these conditions are outside what NASA tested for this fuel. The nearest real tests are listed for reference."
+    s = ""
+    if t:
+        s += f"{t['yes']} of the {t['n']} NASA tests at nearly these conditions {t['outcome_yes']}. "
+    if est:
+        s += (f"Model estimate: {_pct(est['probability'])} chance it {est['will']} "
+              f"(range {_pct(est['low'])}–{_pct(est['high'])} across models trained without different campaigns).")
+        if t is not None and "agrees" in t:
+            s += " The model agrees with those tests." if t["agrees"] else " The model disagrees with those tests: trust the tests."
+    return s
+
+
+def render(res: dict, stamp: datetime) -> str:
+    m = res["model"]
+    psi_id, doi = _dois().get(m["investigation"], (None, None))
+    psi_id = psi_id or m["psi_id"]
+    zl, zd = ZONE[res["zone"]]
+    parts = []
+
+    parts.append(f'<section><h2>Conditions entered</h2>{_table(["Input", "Value"], [[e(r["label"]), e(r["value"])] for r in res["inputs"]])}</section>')
+
+    v = f'<div class="verdict z-{res["zone"]}"><span class="zone">{zl}</span><span class="zd">{zd}</span></div><p class="lead">{e(verdict(res))}</p>'
+    if res["reasons"]:
+        v += "<ul>" + "".join(f"<li>{e(r)}</li>" for r in res["reasons"]) + "</ul>"
+    parts.append(f"<section><h2>Result</h2>{v}</section>")
+
+    rows = []
+    if res["estimate"]:
+        est = res["estimate"]
+        rows.append([e(f"Chance it {est['will']}"), _pct(est["probability"]), f"{_pct(est['low'])}–{_pct(est['high'])}", e(est["model"])])
+    for q in res["quantities"]:
+        rows.append([e(f"{q['label']} ({q['unit']})"), f"{q['value']:.3g}", f"{q['low']:.3g}–{q['high']:.3g} (90 %)", e(q["model"])])
+    if rows:
+        parts.append(f'<section><h2>Estimates</h2>{_table(["Quantity", "Estimate", "Range", "Model"], rows, {1, 2})}'
+                     '<p class="note">Chance range: lowest and highest of five models, each trained with one group of NASA campaigns left out. '
+                     'Measured-quantity range: 90 % of the errors on unseen campaigns were smaller than this (split-conformal).</p></section>')
+
+    near = res["nearest"]
+    if near:
+        extra = "Fuel flow (mg/s)" if res["problem"] == "gas" else "Drop size (mm)"
+        nrows = []
+        for r in near:
+            oc = "b" if r["burned"] else "o"
+            nrows.append([f'<span class="mono">{e(r["code"])}</span>', e(r["fuel"]), f'{r["o2_pct"]:g}', f'{r["psi"]:g}',
+                          f'{r.get("fuel_flow", r.get("d0_mm")):g}', f'<span class="oc-{oc}">{e(r["outcome"])}</span>',
+                          f'{r["distance"]:.2f}{" · close" if r["close"] else ""}',
+                          e(f'{m["investigation"]} table, row {r["source_row"]}' if r["source_row"] else m["investigation"])])
+        parts.append(f'<section><h2>Nearest NASA tests (same fuel)</h2>'
+                     f'{_table(["Test", "Fuel", "O₂ %", "psi", extra, "Measured outcome", "Distance", "Source"], nrows, {2, 3, 4, 6})}'
+                     '<p class="note">Distance: inputs scaled by their spread in the NASA tests; “close” means nearer than half of the tests are to their own nearest neighbour.</p></section>')
+
+    if res["drivers"]:
+        drows = [[e(d["label"]), e(f'+{d["step"]:g} {d["unit"]}'.strip()), f'{d["change_pts"]:+.1f} pts'] for d in res["drivers"]]
+        parts.append(f'<section><h2>What moves the estimate</h2>{_table(["Input", "Change", "Change in chance"], drows, {2})}'
+                     '<p class="note">Each input raised by a tenth of its tested range, the others held. Read as direction and size near these conditions, not as a law.</p></section>')
+
+    ref = res.get("reference")
+    if ref:
+        if ref["values"]:
+            body = _table(["Fuel", "Inert gas: nitrogen", "Inert gas: CO₂"], [[e(ref["fuel"]), f'{ref["values"]["N2"]:g} % O₂', f'{ref["values"]["CO2"]:g} % O₂']], {1, 2})
+        else:
+            body = f'<p>{e(ref["missing"])}</p>'
+        parts.append(f'<section><h2>Reference: Earth limiting oxygen (not NASA test data)</h2>{body}'
+                     f'<p class="note">{e(ref["meaning"])} {e(ref["note"])} Source: <a href="{e(ref["source"]["url"])}">{e(ref["source"]["label"])}</a>.</p></section>')
+
+    crows = []
+    for r in m["comparison"]:
+        chosen = r["model"] == m["chosen"]
+        crows.append([e(r["model"]) + (" <b>· used</b>" if chosen else ""), "—" if r.get("auc") is None else f'{r["auc"]:.3f}',
+                      f'{r["brier"]:.4f}', f'{r["log_loss"]:.4f}', f'{r["accuracy"]:.3f}',
+                      "—" if "beats_baseline" not in r else ("yes" if r["beats_baseline"] else "no")])
+    parts.append(f'<section><h2>Model and validation</h2>'
+                 f'<p>Trained on {m["n_tests"]} {e(m["investigation"])} tests ({e(psi_id)}) with a measured outcome, from {m["n_campaigns"]} NASA test campaigns. '
+                 f'Validation: {e(m["validation"])}: each campaign is hidden during training and then predicted. '
+                 'A model is used only if it beats the baseline on both Brier score and log loss.</p>'
+                 f'{_table(["Model", "AUC", "Brier", "Log loss", "Accuracy", "Beats baseline"], crows, {1, 2, 3, 4})}'
+                 '<p class="note">AUC: how often a test that burned is ranked above one that did not (0.5 = chance). Brier and log loss: error of the probabilities (lower is better). '
+                 'Accuracy is shown but not used: when one outcome is common, always guessing it already scores high.</p></section>')
+
+    parts.append('<section><h2>Limits</h2><ul>'
+                 '<li>All NASA tests used here ran in microgravity. Gravity is not something the model has learned.</li>'
+                 '<li>NASA test fuels stand in for cabin fluids: heptane is similar to kerosene-type liquids, methanol to alcohols, ethane/propane/butane to gas leaks.</li>'
+                 '<li>Solid materials (fabric, plastics, wire insulation) are not covered: their loaded tables record no burned/went-out outcome.</li>'
+                 '<li>A screening estimate for early design and test planning. It does not certify a material or a design.</li></ul></section>')
+
+    src = f'NASA Physical Sciences Informatics, {e(m["investigation"])} experimental table ({e(psi_id)})'
+    if doi:
+        src += f', <a href="https://doi.org/{e(doi)}">doi:{e(doi)}</a>'
+    parts.append(f"<section><h2>Sources</h2><p>{src}.</p></section>")
+
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fire check report · {e(res["label"])}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>{CSS}</style></head><body><main>
+<header><div><h1>Freefall Atlas</h1><span class="kicker">Fire check report</span></div>
+<div class="meta"><span>{e(res["label"])} · {e(res["question"])}</span><span class="mono">{stamp:%Y-%m-%d %H:%M} UTC</span>
+<button onclick="window.print()">Print / save as PDF</button></div></header>
+{''.join(parts)}
+<footer>Generated by Freefall Atlas from NASA's own test tables. Every number above traces to a NASA test row, the model's validation, or the cited source.</footer>
+</main></body></html>"""
+
+
+CSS = """
+:root{--ink:#0d121e;--muted:#5b6478;--line:#d5dae4;--soft:#eef1f6;--burn:#b85f17;--cool:#2369bf;
+--fd:'Barlow Condensed','Arial Narrow',sans-serif;--fb:'IBM Plex Sans',system-ui,sans-serif;--fm:'IBM Plex Mono',ui-monospace,Consolas,monospace}
+*{box-sizing:border-box}body{margin:0;background:#f6f7fa;color:var(--ink);font:14px/1.5 var(--fb)}
+main{max-width:920px;margin:24px auto;background:#fff;border:1px solid var(--line);border-radius:10px;padding:28px 32px}
+header{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;border-bottom:2px solid var(--ink);padding-bottom:12px;flex-wrap:wrap}
+h1{margin:0;font:600 26px/1 var(--fd);letter-spacing:.06em;text-transform:uppercase}
+.kicker{font:500 12px var(--fm);color:var(--muted)}
+.meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;font-size:12.5px;color:var(--muted)}
+.meta button{font:500 12.5px var(--fb);border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;color:var(--ink)}
+section{margin-top:22px}h2{margin:0 0 8px;font:600 14px var(--fd);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:12.5px}th,td{text-align:left;padding:6px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:500;color:var(--muted);font-size:11.5px;background:var(--soft)}td.n,th.n{text-align:right;font-family:var(--fm);font-variant-numeric:tabular-nums}
+.mono{font-family:var(--fm)}.oc-b{color:var(--burn)}.oc-o{color:var(--cool)}
+.verdict{display:flex;gap:12px;align-items:baseline}.zone{font:600 22px var(--fd);letter-spacing:.06em;text-transform:uppercase;border:1.5px solid currentColor;border-radius:999px;padding:1px 12px}
+.z-tested .zone{color:#1d7a46}.z-estimated .zone{color:#8a5a00}.z-untested .zone{color:var(--muted)}.zd{color:var(--muted);font-size:13px}
+.lead{font-size:15px;margin:10px 0 0;max-width:75ch}ul{margin:8px 0 0;padding-left:20px}li{margin:3px 0}
+.note{font-size:12px;color:var(--muted);margin:6px 0 0;max-width:85ch}a{color:var(--cool)}
+footer{margin-top:26px;padding-top:10px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted)}
+@media print{body{background:#fff}main{border:0;margin:0;padding:0;max-width:none}.meta button{display:none}section{break-inside:avoid}}
+"""
