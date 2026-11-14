@@ -4,9 +4,10 @@
     modal setup                         # once: signs this computer in through the browser
     modal deploy deploy/modal_app.py    # from the repo root; prints the public URL
 
-The container is the same one as `docker build .`: FastAPI on port 8000 serves the API and the built
-web app (web/dist). It scales to zero when nobody is using it, so idle time costs nothing; the first
-visit after a quiet spell waits while it starts.
+The image is the same one as `docker build .`: one process (FastAPI) serves the built web app and the API
+on port 8000, with the data loaded and the fire-check models trained at build time. No keys are needed.
+It scales to zero when nobody is using it, so idle time costs nothing; the first visit after a quiet
+spell waits while it starts.
 """
 import subprocess
 from pathlib import Path
@@ -25,5 +26,6 @@ app = modal.App("freefall-atlas")
 @modal.concurrent(max_inputs=50)
 @modal.web_server(port=8000, startup_timeout=240)
 def web():
-    # the image's own start command (Dockerfile CMD): one server for the API and the web app
-    subprocess.Popen(["python", "-m", "uvicorn", "backend.api.main:app", "--host", "0.0.0.0", "--port", "8000"], cwd="/app")
+    # the Dockerfile's CMD, run from its working directory
+    subprocess.Popen("python -m uvicorn backend.api.main:app --host 0.0.0.0 --port 8000 --log-level warning",
+                     shell=True, cwd="/app")

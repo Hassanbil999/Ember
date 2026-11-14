@@ -63,7 +63,7 @@ def ask(question: str) -> dict:
     if not passages:
         return {**base, "answer": NO_COVER, "citations": [], "covered": False, "source": "retrieval", "model": None}
     if not llm.enabled():
-        raise llm.AIUnavailable("Ask needs an Anthropic API key (ANTHROPIC_API_KEY) on the server.")
+        raise llm.AIUnavailable("Ask needs an AI API key on the server (ANTHROPIC_API_KEY, or a free OpenAI-compatible key: LLM_API_KEY, LLM_BASE_URL, LLM_MODEL).")
     sources = [Source(f"S{i + 1}", p["resource_id"], p["page"], p["title"], p["text"]) for i, p in enumerate(passages)]
     user = f"Question: {question}\n\n" + "\n\n".join(f"[{s.label}] {s.title}\n{s.text}" for s in sources)
     k = cache.key(PROMPT_VERSION, llm.model_name(), SYSTEM, user)

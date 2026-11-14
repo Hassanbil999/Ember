@@ -1,4 +1,11 @@
-"""Claude via the Anthropic SDK (SPEC §11). One function, `complete()`, so tests can replace it with a fake.
+"""The language model behind the AI summary and Ask (SPEC §11). One function, `complete()`, so tests can replace it.
+
+Two providers, picked by which key is set (Anthropic first):
+- Claude via the Anthropic SDK: ANTHROPIC_API_KEY (+ ANTHROPIC_MODEL).
+- Any OpenAI-compatible chat API, e.g. a free tier: LLM_API_KEY + LLM_BASE_URL + LLM_MODEL
+  (Google AI Studio: https://generativelanguage.googleapis.com/v1beta/openai ; Groq: https://api.groq.com/openai/v1).
+  Plain HTTPS with the standard library, so no extra dependency.
+Either way the callers' rules hold: cite or refuse, numbers checked against the sources.
 
 - Model from ANTHROPIC_MODEL (default claude-sonnet-5-5); enabled only when ANTHROPIC_API_KEY is set.
 - 20 s timeout, no retries beyond it, so the UI never hangs.
@@ -29,12 +36,50 @@ class Completion:
     refused: bool = False
 
 
+def provider() -> str | None:
+    if os.environ.get("ANTHROPIC_API_KEY"):
+        return "anthropic"
+    if os.environ.get("LLM_API_KEY") and os.environ.get("LLM_BASE_URL") and os.environ.get("LLM_MODEL"):
+        return "openai_compatible"
+    return None
+
+
 def model_name() -> str:
+    if provider() == "openai_compatible":
+        return os.environ["LLM_MODEL"]
     return os.environ.get("ANTHROPIC_MODEL") or DEFAULT_MODEL
 
 
 def enabled() -> bool:
-    return bool(os.environ.get("ANTHROPIC_API_KEY"))
+    return provider() is not None
+
+
+def _complete_openai_compatible(system: str, user: str, max_tokens: int, schema: dict | None) -> Completion:
+    import json
+    import urllib.error
+    import urllib.request
+    model = model_name()
+    body: dict = {"model": model, "max_tokens": max_tokens, "temperature": 0,
+                  "messages": [{"role": "system", "content": system + (
+                      "\nReply with one JSON object that matches this schema:\n" + json.dumps(schema) if schema else "")},
+                               {"role": "user", "content": user}]}
+    if schema is not None:
+        body["response_format"] = {"type": "json_object"}
+    req = urllib.request.Request(os.environ["LLM_BASE_URL"].rstrip("/") + "/chat/completions", data=json.dumps(body).encode(),
+                                 headers={"Content-Type": "application/json", "Authorization": "Bearer " + os.environ["LLM_API_KEY"]})
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT_S) as r:
+            data = json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        raise AIUnavailable("The AI is rate-limited right now." if e.code == 429 else f"The AI returned an error ({e.code}).") from e
+    except (urllib.error.URLError, TimeoutError) as e:
+        raise AIUnavailable("Could not reach the AI service.") from e
+    try:
+        choice = data["choices"][0]
+        text = (choice["message"].get("content") or "").strip()
+    except (KeyError, IndexError, TypeError) as e:
+        raise AIUnavailable("The AI returned an unexpected response.") from e
+    return Completion(text, data.get("model", model), refused=choice.get("finish_reason") == "content_filter")
 
 
 _client = None
@@ -51,7 +96,9 @@ def _get_client():
 def complete(system: str, user: str, max_tokens: int = 2048, schema: dict | None = None) -> Completion:
     """`schema` (a JSON schema) turns on structured outputs: the text is then guaranteed to be valid JSON."""
     if not enabled():
-        raise AIUnavailable("No ANTHROPIC_API_KEY is set.")
+        raise AIUnavailable("No AI key is set (ANTHROPIC_API_KEY, or LLM_API_KEY + LLM_BASE_URL + LLM_MODEL).")
+    if provider() == "openai_compatible":
+        return _complete_openai_compatible(system, user, max_tokens, schema)
     import anthropic
     model = model_name()
     kwargs: dict = {"model": model, "max_tokens": max_tokens, "system": system,

@@ -51,7 +51,7 @@ def test_admin_is_off_without_a_token_and_needs_the_right_one(monkeypatch):
 
 def test_queue_lists_unverified_points_with_their_sources(review):
     q = review.get("/api/admin/queue", headers=H).json()
-    assert q["counts"]["seed"] == 12 and q["counts"]["psi"] == 110  # 87 + the 23 ACME s-Flame tests (oxygen levels derived from "~21" / "~30")
+    assert q["counts"]["seed"] == 12 and q["counts"]["psi"] == 110
     first = q["items"][0]
     assert first["origin"] == "seed" and not first["verified"]
     assert any(i["source_quote"] for i in q["items"] if i["origin"] == "psi")

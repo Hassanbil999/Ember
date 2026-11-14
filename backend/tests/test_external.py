@@ -1,4 +1,4 @@
-"""Evidence from outside NASA: read from its pinned file and never mixed into the NASA data."""
+"""Evidence from outside NASA: read from its pinned file, labelled, and never mixed into the NASA data."""
 from __future__ import annotations
 
 import hashlib
@@ -32,15 +32,10 @@ def test_points_are_the_files_continuous_strips_with_a_rate():
         assert p["pressure_kpa"] == row["Pressure [kPa]"]
 
 
-def test_card_says_not_nasa_and_computes_its_ratio_from_the_file():
-    o = external.spread_card(0.30, "Moon base")
-    assert o and o["doi"].startswith("10.5281/zenodo.") and "Not NASA data" in o["summary"]
-    assert any("not orbit" in l for l in o["limits"])
-    pts = external.zarm_spread()
-    earth = [p["spread_mm_s"] for p in pts if p["o2_frac"] < 0.22]
-    assert f"{pts[-1]['spread_mm_s'] / (sum(earth) / len(earth)):.1f}×" in o["finding"]
+# The Moon-base and ISS card tests went with the old answer screens (backend/topics.py), removed in the rebuild.
 
 
 def test_outside_rows_never_enter_the_nasa_store():
     t = get_store().tests
     assert not t.dataset.str.contains("zarm|external", case=False).any()
+    assert "external" not in set(t.dataset)

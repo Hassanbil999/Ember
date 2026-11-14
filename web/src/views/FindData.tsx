@@ -35,9 +35,10 @@ interface Props {
   filters: Filters; setFilters: (f: Filters) => void;
   investigations: Investigation[];
   onSimulate: (code: string) => void;
+  focus?: { code: string; rid: string; n: number } | null;
 }
 
-export function FindDataView({ active, filters: F, setFilters, investigations, onSimulate }: Props) {
+export function FindDataView({ active, filters: F, setFilters, investigations, onSimulate, focus }: Props) {
   const s = useSim();
   const [data, setData] = useState<ResourceList | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -98,6 +99,22 @@ export function FindDataView({ active, filters: F, setFilters, investigations, o
     if (document.getElementById('res-' + r.id)) cite(r.id);
     else window.open(`/api/resources/${encodeURIComponent(r.id)}`, '_blank', 'noopener');
   }
+
+  // "Open in table" from the fire check: open that NASA table with every row, then show the test's row
+  const [rowFlash, setRowFlash] = useState<string | null>(null);
+  useEffect(() => {
+    if (!focus || !active) return;
+    let stale = false;
+    api.resourceAll(focus.rid).then(d => {
+      if (stale) return;
+      setDetails(x => ({ ...x, [focus.rid]: d }));
+      setOpen(o => new Set(o).add(focus.rid));
+      setRowFlash(focus.code);
+      setTimeout(() => document.getElementById('pt-' + focus.code)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 120);
+      setTimeout(() => setRowFlash(null), 2200);
+    }).catch(() => undefined);
+    return () => { stale = true; };
+  }, [focus?.n, active]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const DD = [
     { key: 'inv' as const, label: 'Investigation', opts: Object.fromEntries(investigations.map(i => [i.slug, i.name])) },
@@ -179,7 +196,7 @@ export function FindDataView({ active, filters: F, setFilters, investigations, o
           {list.map(r => (
             <Row key={r.id} r={r} invName={invName(r.investigation)} isOpen={open.has(r.id)} detail={details[r.id]} picked={basket.has(r.id)} flash={flash === r.id}
               onOpen={() => toggleOpen(r.id)} onPick={() => { const b = new Set(basket); if (b.has(r.id)) b.delete(r.id); else b.add(r.id); setBasket(b); }}
-              onSimulate={onSimulate} />
+              onSimulate={onSimulate} rowFlash={rowFlash} />
           ))}
         </ul>
       </div>
@@ -199,9 +216,9 @@ function Meter({ level, unverified }: { level: number; unverified: boolean }) {
   return <span className={'meter' + (unverified ? ' unv' : '')} aria-hidden="true">{[1, 2, 3, 4, 5].map(i => <i key={i} className={i <= level ? 'on' : ''} />)}</span>;
 }
 
-function Row({ r, invName, isOpen, detail, picked, flash, onOpen, onPick, onSimulate }: {
+function Row({ r, invName, isOpen, detail, picked, flash, onOpen, onPick, onSimulate, rowFlash }: {
   r: Resource; invName: string; isOpen: boolean; detail?: ResourceDetail; picked: boolean; flash: boolean;
-  onOpen: () => void; onPick: () => void; onSimulate: (code: string) => void;
+  onOpen: () => void; onPick: () => void; onSimulate: (code: string) => void; rowFlash?: string | null;
 }) {
   const c = r.credibility, T = TYPES[r.type] ?? TYPES.data;
   return (
@@ -229,19 +246,19 @@ function Row({ r, invName, isOpen, detail, picked, flash, onOpen, onPick, onSimu
             : <div className="factors"><span>Publisher <b>{c.factors!.publisher}</b></span><span>Review <b>{c.factors!.review}</b></span><span>Traceability <b>{c.factors!.trace}</b></span><span>Score = 0.4 × publisher + 0.3 × review + 0.3 × traceability</span></div>}
           {r.doi && <p className="moremsg">Dataset DOI: <a className="link" href={`https://doi.org/${r.doi}`} target="_blank" rel="noopener noreferrer">{r.doi}</a></p>}
           {r.points_count > 0 && !detail && <p className="moremsg">Loading test points…</p>}
-          {detail && detail.test_points.length > 0 && <PointTable points={detail.test_points} total={detail.points_total} onSimulate={onSimulate} />}
+          {detail && detail.test_points.length > 0 && <PointTable points={detail.test_points} total={detail.points_total} onSimulate={onSimulate} flash={rowFlash} />}
         </div>
       )}
     </li>
   );
 }
 
-function PointTable({ points, total, onSimulate }: { points: TestPoint[]; total: number; onSimulate: (code: string) => void }) {
+function PointTable({ points, total, onSimulate, flash }: { points: TestPoint[]; total: number; onSimulate: (code: string) => void; flash?: string | null }) {
   return (
     <>
       <div className="tablebox"><table><thead><tr><th>Test</th><th>Sample</th><th className="n">g</th><th className="n">O₂ %</th><th className="n">kPa</th><th className="n">Flow cm/s</th><th>Outcome</th><th className="n">mm/s</th><th>Source</th><th><span className="sr">Simulate</span></th></tr></thead>
         <tbody>{points.map(p => (
-          <tr key={p.code}>
+          <tr key={p.code} id={'pt-' + p.code} className={flash === p.code ? 'flash' : undefined}>
             <td className="num">{p.code}{!p.verified && <span className="badge" title={p.unverified_reason ?? undefined}>{p.placeholder ? 'starter · unverified' : 'unverified'}</span>}</td>
             <td>{p.sample_desc}</td>
             <td className="n">{p.gravity_g ?? '—'}</td>

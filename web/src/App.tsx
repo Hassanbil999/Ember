@@ -47,6 +47,7 @@ export function App() {
   const [investigations, setInvestigations] = useState<Investigation[]>([]);
   const [panels, setPanelsState] = useState({ l: true, r: true });
   const [loadErr, setLoadErr] = useState<string | null>(null);
+  const [focus, setFocus] = useState<{ code: string; rid: string; n: number } | null>(null);
   const [, setWide] = useState(isWide());
 
   useEffect(() => {
@@ -78,6 +79,11 @@ export function App() {
     f.env = [s.params.g < 0.02 ? 'space' : s.params.g > 0.9 ? 'earth' : 'partial'];
     setFilters(f); setTab('data');
   }
+  function openTest(code: string, rid: string | null) {
+    setFilters(emptyFilters(filters.sort === 'near' ? 'cred' : filters.sort));
+    if (rid) setFocus({ code, rid, n: Date.now() });
+    setTab('data');
+  }
   const simulate = useCallback((code: string) => { if (sim.load(code)) setTab('sim'); }, [setTab]);
 
   function onTabKey(e: React.KeyboardEvent) {
@@ -98,8 +104,8 @@ export function App() {
         {loadErr && <span className="err" role="alert">Could not reach the API ({loadErr}). The simulator still runs on built-in defaults.</span>}
       </header>
       <main>
-        <SimulateView active={tab === 'sim'} panelL={panels.l} panelR={panels.r} setPanels={(l, r) => setPanelsState({ l, r })} onFindData={toData} />
-        <FindDataView active={tab === 'data'} filters={filters} setFilters={setFilters} investigations={investigations} onSimulate={simulate} />
+        <SimulateView active={tab === 'sim'} panelL={panels.l} panelR={panels.r} setPanels={(l, r) => setPanelsState({ l, r })} onFindData={toData} onOpenTest={openTest} />
+        <FindDataView active={tab === 'data'} filters={filters} setFilters={setFilters} investigations={investigations} onSimulate={simulate} focus={focus} />
       </main>
     </>
   );

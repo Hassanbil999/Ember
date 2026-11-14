@@ -10,6 +10,7 @@
     text       load page-anchored chunks of the NTRS PDFs from data/raw/ntrs/text/ (`text --fetch` builds them)
     seed       add data/seed.json rows only where no real row exists (backend/catalog/seed.py)
     curate     add AI-extracted points and apply reviewer decisions from data/curation/ (backend/catalog/curate.py)
+    predict    train and validate the fire-check models on the outcome-labelled NASA tests (backend/predict/)
     fit        fit the simulator's parameters to verified test points, or keep the defaults (backend/sim/fit.py)
     index      rebuild the search index with the §5 resources (used by `q` and by Ask)
     extract    Claude proposes test points from NASA passages → data/curation/ai_extracted.json (needs a key, costs
@@ -23,12 +24,13 @@ import time
 
 from .core.config import PROCESSED
 
-STEPS = ["canonical", "existing", "psi", "ntrs", "text", "seed", "curate", "fit", "index"]
+STEPS = ["canonical", "existing", "psi", "ntrs", "text", "seed", "curate", "fit", "predict", "index"]
 OUTPUTS = ["tests.parquet", "atlas_resources.parquet", "atlas_test_points.parquet", "atlas_presets.parquet"]          # what `run.py start` needs before it can serve
 
 
 def outputs_present() -> bool:
-    return all((PROCESSED / f).exists() for f in OUTPUTS)
+    from .core.config import ARTIFACTS
+    return all((PROCESSED / f).exists() for f in OUTPUTS) and all((ARTIFACTS / "predict" / f"{k}.joblib").exists() for k in ("gas", "droplet"))
 
 
 def run_step(step: str, flags: list[str] | None = None) -> dict:
@@ -64,6 +66,9 @@ def run_step(step: str, flags: list[str] | None = None) -> dict:
         return run()
     if step == "extract":
         from .ai.extract import run
+        return run()
+    if step == "predict":
+        from .predict.train import run
         return run()
     if step == "fit":
         from .sim.fit import run

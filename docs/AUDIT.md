@@ -1,5 +1,7 @@
 # M0 audit: the old Freefall Atlas site
 
+> **Update 2026-11-14 (PR #4):** three more PSI tables are loaded: SLICE (PSI-106), ACME CLD Flame (PSI-21), ACME s-Flame (PSI-23). Now 19 tables and 1,848 usable tests; the catalog has 1,848 real test points (1,738 verified, 110 unverified) plus 12 seed rows. The counts below describe the M0 audit and are kept as written.
+
 Audited 2026-11-14 at commit `2dd0b81` (`main`, after `git pull`). Nothing was changed or deleted to write it.
 This replaces the old site's "Audit, round 2" (a UI-screens audit for the Next.js frontend). That document is still in git: `git show 2dd0b81:docs/AUDIT.md`, and it will be under the tag `v0-old-site`.
 

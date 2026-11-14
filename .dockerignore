@@ -8,6 +8,3 @@ data/artifacts
 **/__pycache__
 .pytest_cache
 .env
-data/raw/**/*.psi-new
-data/raw/**/*.part
-docs/audit
