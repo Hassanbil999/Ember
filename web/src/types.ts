@@ -51,4 +51,4 @@ export interface Filters {
   credMin: 'any' | 'verified' | 'medium' | 'high'; sort: string;
 }
 
-export interface Summary { text: string; citations: string[]; source: 'template' | 'ai'; model?: string | null }
+export interface Summary { text: string; citations: string[]; source: 'template' | 'ai'; model?: string | null; note?: string }

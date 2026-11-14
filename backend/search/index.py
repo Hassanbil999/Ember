@@ -78,6 +78,15 @@ def _items() -> list[dict]:
     for _, d in docs.reset_index().iterrows():
         items.append({"id": f"doc:{d.id}", "type": "document", "title": d.title, "text": f"{d.title} {d.title}",
                       "node": f"doc:{d.id}", "investigations": json.loads(d.investigations), "demo": bool(d.demo)})
+    # SPEC §5 resources (after `ingest existing`/`seed`): findable by title, description and investigation
+    res_p = PROCESSED / "atlas_resources.parquet"
+    if res_p.exists():
+        res = pd.read_parquet(res_p)
+        for r in res.itertuples():
+            invs = json.loads(r.investigations) if isinstance(r.investigations, str) else []
+            items.append({"id": f"res:{r.id}", "type": "resource", "title": r.title, "resource_id": r.id,
+                          "text": f"{r.title} {r.title} {r.description or ''} {r.investigation_detail or ''} {' '.join(invs)}",
+                          "node": f"res:{r.id}", "investigations": invs, "demo": False})
     atlas = ARTIFACTS / "atlas.json"
     if atlas.exists():
         for n in json.loads(atlas.read_text(encoding="utf-8"))["nodes"]:
@@ -123,6 +132,8 @@ def search(q: str, k: int = 20, types: list[str] | None = None, investigation: s
     mask = np.ones(len(items), dtype=bool)
     for i, it in enumerate(items):
         if types and it["type"] not in types:
+            mask[i] = False
+        if not types and it["type"] == "resource":      # §5 resources only when asked for (Ask), so the old ranking holds
             mask[i] = False
         if investigation and investigation not in it.get("investigations", []):
             mask[i] = False

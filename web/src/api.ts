@@ -34,7 +34,19 @@ export interface SimResponse {
   coverage: { kind: string; text: string }; nearest: (TestPoint & { distance: number; match: string })[];
 }
 
+export interface AskPassage { resource_id: string; page: number | null; title: string; section: string | null; excerpt: string }
+export interface AskResponse {
+  question: string; answer: string; covered: boolean; source: string; model: string | null; note?: string;
+  citations: { resource_id: string; page: number | null; title: string }[]; passages: AskPassage[];
+}
+
 export const api = {
+  async ask(question: string): Promise<AskResponse | { detail: string; passages: AskPassage[] }> {
+    const r = await fetch('/api/ai/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question }) });
+    if (r.status === 503) return r.json();
+    if (!r.ok) throw new Error(`ask: ${r.status}`);
+    return r.json();
+  },
   simulate: (s: SimQuery) => post<SimResponse>('/api/simulate', { g: s.g, o2: s.o2, psi: s.p, u: s.u, material: s.mat }),
   presets: () => get<Preset[]>('/api/presets'),
   investigations: () => get<Investigation[]>('/api/investigations'),

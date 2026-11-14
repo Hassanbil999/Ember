@@ -97,6 +97,9 @@ class Catalog:
                                                            item["investigation_detail"], labels)).lower()
             self.resources.append(item)
         self.res = {r["id"]: r for r in self.resources}
+        # NASA passages only (README Decision D): chunk id → resource, page, section, text
+        self.chunks = {r["id"]: {k: _v(r[k]) for k in ("resource_id", "page", "section", "text")}
+                       for r in a["chunks"].to_dict("records") if r["resource_id"] in self.res}
 
     # ---------------------------------------------------------------- resources
     def _tags(self, r: dict, key: str) -> list[str]:

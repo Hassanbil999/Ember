@@ -1,7 +1,9 @@
 /* Find data view (prototype "DATA FINDER"), wired to /api/resources, /api/resources/{id}, /api/ai/summary
    and /api/export. Filtering, facets and sorting run on the server. */
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '../api';
+import { AskBox } from '../components/AskBox';
+import { Cited, type Ref } from '../components/Cited';
 import { ExportDialog } from '../components/ExportDialog';
 import { useSim } from '../sim/store';
 import type { Filters, Investigation, Resource, ResourceDetail, ResourceList, Summary, TestPoint } from '../types';
@@ -90,6 +92,12 @@ export function FindDataView({ active, filters: F, setFilters, investigations, o
     setTimeout(() => document.getElementById('res-' + id)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 50);
     setTimeout(() => setFlash(null), 1300);
   }
+  /* A cited page opens the NASA PDF at that page; a cited resource in the list scrolls to its row. */
+  function citeRef(r: Ref) {
+    if (r.page && r.id.startsWith('doc-')) { window.open(`/api/doc/${r.id.slice(4)}/file#page=${r.page}`, '_blank', 'noopener'); return; }
+    if (document.getElementById('res-' + r.id)) cite(r.id);
+    else window.open(`/api/resources/${encodeURIComponent(r.id)}`, '_blank', 'noopener');
+  }
 
   const DD = [
     { key: 'inv' as const, label: 'Investigation', opts: Object.fromEntries(investigations.map(i => [i.slug, i.name])) },
@@ -156,10 +164,12 @@ export function FindDataView({ active, filters: F, setFilters, investigations, o
           </div>
         </div>
 
+        <AskBox onCite={citeRef} titles={titles.current} />
+
         <div className="sumline" aria-live="polite">
           <div className="count" id="count">{data ? <>{data.total} result{data.total === 1 ? '' : 's'}<span>{data.counts.high} high credibility · {data.counts.unverified} unverified</span></> : ' '}</div>
-          <p id="aiText"><span className="ai">AI</span>{summary ? <Cited text={summary.text} ids={summary.citations} titles={titles.current} onCite={cite} /> : <span className="muted">Summarizing…</span>}
-            {summary?.source === 'template' && <span className="muted"> (Template: AI summaries need an API key.)</span>}</p>
+          <p id="aiText"><span className="ai">AI</span>{summary ? <Cited text={summary.text} refs={summary.citations.map(id => ({ id, title: titles.current[id] ?? id }))} onCite={citeRef} /> : <span className="muted">Summarizing…</span>}
+            {summary?.source === 'template' && <span className="muted"> {summary.note ?? '(Template: AI summaries need an API key.)'}</span>}</p>
         </div>
 
         {err && <p className="err">Could not load results: {err}</p>}
@@ -183,19 +193,6 @@ export function FindDataView({ active, filters: F, setFilters, investigations, o
       {exporting && <ExportDialog ids={[...basket]} onClose={() => setExporting(false)} />}
     </section>
   );
-}
-
-/* Text with [resource_id] citations → numbered, clickable citation buttons. Unknown ids were already dropped server-side. */
-export function Cited({ text, ids, titles, onCite }: { text: string; ids: string[]; titles: Record<string, string>; onCite: (id: string) => void }) {
-  const parts = text.split(/(\[[^\]\s]+\])/g);
-  return <>{parts.map((p, i) => {
-    const m = /^\[([^\]\s]+)\]$/.exec(p);
-    if (m && ids.includes(m[1])) {
-      const n = ids.indexOf(m[1]) + 1;
-      return <button key={i} className="cite" title={titles[m[1]] ?? m[1]} aria-label={`Source ${n}: ${titles[m[1]] ?? m[1]}`} onClick={() => onCite(m[1])}>{n}</button>;
-    }
-    return <Fragment key={i}>{p}</Fragment>;
-  })}</>;
 }
 
 function Meter({ level, unverified }: { level: number; unverified: boolean }) {

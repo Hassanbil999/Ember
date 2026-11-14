@@ -74,3 +74,15 @@ test('export dialog downloads CSV, JSON and BibTeX files that parse', async ({ p
   expect(bib.name).toMatch(/\.bib$/);
   expect(bib.text).toContain('doi = {10.60555/4qc4-de67}');
 });
+
+test('Ask the Atlas: cites NASA passages or refuses (no API key in the demo)', async ({ page }) => {
+  await page.goto('/#data');
+  await page.locator('#askQ').fill('What is the capital of France?');
+  await page.locator('#askBtn').click();
+  await expect(page.locator('#askAnswer')).toContainText("The data here doesn't cover that.");
+  await page.locator('#askQ').fill('Why do flames look different in microgravity?');
+  await page.locator('#askBtn').click();
+  // with a key: a cited answer; without one (the public demo): the matching NASA passages
+  await expect(page.locator('#askAnswer')).toContainText(/API key|\d/);
+  await expect(page.locator('.ask')).toContainText("A Researcher's Guide to: Combustion Science");
+});

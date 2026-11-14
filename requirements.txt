@@ -12,6 +12,7 @@ rank-bm25>=0.2.2
 pymupdf>=1.24
 openpyxl>=3.1
 httpx>=0.27
+anthropic>=2.8
 pytest>=8.0
 # optional: dense embeddings with MiniLM instead of local LSA (set FA_EMBEDDER=st)
 # sentence-transformers>=2.7

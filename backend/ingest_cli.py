@@ -7,6 +7,7 @@
                resources, test_points, resource_points, chunks. Reads only; never re-cleans.
     seed       add data/seed.json rows only where no real row exists (backend/catalog/seed.py)
     fit        fit the simulator's parameters to verified test points, or keep the defaults (backend/sim/fit.py)
+    index      rebuild the search index with the §5 resources (used by `q` and by Ask)
     all        every step in order (the default).
 """
 from __future__ import annotations
@@ -16,7 +17,7 @@ import time
 
 from .core.config import PROCESSED
 
-STEPS = ["canonical", "existing", "seed", "fit"]
+STEPS = ["canonical", "existing", "seed", "fit", "index"]
 OUTPUTS = ["tests.parquet", "atlas_resources.parquet", "atlas_test_points.parquet", "atlas_presets.parquet"]          # what `run.py start` needs before it can serve
 
 
@@ -37,6 +38,9 @@ def run_step(step: str) -> dict:
     if step == "fit":
         from .sim.fit import run
         return run()
+    if step == "index":
+        from .search.index import build_index
+        return build_index()
     raise SystemExit(f"unknown step {step!r}; choose from {', '.join(STEPS + ['all'])}")
 
 

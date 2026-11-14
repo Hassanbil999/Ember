@@ -39,7 +39,7 @@ def sh(cmd, cwd=ROOT, **kw):
 
 
 def _python_deps_ok() -> bool:
-    return all(importlib.util.find_spec(m) for m in ("fastapi", "uvicorn", "pandas", "duckdb", "rank_bm25", "pymupdf", "sklearn"))
+    return all(importlib.util.find_spec(m) for m in ("fastapi", "uvicorn", "pandas", "duckdb", "rank_bm25", "pymupdf", "sklearn", "scipy", "anthropic"))
 
 
 def setup():

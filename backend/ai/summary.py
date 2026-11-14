@@ -48,5 +48,63 @@ def template(filters: dict, sort: str, sim: dict) -> dict:
     return {"text": text.strip(), "citations": [r["id"] for r in top], "source": "template", "model": None}
 
 
+SYSTEM = """You summarize NASA microgravity combustion sources for spacecraft and habitat fire-safety engineers.
+Use only the sources given. Each source has a label like [S3].
+Write one or two plain sentences (no markdown, no lists) that name the most useful sources for the environment
+and say briefly what each offers. End every sentence with the label(s) of the source(s) it relies on, e.g. [S1] or [S1, S4].
+Use only numbers that appear in the sources. Do not mention gaps or missing data: those are added separately.
+Prefer sources with higher credibility; never present a placeholder as evidence."""
+PROMPT_VERSION = "summary-v1"
+
+
+def _source_text(r: dict, c) -> str:
+    pts = [c.points[x] for x in r["_codes"] if x in c.points]
+    o2 = [p["o2_pct"] for p in pts if p.get("o2_pct") is not None]
+    kpa = [p["pressure_kpa"] for p in pts if p.get("pressure_kpa") is not None]
+    inv = ", ".join(c.inv[i]["name"] for i in r["investigations"] if i in c.inv)
+    cr = r["credibility"]
+    lines = [f"Title: {r['title']}", f"Type: {r['type']}; investigation: {inv}; publisher: {r['publisher']}; year: {r['year'] or 'n/a'}",
+             f"Credibility: {cr['label']}" + (f" ({cr['score']})" if cr["score"] is not None else "") + ("; PLACEHOLDER, no source link" if r["placeholder"] else ""),
+             f"Description: {r['description'] or ''}"]
+    if pts:
+        lines.append(f"Test points: {len(pts)}" + (f"; oxygen {min(o2):g}–{max(o2):g}%" if o2 else "") + (f"; pressure {min(kpa):.0f}–{max(kpa):.0f} kPa" if kpa else ""))
+    return "\n".join(lines)
+
+
+def ai_summary(filters: dict, sort: str, sim: dict) -> dict:
+    from . import cache, llm
+    from .cite import Source, check
+    ctx = context(filters, sort, sim)
+    items, preset, c = ctx["items"], ctx["preset"], ctx["catalog"]
+    if not items:
+        return template(filters, sort, sim)
+    top = [r for r in items if not r["placeholder"]][:12] or items[:12]
+    sources = [Source(f"S{i + 1}", r["id"], None, r["title"], _source_text(r, c)) for i, r in enumerate(top)]
+    user = (f"Environment: {preset['label']} ({preset['g']} g, {preset['o2']}% O2, {preset['psi']} psi, airflow {preset['u']} cm/s). "
+            "Sources are listed most relevant first.\n\n" + "\n\n".join(f"[{s.label}]\n{s.text}" for s in sources))
+    k = cache.key(PROMPT_VERSION, llm.model_name(), SYSTEM, user, ctx["gaps"])
+    hit = cache.get(k)
+    if hit:
+        return {**hit, "cached": True}
+    out = llm.complete(SYSTEM, user, max_tokens=2048)
+    if out.refused:
+        raise llm.AIUnavailable("The AI declined this request.")
+    checked = check(out.text, sources, extra_context=user)
+    if checked is None:
+        raise llm.AIUnavailable("The AI answer had no valid citations.")
+    text = (checked.text + " " + " ".join(ctx["gaps"])).strip()
+    res = {"text": text, "citations": [x["resource_id"] for x in checked.citations], "source": "ai", "model": out.model,
+           "dropped": len(checked.dropped)}
+    cache.put(k, res)
+    return res
+
+
 def summarize(filters: dict, sort: str, sim: dict) -> dict:
+    """AI summary with citations when a key is set; otherwise, or if the AI fails or cites nothing, the template."""
+    from . import llm
+    if llm.enabled():
+        try:
+            return ai_summary(filters, sort, sim)
+        except llm.AIUnavailable as e:
+            return {**template(filters, sort, sim), "note": f"{e} Showing the template instead."}
     return template(filters, sort, sim)
