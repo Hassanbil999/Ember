@@ -67,6 +67,7 @@ investigations:
     years: [2007, 2008]
     years_source: approximate (the PSI table gives no year)
     objectives: Characterize smoke particle size from overheated spacecraft materials to design detectors.
+    datasets: [same]
     psi_ids: [PSI-102]
   - id: SAME-R
     name: Smoke Aerosol Measurement Experiment — Reflight
@@ -77,6 +78,7 @@ investigations:
     years: [2014, 2014]
     years_source: approximate (the PSI table gives no year)
     objectives: Repeat and extend SAME smoke-particle measurements.
+    datasets: [same_r]
     psi_ids: [PSI-101]
   - id: DAFT
     name: Dust and Aerosol measurement Feasibility Test

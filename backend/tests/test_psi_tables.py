@@ -154,3 +154,31 @@ def test_no_real_solid_test_reaches_moon_base_oxygen():
     t = get_store().tests
     solids = t[t.dataset.isin(["bass2", "bass", "saffire1", "saffire2", "saffire3"])]
     assert solids.o2_frac.max() == pytest.approx(0.222)
+
+
+# ------------------------------------------------------------------ smoke for detection (SAME, SAME-R)
+def test_same_expands_same_conditions_rows_and_says_so():
+    _, res, df = _load("same")
+    d = df.set_index("test_id")
+    assert len(df) == 20 and df.test_id.is_unique
+    assert set(df.material) == {"Teflon", "Kapton", "Silicone Rubber", "Lampwick", "Dibutyl Phthalate"}
+    assert d.loc["SAME-5.3", "smoke_aging_s"] == 1200 and d.loc["SAME-3", "smoke_aging_s"] == 1200   # 20 min, copied from sample 3
+    why = next(p for p in res.provenance if p["test_id"] == "SAME-5.3" and p["variable"] == "flow_cm_s")
+    assert why["steps"][0]["op"] == "derive" and "same conditions as 1-4" in why["steps"][0]["detail"]
+    assert "burned" not in df.columns or df["burned"].isna().all(), "the table records no smoke results"
+
+
+def test_same_r_rows_ids_and_second_measurements():
+    _, _, df = _load("same_r")
+    d = df.set_index("test_id")
+    assert len(df) == 109 and df.test_id.is_unique                    # test 57 appears under two materials
+    assert {"SAMER-LAM-57", "SAMER-TEF-57"} <= set(df.test_id)
+    assert d.loc["SAMER-KAP-61a", "smoke_aging_s"] == 807 and d.loc["SAMER-KAP-61", "heater_ratio"] == 1.38
+    assert d.loc["SAMER-KAP-61a", "notes"].startswith("Second measurement of the smoke from test 61")
+    assert "mission_date" not in df.columns or df["mission_date"].isna().all(), "the table gives no year, so none is invented"
+
+
+def test_detection_goal_has_real_data_in_the_ranking():
+    from backend import relevance
+    best = {b["goal"]: b["label"] for b in relevance.rank("iss")["best"]}
+    assert best["detecting fire"] in ("SAME", "SAME-R")

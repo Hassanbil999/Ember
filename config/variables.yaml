@@ -148,6 +148,45 @@ variables:
     description: Mass flow of fuel fed to a gas flame (spherical burner); more fuel means a larger flame.
     synonyms: [fuel flow, fuel flow rate, mass flow, burner flow]
     valid_range: [0, 100]
+  heater_ratio:
+    label: Heater setting (Rt/R0)
+    short: Rt/R0
+    unit: ""
+    kind: number
+    role: condition
+    description: The smoke experiments' heater setting, the ratio of the heater's hot to cold resistance as written in the PSI table; a higher value means a hotter sample.
+    synonyms: [heater, rt/r0, heating temperature, temperature setting]
+    valid_range: [0.5, 3]
+  heat_duration_s:
+    label: Heating time
+    unit: s
+    kind: number
+    role: condition
+    description: How long the sample was heated to make smoke.
+    synonyms: [heating time, heating duration, duration]
+    valid_range: [0, 3600]
+  smoke_aging_s:
+    label: Smoke aging time
+    unit: s
+    kind: number
+    role: condition
+    description: How long the smoke was held before it was measured (smoke particles grow as they age).
+    synonyms: [aging, smoke aging, aged smoke, aging time]
+    valid_range: [0, 10000]
+  mass_loss_rate_mg_min:
+    label: Sample weight-loss rate
+    unit: mg/min
+    kind: number
+    role: condition
+    description: How fast the heated sample lost mass while giving off smoke.
+    synonyms: [weight loss, mass loss, weight loss rate]
+    valid_range: [0, 1000]
+  notes:
+    label: Test note
+    kind: category
+    role: meta
+    description: The test's own description or note from the PSI table.
+    synonyms: [note, description, comment]
   material:
     label: Material
     kind: category

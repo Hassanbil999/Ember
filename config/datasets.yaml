@@ -208,6 +208,50 @@ datasets:
     columns: *saffire_cols
     outcome_map: { "1": 1, "0": 0 }
 
+  same:
+    title: SAME smoke tests for fire detection (NASA PSI-102 experimental table)
+    adapter: psi_same
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    constants: { gravity_g: 0.0 }
+    investigations: [SAME]
+    files: ["PSI-102_Experimental table_SAME.csv"]
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-102. See the PSI terms of use."
+    # Conditions under which smoke was made for detector design; the smoke measurements are not in the table.
+    columns:
+      "Test id": test_id
+      "Investigation": investigation_id
+      "Material": material
+      "Flow": flow_cm_s
+      "Loss": mass_loss_rate_mg_min
+      "Aging": smoke_aging_s
+      "Note": notes
+    units: { "Flow": "cm/s", "Loss": "mg/min", "Aging": "min" }
+
+  same_r:
+    title: SAME-R smoke tests for fire detection (NASA PSI-101 experimental table)
+    adapter: psi_same_r
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    constants: { gravity_g: 0.0 }
+    investigations: [SAME-R]
+    files: ["PSI-101_Experimental table_SAME-R.csv"]
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-101. See the PSI terms of use."
+    columns:
+      "Test id": test_id
+      "Investigation": investigation_id
+      "Material": material
+      "Flow": flow_cm_s
+      "Heater": heater_ratio
+      "Heat time": heat_duration_s
+      "Aging": smoke_aging_s
+      "Note": notes
+    units: { "Flow": "cm/s", "Heat time": "s", "Aging": "s" }
+
   flex_demo:        # synthetic stand-in used before the real table was loaded; kept for the adapter tests
     title: Droplet combustion tests (FLEX-shaped demo fixture)
     adapter: flex_droplets
