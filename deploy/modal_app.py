@@ -19,7 +19,9 @@ image = modal.Image.from_dockerfile(ROOT / "Dockerfile", context_dir=ROOT)
 app = modal.App("freefall-atlas")
 
 
-@app.function(image=image, cpu=2.0, memory=2048, timeout=3600, scaledown_window=600)
+# Lean on purpose: the free Starter credit is small, and a container only costs while it is awake.
+# 1 CPU and 1 GiB are enough (the container was measured at ~390 MiB); it sleeps 3 minutes after the last visitor.
+@app.function(image=image, cpu=1.0, memory=1024, timeout=3600, scaledown_window=180)
 @modal.concurrent(max_inputs=50)
 @modal.web_server(port=7860, startup_timeout=240)
 def web():
