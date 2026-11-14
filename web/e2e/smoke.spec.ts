@@ -109,6 +109,15 @@ test('fire check: no number outside NASA tests, an estimate between them, a repo
   await expect(dlg.locator('#fcZone')).toHaveText(/Estimated|Tested/);
   await expect(dlg.locator('#fcProb')).toContainText('%');
   await expect(dlg.locator('#fcModel')).toContainText('never saw');
+  await expect(dlg.locator('#fcNotIn')).toContainText('still air');
+
+  // a half-typed field: an inline error, the old result marked out of date, no report from stale inputs
+  await dlg.locator('#fcD0').fill('');
+  await expect(dlg.locator('#fcD0Err')).toHaveText('Enter a number.');
+  await expect(dlg.locator('#fcStale')).toBeVisible();
+  await expect(dlg.locator('#fcReport')).toBeDisabled();
+  await dlg.locator('#fcD0').fill('3');
+  await expect(dlg.locator('#fcReport')).toBeEnabled();
 
   const [dl] = await Promise.all([page.waitForEvent('download'), dlg.locator('#fcReport').click()]);
   const html = readFileSync((await dl.path())!, 'utf8');
@@ -120,4 +129,16 @@ test('fire check: no number outside NASA tests, an estimate between them, a repo
   await expect(page.locator('#view-data')).toBeVisible();
   await expect(page.locator(`#pt-${code}`)).toBeVisible({ timeout: 15000 });
   expect(errors, errors.join('\n')).toEqual([]);
+});
+
+test('simulator: outside tested conditions it shows a trend, not numbers; acrylic shows the outside-NASA spread data', async ({ page }) => {
+  await page.goto('/?g=0.166&o2=34&p=8.2&u=10&mat=fabric#simulate');
+  await expect(page.locator('#simZone')).toContainText('Untested here');
+  await expect(page.locator('#sSpread')).toHaveText('—');
+  await expect(page.locator('#verdictText')).not.toContainText('×');
+  await page.goto('/?g=0&o2=21&p=14.7&u=10&mat=pmma#simulate');
+  await expect(page.locator('#simZone')).toContainText('Illustrative');
+  await expect(page.locator('#sSpread')).toContainText('≈');
+  await expect(page.locator('#zarm')).toContainText('outside NASA');
+  await expect(page.locator('#zarm')).toContainText('doi:10.5281/zenodo.18479713');
 });

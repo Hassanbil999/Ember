@@ -30,7 +30,7 @@ Stated plainly, because honest limits are part of the product. The data limits b
 - **Quoted passages come mostly from NASA's *A Researcher's Guide to: Combustion Science* (2015, 56 pages)**, checksum-verified against NASA's file. Its table of contents, acronym list and garbled hardware tables are not quoted. It predates BASS-II, SAFFIRE and CFI-G and does not discuss the Moon or partial gravity, so those answers rest on the test data.
 - The two "context notes" PDFs restate facts from the challenge brief (for example the planned Moon-base atmosphere). They are not NASA documents, are labelled as such wherever they are quoted, and stay only until a NASA source for those facts is loaded.
 
-- One source from outside NASA is loaded: five measured flame-spread rates over thin acrylic (PMMA) from the ZARM drop tower in Bremen (Zenodo doi:10.5281/zenodo.18479713, CC BY-NC 4.0, DLR-funded), at 21–36 % oxygen, which covers Moon-base air. A drop tower gives only seconds of microgravity, so it shows how fast a flame spreads, not whether it keeps burning. It is read from its pinned file (`backend/external.py`), never enters the test store, trains no model and is not shown in the current screens yet.
+- One source from outside NASA is loaded: five measured flame-spread rates over thin acrylic (PMMA) from the ZARM drop tower in Bremen (Zenodo doi:10.5281/zenodo.18479713, CC BY-NC 4.0, DLR-funded), at 21–36 % oxygen, which covers Moon-base air. A drop tower gives only seconds of microgravity, so it shows how fast a flame spreads, not whether it keeps burning. It is read from its pinned file (`backend/external.py`), never enters the test store, trains no model and is shown next to the simulator for acrylic (labelled outside NASA) and never used to fit it.
 
 ## Simulator (SPEC §8)
 - **Illustrative, not a design tool.** A reduced-order flame-limit model for two solid materials (cotton-fiberglass fabric, acrylic/PMMA) with parameters from published BASS-II limits and the Saffire-I spread rate. Droplets and gas flames are not simulated.
@@ -45,3 +45,11 @@ Stated plainly, because honest limits are part of the product. The data limits b
 ## Search and answers
 - Dense retrieval uses local LSA. It is weaker than a neural embedder on paraphrases. `FA_EMBEDDER=st` enables MiniLM if sentence-transformers is installed. There is no cross-encoder rerank.
 - The query parser understands common units and phrasings ("30 percent oxygen", "0.3 O2", "10 psi", "moon base"), not arbitrary language. Unparsed words fall back to keyword search.
+
+## Fire check (README decisions Z–AM)
+- Microgravity only; gas and liquid fuels only (no burned/went-out outcome exists for solids in the loaded tables). Test fuels stand in for cabin fluids.
+- Few tests near Moon-base air: many checks there are honestly "untested"; the dialog offers the nearest tested conditions.
+- Small datasets: the models beat always guessing the average by 40 % (gas) and 18 % (droplets) in Brier score on unseen campaigns. Read the chances as screening estimates.
+- The chance range shows how much the answer depends on which campaigns were run; it is not a guaranteed interval and may still be too narrow. Gas chances in the middle range are overconfident (calibration table in every report).
+- Airflow is not an input: the outcome-labelled NASA tests here have no airflow variation.
+- The simulator for solids is still illustrative and unfitted: no verified solid test has oxygen, pressure, airflow and an outcome together. Its starter reference points (seed rows) still need a person to check them against the cited papers on /admin/verify.

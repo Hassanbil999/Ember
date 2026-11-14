@@ -12,8 +12,11 @@ Brier score and log loss (the probabilities, not just the ranking); among usable
 wins. A regressor is usable only if its mean absolute error beats the baseline's. If nothing beats the
 baseline, no estimate is ever shown for that question: the app shows the nearest real tests instead.
 
-Uncertainty: the 5 fold models (each trained without one group of campaigns) are kept; the spread of
-their predictions is the range shown. For measured quantities the 90 % range is split-conformal: the
+Uncertainty: the chosen model is refitted on 15 campaign-bootstrap samples (whole NASA campaigns drawn
+with replacement, since tests inside one campaign are not independent); the 10th–90th percentile of
+their predictions is the range shown. This is wider than the old 5-fold spread and reflects how much the
+answer depends on which campaigns NASA happened to run. Calibration (predicted vs observed rate on
+unseen campaigns, in five bins) is stored with the model so a reader can see whether "30 %" means 30 %. For measured quantities the 90 % range is split-conformal: the
 90th percentile of the absolute errors on unseen campaigns, so its coverage is checked, not assumed.
 """
 from __future__ import annotations
@@ -40,6 +43,7 @@ warnings.filterwarnings("ignore")
 OUT = ARTIFACTS / "predict"
 OUT.mkdir(parents=True, exist_ok=True)
 FOLDS = 5
+BOOT = 15
 
 
 def _classifiers(d: int) -> dict:
@@ -72,7 +76,30 @@ def _clf_scores(y, p) -> dict:
             "accuracy": round(float(((p > 0.5) == y).mean()), 3)}
 
 
-def train_classifier(pb: Problem) -> dict:
+def _calibration(y, p, bins: int = 5) -> list[dict]:
+    """Unseen-campaign predictions split into equal-count bins: mean predicted chance vs observed share."""
+    order = np.argsort(p)
+    out = []
+    for chunk in np.array_split(order, bins):
+        if len(chunk):
+            out.append({"n": int(len(chunk)), "predicted": round(float(p[chunk].mean()), 3), "observed": round(float(y[chunk].mean()), 3)})
+    return out
+
+
+def _campaign_bootstrap(mk, X, y, groups, n: int = BOOT, seed: int = 0) -> list:
+    rng = np.random.default_rng(seed)
+    camps = np.array(sorted(set(groups)))
+    models = []
+    while len(models) < n:
+        pick = rng.choice(camps, size=len(camps), replace=True)
+        idx = np.concatenate([np.flatnonzero(groups == c) for c in pick])
+        if len(set(y[idx])) < 2:
+            continue
+        models.append(mk().fit(X[idx], y[idx]))
+    return models
+
+
+def train_classifier(pb: Problem) -> tuple[dict, dict]:
     df = pb.frame()
     X, y = df[pb.features].to_numpy(float), df[pb.target].astype(int).to_numpy()
     groups = df.campaign.astype(str).to_numpy()
@@ -97,11 +124,16 @@ def train_classifier(pb: Problem) -> dict:
     if chosen:
         mk = _classifiers(X.shape[1])[chosen]
         bundle["model"] = mk().fit(X, y)
-        bundle["fold_models"] = [mk().fit(X[tr], y[tr]) for tr, _ in splits if len(set(y[tr])) > 1]
+        bundle["boot_models"] = _campaign_bootstrap(mk, X, y, groups)
     card = {"question": pb.question, "target": pb.target, "investigation": pb.investigation, "psi_id": pb.psi_id,
             "n_tests": int(len(y)), "n_yes": int(y.sum()), "outcome_yes": pb.outcome_yes, "outcome_no": pb.outcome_no,
             "n_campaigns": int(len(set(groups))), "validation": f"GroupKFold by campaign, {len(splits)} folds",
             "comparison": table, "chosen": chosen, "features": pb.features}
+    if chosen:
+        best = next(r for r in table if r["model"] == chosen)
+        card["skill_vs_baseline"] = round(1 - best["brier"] / table[0]["brier"], 3)
+        card["calibration"] = _calibration(y, np.clip(oof_by[chosen], 1e-3, 1 - 1e-3))
+        card["range_method"] = f"10th–90th percentile of {BOOT} models refitted on campaign-bootstrap samples"
     return bundle, card
 
 

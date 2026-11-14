@@ -210,6 +210,7 @@ def test_every_downloaded_psi_table_is_used():
     for ds_id in MANIFEST:
         assert ds_id in loaded or ds_id == "flex2", f"{ds_id} is downloaded but not loaded"
     import yaml
+
     from backend.core.config import CONFIG
     flex2 = next(i for i in yaml.safe_load((CONFIG / "investigations.yaml").read_text(encoding="utf-8"))["investigations"] if i["id"] == "FLEX-2")
     assert "test matrix" in flex2["test_matrix"].lower(), "FLEX-2's PSI table is a test plan, shown as such"

@@ -237,3 +237,14 @@ dialog.fc{width:min(860px,96vw)}
 .pill.zone-untested{background:transparent;color:var(--muted);border:1px dashed #4a5672}
 tr.flash td{animation:flash 1.6s ease}
 @media (prefers-reduced-motion:reduce){ tr.flash td{animation:none} }
+.fc-err{font-size:12px;color:#f3b07a;margin-top:2px}
+.fc-num input[aria-invalid="true"]{border-color:#b8742f}
+.fc-stale{margin:0;font-size:12.5px;color:#f3b07a}
+.fc-res.stale{opacity:.55}
+.fc-stats{flex-wrap:wrap;gap:16px 28px}
+.sim-zone{margin:0;font-size:12.5px;color:var(--muted)}
+.sim-zone.untested{color:#cfd5e2}
+.sim-zone .badge{margin-left:0}
+.badge.solid{border-style:solid}
+.outside{font-size:12.5px;color:var(--muted);border-left:2px dashed #4a5672;padding-left:10px}
+.outside b{color:var(--ink);font-weight:500}

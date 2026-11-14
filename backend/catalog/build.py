@@ -16,7 +16,7 @@ import pandas as pd
 from ..core import config
 from ..core.config import PROCESSED, RAW
 from . import credibility
-from .groups import (FUEL_PHASE_TO_FUEL, GROUPS, MEMBER_TO_GROUP, PILLAR_TO_PURPOSE, material_of, outcome_of)
+from .groups import FUEL_PHASE_TO_FUEL, GROUPS, MEMBER_TO_GROUP, PILLAR_TO_PURPOSE, material_of, outcome_of
 
 # Variables a test point's numbers come from. A point is verified only if none of these was derived or refused
 # (README Decision B). Dataset settings (e.g. gravity 0 for an ISS run) count as published.

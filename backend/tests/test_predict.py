@@ -26,7 +26,8 @@ def _real(problem: str):
         r = t[(t.dataset == "cfig_normal") & t.burned.notna() & t.o2_frac.notna() & t.fuel_flow_mg_s.notna()].iloc[0]
         return r, {"problem": "gas", "fuel": r.fuel, "o2_pct": r.o2_frac * 100, "psi": r.pressure_kpa / PSI, "fuel_flow": r.fuel_flow_mg_s}
     r = t[(t.dataset == "flex") & t.burned.notna() & t.d0_mm.notna() & (t.diluent == "N2")].iloc[0]
-    return r, {"problem": "droplet", "fuel": r.fuel, "o2_pct": r.o2_frac * 100, "psi": r.pressure_kpa / PSI, "d0_mm": r.d0_mm, "diluent": "N2"}
+    return r, {"problem": "droplet", "fuel": r.fuel, "o2_pct": r.o2_frac * 100, "psi": r.pressure_kpa / PSI, "d0_mm": r.d0_mm,
+               "co2_pct": (r.co2_frac or 0) * 100, "he_pct": (r.he_frac or 0) * 100}
 
 
 def test_fuel_labels_parse_into_what_the_fuel_is():
@@ -69,7 +70,7 @@ def test_models_are_used_only_if_they_beat_the_baseline_on_unseen_campaigns():
 
 
 def test_estimate_between_tests_has_a_range_and_drivers():
-    res = service.check({"problem": "droplet", "fuel": "n-heptane", "o2_pct": 19, "psi": 14.7, "d0_mm": 3, "diluent": "N2"})
+    res = service.check({"problem": "droplet", "fuel": "n-heptane", "o2_pct": 19, "psi": 14.7, "d0_mm": 3})
     assert res["zone"] in ("estimated", "tested")
     e = res["estimate"]
     assert 0 <= e["low"] <= e["high"] <= 1 and 0 <= e["probability"] <= 1
@@ -105,3 +106,43 @@ def test_report_escapes_what_it_prints():
     res["inputs"][0]["value"] = "<script>alert(1)</script>"
     html = report.render(res, datetime.now(timezone.utc))
     assert "<script>alert(1)</script>" not in html and "&lt;script&gt;" in html
+
+
+def test_a_real_co2_mix_is_answered_not_always_untested():
+    """NASA mixed 45–70 % CO₂ with nitrogen; the old input set CO₂ to everything but oxygen and was always untested."""
+    from backend.core.store import get_store
+    t = get_store().usable_tests("flex")
+    r = t[(t.diluent == "CO2") & t.burned.notna() & t.d0_mm.notna()].iloc[0]
+    res = service.check({"problem": "droplet", "fuel": r.fuel, "o2_pct": r.o2_frac * 100, "psi": r.pressure_kpa / PSI,
+                         "d0_mm": r.d0_mm, "co2_pct": r.co2_frac * 100, "he_pct": 0})
+    assert res["zone"] == "tested" and res["nearest"][0]["code"] == r.test_id
+    with pytest.raises(ValueError):
+        service.check({"problem": "droplet", "fuel": "n-heptane", "o2_pct": 40, "psi": 14.7, "d0_mm": 3, "co2_pct": 70})
+
+
+def test_hints_are_per_fuel_and_airflow_is_explained():
+    m = service.meta()
+    assert m["gas"]["ranges_by_fuel"]["propane"]["psi"][0] > 13          # pure propane: tested near 1 atm only
+    assert m["gas"]["ranges"]["psi"][0] < 8                               # all fuels together reach lower pressure
+    assert "Airflow" in m["gas"]["not_in_data"] and "still air" in m["droplet"]["not_in_data"]
+
+
+def test_untested_offers_the_nearest_tested_conditions():
+    res = service.check({"problem": "gas", "fuel": "propane", "o2_pct": 34, "psi": 8.2, "fuel_flow": 1})
+    assert res["zone"] == "untested" and res["suggestion"]
+    s = res["suggestion"]
+    again = service.check({"problem": "gas", "fuel": s["fuel"], "o2_pct": s["o2_pct"], "psi": s["psi"], "fuel_flow": s["fuel_flow"]})
+    assert again["zone"] == "tested"
+    assert service.check({"problem": "gas", "fuel": "propane", "o2_pct": 34, "psi": 14.7, "fuel_flow": 1, "gravity_g": 0.166})["suggestion"] is None
+
+
+def test_burn_time_and_calibration_are_reported():
+    res = service.check({"problem": "droplet", "fuel": "n-heptane", "o2_pct": 19, "psi": 14.7, "d0_mm": 3})
+    assert any(q["label"] == "Burn time" and q["unit"] == "s" and q["low"] <= q["value"] <= q["high"] for q in res["quantities"])
+    m = res["model"]
+    assert 0 < m["skill"] < 1 and len(m["calibration"]) == 5 and "bootstrap" in m["range_method"]
+
+
+def test_validation_errors_are_readable(client):
+    r = client.post("/api/fire-check", json={"problem": "gas", "fuel": "propane", "o2_pct": 21, "psi": 0, "fuel_flow": 1})
+    assert r.status_code == 422 and isinstance(r.json()["detail"], list)      # the web client turns this list into text

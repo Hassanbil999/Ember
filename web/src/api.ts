@@ -6,11 +6,18 @@ async function get<T>(path: string): Promise<T> {
   return r.json() as Promise<T>;
 }
 
+/* FastAPI sends a string for our own errors and a list of {loc, msg} for validation errors. */
+export function detailText(d: unknown): string {
+  if (typeof d === 'string') return d;
+  if (Array.isArray(d)) return d.map(x => (x && typeof x === 'object' && 'msg' in x ? `${(x as { loc?: unknown[] }).loc?.slice(-1)[0] ?? ''}: ${(x as { msg: string }).msg}` : String(x))).join('; ');
+  return d == null ? '' : JSON.stringify(d);
+}
+
 async function post<T>(path: string, body: unknown): Promise<T> {
   const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   if (!r.ok) {
     let msg = `${r.status}`;
-    try { msg = (await r.json()).detail ?? msg; } catch { /* not JSON */ }
+    try { msg = detailText((await r.json()).detail) || msg; } catch { /* not JSON */ }
     throw new Error(msg);
   }
   return r.json() as Promise<T>;
@@ -40,7 +47,7 @@ export interface AskResponse {
   citations: { resource_id: string; page: number | null; title: string }[]; passages: AskPassage[];
 }
 
-export interface FireCheckReq { problem: 'gas' | 'droplet'; fuel: string; o2_pct: number; psi: number; gravity_g: number; fuel_flow: number; d0_mm: number; diluent: 'N2' | 'CO2' | 'He' }
+export interface FireCheckReq { problem: 'gas' | 'droplet'; fuel: string; o2_pct: number; psi: number; gravity_g: number; fuel_flow: number; d0_mm: number; co2_pct: number; he_pct: number }
 export interface FireCheckNear { code: string; dataset: string; source_row: number | null; resource_id: string | null; fuel: string; o2_pct: number; psi: number; pressure_kpa: number; outcome: string; burned: number; distance: number; close: boolean; fuel_flow?: number; d0_mm?: number }
 export interface FireCheckRes {
   problem: 'gas' | 'droplet'; label: string; zone: 'tested' | 'estimated' | 'untested'; zone_text: string; reasons: string[]; verdict: string;
@@ -48,16 +55,22 @@ export interface FireCheckRes {
   quantities: { label: string; unit: string; value: number; low: number; high: number }[];
   drivers: { label: string; step: number; unit: string; change_pts: number }[];
   nearest: FireCheckNear[]; tested: { n: number; yes: number; agrees?: boolean } | null;
-  model: { chosen: string | null; n_tests: number; n_campaigns: number; auc: number | null; brier: number | null; baseline_brier: number; investigation: string; psi_id: string };
+  model: { chosen: string | null; n_tests: number; n_campaigns: number; auc: number | null; brier: number | null; baseline_brier: number; investigation: string; psi_id: string; skill: number | null };
+  not_in_data: string;
+  suggestion: { code: string; fuel: string; o2_pct: number; psi: number; fuel_flow?: number; d0_mm?: number; co2_pct?: number; he_pct?: number } | null;
 }
-export type FireCheckMeta = Record<'gas' | 'droplet', { label: string; fuels: string[]; ranges: Record<string, [number, number]> }>;
+export type FireCheckMeta = Record<'gas' | 'droplet', { label: string; fuels: string[]; ranges: Record<string, [number, number]>; ranges_by_fuel: Record<string, Record<string, [number, number]>>; not_in_data: string }>;
+
+export interface Zarm { label: string; material: string; doi: string; url: string; citation: string; license: string; limits: string[];
+  points: { id: string; o2_frac: number; pressure_kpa: number; flow_mm_s: number; thickness_mm: number; spread_mm_s: number; spread_std: number }[] }
 
 export const api = {
+  zarm: () => get<Zarm>('/api/outside/zarm'),
   fireCheckMeta: () => get<FireCheckMeta>('/api/fire-check/meta'),
   fireCheck: (r: FireCheckReq) => post<FireCheckRes>('/api/fire-check', r),
   async fireCheckReport(r: FireCheckReq): Promise<{ text: string; filename: string }> {
     const res = await fetch('/api/fire-check/report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(r) });
-    if (!res.ok) throw new Error(`report: ${res.status}`);
+    if (!res.ok) { let m = `report: ${res.status}`; try { m = detailText((await res.json()).detail) || m; } catch { /* not JSON */ } throw new Error(m); }
     const cd = res.headers.get('Content-Disposition') || '';
     return { text: await res.text(), filename: /filename="?([^";]+)"?/.exec(cd)?.[1] ?? 'fire-check-report.html' };
   },

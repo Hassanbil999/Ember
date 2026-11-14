@@ -94,6 +94,10 @@ PROBLEMS: dict[str, Problem] = {
         feature_labels={"o2_pct": "Oxygen", "psi": "Pressure", "fuel_flow": "Fuel flow (leak size)",
                         "carbon_n": "Fuel (carbon atoms)", "fuel_share": "Fuel share of the jet"},
         units={"o2_pct": "%", "psi": "psi", "fuel_flow": "mg/s", "carbon_n": "", "fuel_share": ""},
+        regressions={
+            "burn_time_s": {"label": "Time until the flame went out", "unit": "s", "only_when": {"burned": 0},
+                            "meaning": "only for flames that go out on their own; a flame that stays lit burns until the test is stopped"},
+        },
     ),
     "droplet": Problem(
         key="droplet", label="Liquid fuel droplet", question="Does a burning fuel drop burn to the end?",
@@ -108,6 +112,8 @@ PROBLEMS: dict[str, Problem] = {
                                   "meaning": "how fast the drop is consumed (diameter² falls by K each second)"},
             "extinction_d_mm": {"label": "Drop size when the flame died", "unit": "mm", "only_when": {"burned": 0},
                                 "meaning": "only meaningful when the flame dies early"},
+            "burn_time_s": {"label": "Burn time", "unit": "s",
+                            "meaning": "from ignition until the flame went out or the drop was used up"},
         },
     ),
 }
@@ -125,8 +131,10 @@ def features_from(problem: Problem, inp: dict) -> np.ndarray:
         fuel = DROPLET_FUELS.get(inp["fuel"], inp["fuel"])
         if fuel not in DROPLET_FUELS.values():
             raise ValueError(f"Unknown droplet fuel {inp['fuel']!r}; choose n-heptane or methanol.")
-        dil = inp.get("diluent", "N2")
-        rest = max(0.0, 100.0 - float(inp["o2_pct"]))
+        # the rest of the air: CO₂ and helium shares as NASA mixed them; nitrogen makes up the remainder
+        co2, he = float(inp.get("co2_pct") or 0.0), float(inp.get("he_pct") or 0.0)
+        if co2 < 0 or he < 0 or float(inp["o2_pct"]) + co2 + he > 100.0 + 1e-6:
+            raise ValueError("Oxygen, CO₂ and helium together cannot exceed 100 %.")
         row = {"o2_pct": inp["o2_pct"], "psi": inp["psi"], "d0_mm": inp["d0_mm"], "heptane": 1.0 if fuel == "heptane" else 0.0,
-               "co2_pct": rest if dil == "CO2" else 0.0, "he_pct": rest if dil == "He" else 0.0}
+               "co2_pct": co2, "he_pct": he}
     return np.array([[float(row[f]) for f in problem.features]])

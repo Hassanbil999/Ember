@@ -1,5 +1,4 @@
 """Citation verifier, answer engine abstention, applicability domain, surrogate sanity."""
-import pandas as pd
 import pytest
 
 from backend.answer.verifier import numbers_in, verify_sentence

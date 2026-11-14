@@ -7,10 +7,6 @@ import html
 from datetime import datetime
 from functools import lru_cache
 
-
-
-
-
 e = lambda v: html.escape("" if v is None else str(v))  # noqa: E731
 
 ZONE = {"tested": ("Tested", "NASA tests at nearly these conditions"),
@@ -22,6 +18,7 @@ ZONE = {"tested": ("Tested", "NASA tests at nearly these conditions"),
 def _dois() -> dict:
     """investigation -> (PSI id, DOI), from the team's verified list in config/investigations.yaml."""
     import yaml
+
     from ..core.config import CONFIG
     try:
         y = yaml.safe_load((CONFIG / "investigations.yaml").read_text(encoding="utf-8"))
@@ -56,7 +53,7 @@ def verdict(res: dict) -> str:
         s += f"{t['yes']} of the {t['n']} NASA tests at nearly these conditions {t['outcome_yes']}. "
     if est:
         s += (f"Model estimate: {_pct(est['probability'])} chance it {est['will']} "
-              f"(range {_pct(est['low'])}–{_pct(est['high'])} across models trained without different campaigns).")
+              f"(likely range {_pct(est['low'])}–{_pct(est['high'])}, from models refitted on resampled NASA campaigns).")
         if t is not None and "agrees" in t:
             s += " The model agrees with those tests." if t["agrees"] else " The model disagrees with those tests: trust the tests."
     return s
@@ -84,7 +81,7 @@ def render(res: dict, stamp: datetime) -> str:
         rows.append([e(f"{q['label']} ({q['unit']})"), f"{q['value']:.3g}", f"{q['low']:.3g}–{q['high']:.3g} (90 %)", e(q["model"])])
     if rows:
         parts.append(f'<section><h2>Estimates</h2>{_table(["Quantity", "Estimate", "Range", "Model"], rows, {1, 2})}'
-                     '<p class="note">Chance range: lowest and highest of five models, each trained with one group of NASA campaigns left out. '
+                     '<p class="note">Chance range: 10th–90th percentile of 15 models, each refitted on NASA campaigns drawn with replacement (tests in one campaign are not independent). It shows how much the answer depends on which campaigns were run; it is not a guarantee. '
                      'Measured-quantity range: 90 % of the errors on unseen campaigns were smaller than this (split-conformal).</p></section>')
 
     near = res["nearest"]
@@ -127,7 +124,14 @@ def render(res: dict, stamp: datetime) -> str:
                  'A model is used only if it beats the baseline on both Brier score and log loss.</p>'
                  f'{_table(["Model", "AUC", "Brier", "Log loss", "Accuracy", "Beats baseline"], crows, {1, 2, 3, 4})}'
                  '<p class="note">AUC: how often a test that burned is ranked above one that did not (0.5 = chance). Brier and log loss: error of the probabilities (lower is better). '
-                 'Accuracy is shown but not used: when one outcome is common, always guessing it already scores high.</p></section>')
+                 'Accuracy is shown but not used: when one outcome is common, always guessing it already scores high.</p>'
+                 + (f'<p>Improvement over always guessing the average (Brier skill): <b>{m["skill"] * 100:.0f} %</b>. '
+                    'Small datasets: read the estimate as a screening value, not a precise probability.</p>' if m.get("skill") is not None else "")
+                 + (_table(["Predicted chance (unseen campaigns)", "Observed share", "Tests"],
+                           [[_pct(c["predicted"]), _pct(c["observed"]), str(c["n"])] for c in m.get("calibration", [])], {0, 1, 2})
+                    + '<p class="note">Calibration: tests sorted by predicted chance into five equal groups. Close numbers in a row mean the chances can be read at face value.</p>'
+                    if m.get("calibration") else "")
+                 + '</section>')
 
     parts.append('<section><h2>Limits</h2><ul>'
                  '<li>All NASA tests used here ran in microgravity. Gravity is not something the model has learned.</li>'

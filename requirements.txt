@@ -16,3 +16,4 @@ anthropic>=2.8
 pytest>=8.0
 # optional: dense embeddings with MiniLM instead of local LSA (set FA_EMBEDDER=st)
 # sentence-transformers>=2.7
+ruff>=0.17          # linter (python run.py lint)

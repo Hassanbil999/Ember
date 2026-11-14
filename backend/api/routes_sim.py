@@ -33,3 +33,14 @@ def flammability_map(g: float = Query(0.166, ge=0, le=1.2), o2: float = Query(34
     """Flame-limit curve (oxygen limit against airflow) for the settings, the measured points for this
     gravity and material, and where the settings sit."""
     return service.flammability_map(g, o2, psi, u, material)
+
+
+@router.get("/outside/zarm")
+def outside_zarm():
+    """Evidence from outside NASA, kept apart: ZARM drop-tower flame-spread rates over thin acrylic (backend/external.py).
+    Shown next to the illustrative simulator for acrylic; never used to fit it."""
+    from .. import external
+    src = external.sources().get("zarm_barriers") or {}
+    return {"label": src.get("label"), "material": src.get("material"), "doi": src.get("doi"), "url": src.get("url"),
+            "citation": src.get("citation"), "license": src.get("license"), "limits": src.get("limits", []),
+            "points": external.zarm_spread()}

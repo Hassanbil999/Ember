@@ -51,7 +51,7 @@ def _decide(code: str, action: str, body: Decision, token: str | None) -> dict:
         try:
             d = curate.record(code, action, body.by, body.fields, body.note)
         except curate.CurationError as e:
-            raise HTTPException(422, str(e))
+            raise HTTPException(422, str(e)) from e
         _apply_and_reload()
     p = catalog().points.get(code)
     return {"decision": d, "point": p, "model_params": catalog().params_meta}

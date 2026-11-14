@@ -1,0 +1,19 @@
+# `python run.py lint` (ruff for Python, the TypeScript compiler for the web app)
+line-length = 140
+target-version = "py311"
+extend-exclude = ["web", "prototype", "data", "frontend"]
+
+[lint]
+# pyflakes (unused/undefined names), pycodestyle errors and warnings, import order, bugbear (likely bugs)
+select = ["F", "E", "W", "I", "B"]
+ignore = [
+  "E501",   # long lines: data tables and messages read better unwrapped; line-length still guides formatting
+  "E731",   # small lambdas are used as local helpers
+  "B008",   # FastAPI's Query()/Field() defaults are the intended pattern
+  "B905",   # zip() pairs columns of one table, which have equal length by construction
+]
+
+[lint.per-file-ignores]
+"backend/api/main.py" = ["E402"]   # routers are imported after the app is created
+"backend/adapters/pdf_reports.py" = ["B023"]   # flush() is defined and called inside the same loop pass: it always sees the current values
+"backend/sim/model.py" = ["E741"]   # I = intensity, named as in SPEC §8 and the prototype it was ported from
