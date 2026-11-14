@@ -120,9 +120,10 @@ def test_presets_come_from_the_prototype(api):
     assert p["moon"]["o2"] == 34 and p["moon"]["psi"] == 8.2 and p["rover"]["u"] == 0
 
 
-def test_type_filter_and_facets(api):
+def test_type_filter_and_facets(api, t):
     r = api.get("/api/resources", params={"types": "paper"}).json()
-    assert r["total"] == 4 and {i["type"] for i in r["items"]} == {"paper"}
+    n_papers = int((t["resources"].type == "paper").sum())
+    assert r["total"] == n_papers >= 4 and {i["type"] for i in r["items"]} == {"paper"}
     assert r["facets"]["types"]["data"] == 16, "facets ignore the type filter itself"
 
 

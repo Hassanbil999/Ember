@@ -9,3 +9,4 @@ tests/screens/
 .next-build/
 web/test-results/
 web/playwright-report/
+data/cache/

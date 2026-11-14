@@ -250,7 +250,9 @@ function PointTable({ points, total, onSimulate }: { points: TestPoint[]; total:
             <td className="n">{p.flow_cm_s ?? '—'}</td>
             <td className={p.outcome === 'burned' ? 'oc-b' : p.outcome === 'went_out' ? 'oc-o' : ''} title={p.notes ?? undefined}>{p.outcome_text}{p.notes ? ' ·' : ''}</td>
             <td className="n">{p.spread_mm_s ?? '—'}</td>
-            <td title={p.source_quote ?? undefined}>{p.source_page ? <a className="link" href={`/api/source/${p.dataset}/row/${p.source_page.replace('row ', '')}`} target="_blank" rel="noopener noreferrer">{p.source_page}</a> : p.placeholder ? 'placeholder' : '—'}</td>
+            <td title={p.source_quote ?? undefined}>{p.source_page && p.dataset && p.source_page.startsWith('row ')
+              ? <a className="link" href={`/api/source/${p.dataset}/row/${p.source_page.slice(4)}`} target="_blank" rel="noopener noreferrer">{p.source_page}</a>
+              : p.source_page ?? (p.placeholder ? 'placeholder' : '—')}{p.extraction === 'ai' && <span className="badge">AI-extracted</span>}</td>
             <td>{p.simulatable && <button className="btn small" data-sim={p.code} onClick={() => onSimulate(p.code)}>▶ Simulate</button>}</td>
           </tr>
         ))}</tbody></table></div>

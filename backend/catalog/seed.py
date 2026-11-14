@@ -11,6 +11,7 @@ never overwrites a real row; it keeps its `status` and `verified` exactly as giv
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pandas as pd
@@ -68,13 +69,16 @@ def run() -> dict:
 
     # resources
     real_urls = {u for u in res.url.dropna()}
+    ntrs_id = re.compile(r"ntrs\.nasa\.gov/(?:api/)?citations/(\d+)")
+    real_ntrs = {m.group(1) for u in real_urls for m in [ntrs_id.search(u)] if m}
     real_titles = {t.strip().lower() for t in res.title.dropna()}
     real_data_invs = set(res.loc[res.type == "data", "investigation"].dropna())
     for s in seed["resources"]:
         if s.get("investigation") in real_data_invs and s["type"] == "data" and s.get("status") == "placeholder":
             added["resources_skipped"].append(s["key"])
             continue
-        if (s.get("url") and s["url"] in real_urls) or s["title"].strip().lower() in real_titles:
+        m = ntrs_id.search(s.get("url") or "")
+        if (s.get("url") and s["url"] in real_urls) or s["title"].strip().lower() in real_titles or (m and m.group(1) in real_ntrs):
             added["resources_skipped"].append(s["key"])
             continue
     seed_res = []

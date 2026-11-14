@@ -87,6 +87,17 @@ def _items() -> list[dict]:
             items.append({"id": f"res:{r.id}", "type": "resource", "title": r.title, "resource_id": r.id,
                           "text": f"{r.title} {r.title} {r.description or ''} {r.investigation_detail or ''} {' '.join(invs)}",
                           "node": f"res:{r.id}", "investigations": invs, "demo": False})
+        # page-anchored passages from other NASA documents (NTRS PDFs, `ingest text`)
+        ch_p = PROCESSED / "atlas_chunks.parquet"
+        if ch_p.exists():
+            titles = dict(zip(res.id, res.title))
+            groups = {r.id: (json.loads(r.investigations) if isinstance(r.investigations, str) else []) for r in res.itertuples()}
+            for c in pd.read_parquet(ch_p).itertuples():
+                if not str(c.resource_id).startswith("ntrs-") or c.resource_id not in titles:
+                    continue
+                items.append({"id": f"chunk:{c.id}", "type": "passage", "title": f"{titles[c.resource_id]} · p.{c.page}",
+                              "text": c.text, "node": f"res:{c.resource_id}", "chunk_id": c.id,
+                              "investigations": groups.get(c.resource_id, []), "demo": False})
     atlas = ARTIFACTS / "atlas.json"
     if atlas.exists():
         for n in json.loads(atlas.read_text(encoding="utf-8"))["nodes"]:
@@ -133,8 +144,8 @@ def search(q: str, k: int = 20, types: list[str] | None = None, investigation: s
     for i, it in enumerate(items):
         if types and it["type"] not in types:
             mask[i] = False
-        if not types and it["type"] == "resource":      # §5 resources only when asked for (Ask), so the old ranking holds
-            mask[i] = False
+        if not types and (it["type"] == "resource" or it["id"].startswith("chunk:ntrs-")):
+            mask[i] = False      # §5 resources and NTRS passages only when asked for (Ask), so the old ranking holds
         if investigation and investigation not in it.get("investigations", []):
             mask[i] = False
         if pillar and it["type"] == "investigation" and pillar not in it.get("pillars", []):

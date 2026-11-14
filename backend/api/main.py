@@ -26,6 +26,7 @@ from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Res
 from pydantic import BaseModel
 
 from .. import record
+from .auth import require_admin
 from ..core import config
 from ..core.config import ROOT
 from ..core.store import get_store
@@ -272,13 +273,6 @@ def api_export_citations(body: CiteReq):
     return J({"text": "\n".join(text), "bibtex": "\n\n".join(bib)})
 
 
-def require_admin(token: str | None) -> None:
-    """Admin routes need the ADMIN_TOKEN header. With no token configured, admin is disabled."""
-    want = os.environ.get("ADMIN_TOKEN", "")
-    if not want or want == "change-me" or token != want:
-        raise HTTPException(401, "Admin token required (header X-Admin-Token).")
-
-
 @app.post("/api/admin/reload")
 def admin_reload(x_admin_token: str | None = Header(default=None)):
     require_admin(x_admin_token)
@@ -294,12 +288,14 @@ def admin_reload(x_admin_token: str | None = Header(default=None)):
 from .routes_ai import router as ai_router  # noqa: E402
 from .routes_catalog import router as catalog_router  # noqa: E402
 from .routes_export import router as export_router  # noqa: E402
+from .routes_admin import router as admin_router  # noqa: E402
 from .routes_sim import router as sim_router  # noqa: E402
 
 app.include_router(catalog_router)
 app.include_router(ai_router)
 app.include_router(export_router)
 app.include_router(sim_router)
+app.include_router(admin_router)
 
 
 # ------------------------------------------------------------------ the web app (keep this section last)

@@ -96,7 +96,7 @@ def test_ask_without_key_is_503_with_the_relevant_passages(api, monkeypatch):
     monkeypatch.setattr(llm, "enabled", lambda: False)
     r = api.post("/api/ai/ask", json={"question": "Why do flames look different in microgravity?"})
     assert r.status_code == 503 and "API key" in r.json()["detail"]
-    assert r.json()["passages"] and all(p["resource_id"].startswith(("doc-", "psi-", "p-", "r-", "s-", "n-", "img-")) for p in r.json()["passages"])
+    assert r.json()["passages"] and all(p["resource_id"].startswith(("doc-", "ntrs-", "psi-", "p-", "r-", "s-", "n-", "img-")) for p in r.json()["passages"])
 
 
 def test_ask_off_topic_is_refused_without_calling_the_ai(api, monkeypatch):
@@ -111,8 +111,8 @@ def test_ask_answer_cites_resource_and_page(api, monkeypatch):
     j = api.post("/api/ai/ask", json={"question": "Why do flames look different in microgravity?"}).json()
     assert j["covered"] and j["citations"]
     c = j["citations"][0]
-    assert c["resource_id"] == "doc-researchers-guide-combustion-science" and isinstance(c["page"], int)
-    assert f"[{c['resource_id']} p.{c['page']}]" in j["answer"] and "S40" not in j["answer"] and "Made-up" not in j["answer"]
+    assert c["resource_id"].startswith(("doc-", "ntrs-")) and (c["page"] is None or isinstance(c["page"], int))
+    assert (f"[{c['resource_id']} p.{c['page']}]" if c["page"] else f"[{c['resource_id']}]") in j["answer"] and "S40" not in j["answer"] and "Made-up" not in j["answer"]
 
 
 def test_ask_uncited_answer_is_refused(api, monkeypatch):

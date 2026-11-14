@@ -48,15 +48,21 @@ def _get_client():
     return _client
 
 
-def complete(system: str, user: str, max_tokens: int = 2048) -> Completion:
+def complete(system: str, user: str, max_tokens: int = 2048, schema: dict | None = None) -> Completion:
+    """`schema` (a JSON schema) turns on structured outputs: the text is then guaranteed to be valid JSON."""
     if not enabled():
         raise AIUnavailable("No ANTHROPIC_API_KEY is set.")
     import anthropic
     model = model_name()
     kwargs: dict = {"model": model, "max_tokens": max_tokens, "system": system,
                     "messages": [{"role": "user", "content": user}]}
+    output_config: dict = {}
     if model in EFFORT_MODELS:
-        kwargs["output_config"] = {"effort": "low"}          # short, grounded answers: thinking depth is not the bottleneck
+        output_config["effort"] = "low"          # short, grounded answers: thinking depth is not the bottleneck
+    if schema is not None:
+        output_config["format"] = {"type": "json_schema", "schema": schema}
+    if output_config:
+        kwargs["output_config"] = output_config
     try:
         if model in FALLBACK_MODELS:
             msg = _get_client().beta.messages.create(betas=["server-side-fallback-2026-07-01"], fallbacks="default", **kwargs)
