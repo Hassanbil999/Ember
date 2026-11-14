@@ -9,7 +9,7 @@ import ProvenancePanel from "./ProvenancePanel";
 import SourceViewer from "./SourceViewer";
 
 const NAV = [
-  { href: "/explore", label: "Explore" },
+  { href: "/explore", label: "Explore", also: ["/places"] },
   { href: "/lab", label: "Simulate", also: ["/trade"] },
   { href: "/insights", label: "Insights", also: ["/studio"] },
   { href: "/data", label: "Data", also: ["/image"] },

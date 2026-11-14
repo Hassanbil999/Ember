@@ -231,3 +231,43 @@ def test_atmosphere_payload_cites_its_sources(api):
     assert {r["id"] for r in a["references"]} == {"iss", "campout", "exploration"}
     assert all(s["url"].startswith("https://") and "nasa.gov" in s["url"] for s in a["sources"])
     assert a["constants"]["pio2_floor_mmhg"] == 127 and a["constants"]["r_accept"] == 1.65 and a["caveats"]
+
+
+def test_every_place_ranks_every_investigation_with_reasons():
+    from backend import relevance
+    for p in relevance.places():
+        d = relevance.rank(p["id"])
+        scores = [r["score"] for r in d["rows"]]
+        assert scores == sorted(scores, reverse=True) and len(d["rows"]) >= 15
+        for r in d["rows"]:
+            assert set(r["parts"]) == {"burns", "air", "gravity", "evidence"}
+            assert all(0 <= part["score"] <= 3 and part["why"].endswith(".") for part in r["parts"].values())
+            assert r["score"] == sum(part["score"] for part in r["parts"].values())
+
+
+def test_partial_gravity_never_scores_as_tested():
+    from backend import relevance
+    for pid in ("moon_base", "rover", "mars"):
+        d = relevance.rank(pid)
+        assert not d["gravity_tested"]
+        assert all(r["parts"]["gravity"]["score"] <= 2 for r in d["rows"])
+        assert any("partial-gravity" in g["text"] for g in d["gaps"])
+    assert all(r["parts"]["gravity"]["score"] == 3 for r in relevance.rank("iss")["rows"])
+
+
+def test_demo_rows_never_count_as_real_evidence_in_the_ranking():
+    from backend import relevance
+    rows = relevance.rank("iss")["rows"]
+    assert not any(r["parts"]["evidence"].get("demo") for r in rows), "no demo rows are loaded any more"
+    for label in ("BASS-II", "FLEX", "CFI-G", "Saffire-II"):       # real PSI tables now: full evidence score
+        r = next(r for r in rows if r["label"] == label)
+        assert r["parts"]["evidence"]["score"] == 3, label
+
+
+def test_solids_are_matched_on_oxygen_alone_in_the_ranking():
+    """BASS-II records no pressure: its air match must say so, never claim 0 tests in a place's air by pressure."""
+    from backend import relevance
+    iss = next(r for r in relevance.rank("iss")["rows"] if r["label"] == "BASS-II")["parts"]["air"]
+    assert iss["score"] >= 1 and "records no pressure" in iss["why"]
+    moon = next(r for r in relevance.rank("moon_base")["rows"] if r["label"] == "BASS-II")["parts"]["air"]
+    assert moon["score"] == 0 and "22.2%" in moon["why"]

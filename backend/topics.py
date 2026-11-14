@@ -259,7 +259,7 @@ def _environment(tid: str, material: str | None) -> dict:
     return {"finding": finding, "grade": grade, "visual": visual, "measured": measured, "inferred": inferred,
             "untested": untested, "materials": mats, "material": sel["material"] if sel else None,
             "next": [{"label": "Try this air in the simulator", "href": f"/lab?preset={preset['id']}&mode={lab_mode}"},
-                     {"label": "See the experiments behind this", "href": "/explore?open=inv:BASS-II"},
+                     {"label": "See which experiments matter most here", "href": f"/places?place={spec['target']}"},
                      {"label": "Open the solid-material tests", "href": "/data?dataset=bass2"}]}
 
 
