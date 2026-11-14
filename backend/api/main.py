@@ -41,6 +41,10 @@ async def lifespan(_app):
         try:
             from ..catalog.query import catalog
             catalog()
+            from ..predict import pipeline, service  # the Statistics page's views, so its first visit is fast
+            if service.available():
+                service.meta()
+                pipeline.build()
         except Exception as e:                      # warming is an optimisation, never a reason to fail to start
             print("warm-up skipped:", e)
     threading.Thread(target=warm, daemon=True).start()

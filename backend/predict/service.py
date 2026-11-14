@@ -28,6 +28,8 @@ def clear():
     _domain.cache_clear()
     _links.cache_clear()
     meta.cache_clear()
+    from . import pipeline  # imported here: pipeline itself uses this module
+    pipeline.build.cache_clear()
 
 
 @lru_cache(maxsize=4)

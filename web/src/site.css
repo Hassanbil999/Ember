@@ -80,6 +80,37 @@ figure.chart svg{width:100%;height:auto;display:block}
 details.tview summary{cursor:pointer;color:#c3cbe0;font-size:12.5px}
 details.tview .tablebox{margin-top:8px}
 
+/* statistics: from NASA tables to the model */
+.card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.step-h{margin:4px 0 6px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:10px}
+.step-h span{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;color:#1d0d06;background:var(--grad);flex:none}
+.pipe{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:26px;counter-reset:p}
+.pipe li{position:relative;background:#141c3b;border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.pipe li+li::before{content:"";position:absolute;left:-22px;top:50%;width:16px;height:2px;background:#ff8a4d}
+.pipe li+li::after{content:"";position:absolute;left:-10px;top:calc(50% - 4px);border:5px solid transparent;border-left-color:#ff8a4d}
+.pipe b{font-size:26px;font-weight:600;line-height:1.1}
+.pipe span{font-size:13px;color:#dfe5f2}
+.pipe .bar{display:block;height:6px;border-radius:4px;background:#26315c;margin-top:4px}
+.pipe .bar i{display:block;height:100%;border-radius:4px;background:var(--grad)}
+.pipe em{position:absolute;top:10px;right:12px;font-style:normal;font-size:12px;color:#ffb38a;font-family:var(--font-mono)}
+.chart .ring{stroke:#172040;stroke-width:1.5}
+.chart .gid text{fill:#fff;font:700 11px var(--font-body)}
+.chart .gid circle{stroke:#fff;stroke-width:2}
+.chart .td-b{fill:#f7f9fe;stroke:#172040;stroke-width:1.5}
+.chart .td-o{fill:#172040;stroke:#f7f9fe;stroke-width:1.8}
+.groups{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:12.5px}
+.groups li{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}
+.groups i{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:700;font-size:11px;color:#fff}
+.groups span{color:#dfe5f2;font-family:var(--font-mono);font-size:12px}
+.groups span b{font-family:var(--font-body);color:var(--ink)}
+.groups em{font-style:normal;color:#ffd37a;white-space:nowrap}
+.chart .note{margin:2px 0 0;font-size:12.5px;color:#dfe5f2}
+.legend.map .ramp i{width:46px;height:9px;border-radius:3px;background:linear-gradient(90deg,rgba(255,122,61,.1),#ff7a3d)}
+.legend.map .lg-hatch{width:12px;height:12px;border-radius:2px;background:repeating-linear-gradient(45deg,#2c3866 0 2px,transparent 2px 5px);border:1px solid #33416f}
+.legend.map .lg-tb{background:#f7f9fe}
+.legend.map .lg-to{background:transparent;border:2px solid #f7f9fe;width:9px;height:9px}
+@media (max-width:900px){ .pipe{grid-template-columns:repeat(2,minmax(0,1fr))} .pipe li:nth-child(3)::before,.pipe li:nth-child(3)::after{display:none} }
+
 /* zone pills and outcomes */
 .zone-pill{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:5px 14px;font-family:var(--font-display);font-size:19px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
 .zone-pill::before{content:"";width:9px;height:9px;border-radius:50%;background:currentColor}

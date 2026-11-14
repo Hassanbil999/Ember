@@ -183,6 +183,12 @@ test('site: landing → simulation, statistics, research and presentation, deep 
   await expect(page.locator('#stTiles')).toContainText('NASA tests loaded');
   expect(await page.locator('#rocGas svg path').count()).toBeGreaterThanOrEqual(3);   // one line per model
   await expect(page.locator('#covGas svg circle').first()).toBeVisible();
+  // from NASA tables to the model: cleaning funnel, unsupervised groups, the Gaussian process map
+  await expect(page.locator('#pipeFunnel li')).toHaveCount(4);
+  expect(await page.locator('#pipeClusters .gid').count()).toBeGreaterThanOrEqual(2);
+  expect(await page.locator('#pipeMap svg rect').count()).toBeGreaterThan(10);
+  await page.locator('#pipe-droplet').click();
+  await expect(page.locator('#pipeMap figcaption')).toContainText('methanol');
   await page.goto('/engine/models');                                              // older address
   await expect(page.locator('#view-stats')).toBeVisible();
 
