@@ -1,42 +1,53 @@
 # Freefall Atlas
 
-What NASA knows about fire in space, and what it doesn't: microgravity combustion experiments (NASA PSI) with their evidence and their gaps in one place. Ask a question or pick a starting point, get a finding with its sources, and see what was measured, what a model infers and what was never tested.
+NASA Space Apps 2026: an AI-powered dashboard of NASA microgravity combustion research for fire safety in spacecraft, Moon and Mars habitats, and pressurized rovers. Two linked views: **Simulate** (flame and airflow simulator with a timeline) and **Find data** (filtered research with credibility scores and AI summaries).
 
-> **What is real and what is not.** Every test in the app is real NASA PSI data, loaded as published from all 16 PSI experimental tables the project downloads (1,781 usable tests): droplets (FLEX PSI-69, CFI PSI-39, and the FLEX-2 PSI-68 test plan), gas flames (CFI-G PSI-159 normal and inverse, ACME Flame Design PSI-10, ACME Burning Rate Emulator PSI-20, E-FIELD PSI-22, SPICE PSI-107), solid materials (BASS-II PSI-25, BASS PSI-26, SAFFIRE-1/2/3 PSI-98–100, including SAFFIRE-2's 1g ground tests) and smoke for fire detection (SAME PSI-102, SAME-R PSI-101). Values read from free-text notes are marked *derived*; impossible source values are flagged, never corrected. `python run.py fetch` re-downloads the tables and checks their checksums. Quoted passages come from NASA's *A Researcher's Guide to: Combustion Science* (2015). Not NASA material: two context-notes PDFs (labelled) and the Image Lab test patterns. Breathing and spacewalk limits on the atmosphere map come from NASA medical technical briefs, cited on the screen.
+> **What is real and what is not.** Every measured test comes from the real NASA PSI experimental tables the team downloaded and cleaned: 16 tables, 1,781 usable tests (FLEX, CFI, FLEX-2 test plan, CFI-G, ACME Flame Design, ACME BRE, E-FIELD, SPICE, BASS-II, BASS, SAFFIRE-1/2/3, SAME, SAME-R). They are loaded as published: impossible source values are flagged, never corrected, and values read from free-text notes are marked *derived*. Starter rows from `data/seed.json` fill only what the real data lacks (papers, reports, and the few acrylic and fabric test conditions the simulator demo needs). They stay labelled **placeholder / unverified** until a person checks them. The simulator is an illustrative reduced-order model, not a design tool.
 
-## Run it (local, verified)
+## Run it
 
-1. Install Python 3.11+ and Node 20+.
-2. `python run.py setup` installs Python and Node dependencies.
-3. `python run.py all` builds the image test patterns, ingests the NASA tables in `data/raw/`, runs the image pipeline and trains the models (~2 min). `python run.py fetch` re-downloads the PSI tables and checks them against their checksums.
-4. `python run.py start` builds the web app and serves the fast production version. Open http://localhost:3000.
-5. `python run.py test` runs 90 backend checks plus the browser acceptance test (needs the app running and Playwright installed).
-6. `python run.py audit` re-captures every screen and its timings into `docs/audit/after/`.
+```
+python run.py start      # one command from a clean checkout → http://localhost:8000
+```
 
-`python run.py dev` starts the hot-reload development servers instead. They are several times slower; do not demo with them.
+`start` installs missing Python and Node dependencies, runs the ingest steps if `data/processed/` is empty, builds the web app if needed, and serves the app and API on one port. You need Python 3.11+ and Node 20+. No API keys and no login are needed.
 
-Docker alternative: `docker compose up --build`. The Compose files are provided but were not run on the build machine.
+| Task | Command |
+|---|---|
+| Dev servers (API with reload + Vite) | `python run.py dev` |
+| Load data | `python run.py ingest [canonical\|existing\|seed\|fit\|all]` |
+| Re-download the PSI tables and verify checksums | `python run.py fetch` |
+| Unit tests / browser smoke test / both | `python -m pytest backend/tests -q` / `python run.py e2e` / `python run.py test` |
+| Container | `docker compose up --build` |
 
-## What's inside
-
-| Screen | Where | What it does |
-|---|---|---|
-| **Home** | `/` | One sentence, an ask box and four starting points: Moon base fire risk, ISS cabin, how fire behaves in microgravity, what NASA hasn't tested yet. |
-| **Answer** | `/answer` | For a starting point: finding, one visual, evidence grade, then measured / inferred / never tested, with sources. For a typed question: an extractive answer in which every sentence is verified against rows or pages, or an explicit refusal. |
-| **Explore** | `/explore` | The experiments, at most 15 on screen, grouped by what burns, safety goal or era. Size = amount of test data. Relationships appear for the experiment in focus. |
-| **Atmosphere trade** | `/trade` | One map of cabin pressure against oxygen with three layers: where a crew can breathe, how much pre-breathe a spacewalk costs, and where things burn, with the real tests marked and the untested area hatched. Drag a point to read all three at once. |
-| **Simulate** | `/lab` | One flame, drawn on the GPU, that reacts to oxygen, pressure and fuel supply for real CFI-G gas flames or FLEX droplets; preset places; one sentence with confidence and the nearest real test. A real FLEX test can be replayed in the same scene from its measured burning rate and extinction diameter. Optional generated sound (off by default). |
-| **Insights** | `/insights` | Up to eight findings recomputed from the data, each a sentence, a chart and its source. Links to the Studio (`/studio`) for custom charts and exports. |
-| **Data** | `/data` | Data quality, everything set aside and why, every test. Any test opens the provenance panel: values with status → plain source → technical trail. Links to flame image measurements (`/image`). |
+Optional settings are in `.env.example`. With `ANTHROPIC_API_KEY` set, the AI summary and Ask use Claude (`ANTHROPIC_MODEL`).
 
 ## Layout
 
 ```
-backend/   adapters · core (schema, units, validation, store) · search · answer · llm · models · vision · api · tests
-frontend/  Next.js App Router (home, answer, explore, lab, insights, studio, data, image) + components
-config/    datasets.yaml · variables.yaml · models.yaml · presets.yaml · media.yaml · investigations.yaml · concepts.yaml · theme.tokens.json
-data/      raw/ (inputs) · processed/ (Parquet + DuckDB) · artifacts/ (indexes, layouts, models, frames, vision results)
-docs/      PLAN · DECISIONS · DESIGN · PERF · AUDIT (+ audit/ screenshots) · ADDING_A_DATASET · LIMITS
+backend/   adapters (team's cleaning code) · core (schema, units, validation, store) · ingest · record (provenance)
+           · search · answer/verifier · api
+web/       React + Vite + TypeScript port of prototype/index.html
+config/    datasets.yaml (cleaning spec) · variables.yaml · investigations.yaml · concepts.yaml
+data/      raw/ (NASA PSI tables + PDFs, byte-exact, checksummed) · seed.json · processed/ (built, gitignored)
+prototype/ the reference UI (do not edit)
+docs/      AUDIT (M0) · DECISIONS (old site's data decisions) · LIMITS · ADDING_A_DATASET
 ```
 
-Read `docs/LIMITS.md` before drawing any conclusion from this build.
+The old Next.js site is tagged `v0-old-site`.
+
+## Decisions
+
+Choices made where the brief was open. Newest last. The old site's data decisions (1–88) are in `docs/DECISIONS.md`.
+
+| # | Decision | Why |
+|---|---|---|
+| A | **Investigations use the prototype's grouped slugs** (`bass` = BASS + BASS-II, `saffire` = Saffire-I/II/III, `same` = SAME + SAME-R, `flex` = FLEX + FLEX-2, `cfi`, `acme` = ACME + CFI-G + E-FIELD Flames, `spice` = SPICE + SLICE, `daft` = DAFT + DAFT-2, plus seed-only `sofie` and `ea`). Each group lists its real PSI members with PSI ids, DOIs and years. Test points and data resources keep the exact PSI investigation name. | Matches the prototype's filter and the seed's references. No real information is lost. |
+| B | **Real PSI rows are `verified=true`, `extraction=manual`** (read by the team's deterministic adapters) only when every value used is as published. Rows that use a value derived from free-text notes stay `verified=false`. Seed rows stay as given (`false`). | They are NASA's published tables, not AI extraction. Derived values deserve a human check. |
+| C | Credibility review factor for PSI flight data: **R = 0.8** (with P = 1.0 and T = 1.0, S = 94, High). | §7 has no rule for curated NASA data that is not peer-reviewed. |
+| D | The two context-notes PDFs the team wrote are **not resources** and are not cited by AI. | They are not NASA sources. |
+| E | **No Postgres.** The existing DuckDB + Parquet store is kept, and the §5 tables are added beside it. Embeddings stay local LSA (`FA_EMBEDDER=st` switches to MiniLM). The deploy is **one container** that serves the API and the built web app. | The existing stack works, the demo needs no database server, and MiniLM would add about 2 GB of PyTorch. |
+| F | **Deleted:** the old frontend, the synthetic-data generator (`backend/fixture.py`), the Image Lab (`backend/vision/`) and its 11 MB of synthetic frames, the GP surrogates, and the old screens' backend modules. **Kept:** the two small synthetic tables, because the adapter unit tests check the cleaning code against them. | `fixture.py` overwrote `data/raw/reports/reports.yaml` and broke every clean checkout (docs/AUDIT.md §0). Nothing deleted was NASA data. All of it is recoverable from `v0-old-site`. |
+| G | **Presets come from the prototype/seed** (Moon base 34 % O₂ at 8.2 psi), not from the old `config/presets.yaml` (30 % at 10.2 psi). | The §8.5 anchor tests and the §13 smoke path depend on them; the value is NASA's 2024 exploration-atmosphere recommendation (`r-ea`). |
+| H | The processed tables stay gitignored. A clean checkout runs the team's unchanged pipeline (`ingest canonical`) once, at start or at image build. | Nothing is re-cleaned by hand. Running the existing deterministic code is the only way to rebuild its outputs. |
+| I | `POST /api/admin/reload` now requires the `X-Admin-Token` header, and admin routes are disabled while `ADMIN_TOKEN` is empty or `change-me`. | It had no auth on the old site. |

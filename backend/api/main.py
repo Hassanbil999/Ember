@@ -1,9 +1,15 @@
-"""FastAPI app. Run: uvicorn backend.api.main:app --port 8000"""
+"""FastAPI app. Run: uvicorn backend.api.main:app --port 8000
+
+Routes kept from the old site (see docs/AUDIT.md §3): health, test records and raw source rows,
+document pages and chunks, search, CSV/citation export, admin reload. The SPEC §9 routes are added
+in backend/api/routes_*.py.
+"""
 from __future__ import annotations
 
 import csv
 import io
 import json
+import os
 import re
 import time
 from datetime import date
@@ -12,26 +18,19 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 import pymupdf as fitz
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response
 from pydantic import BaseModel
 
-from .. import atmosphere, explore as explore_mod, insights as insights_mod, labgrid, record, relevance, topics
-from ..answer.engine import answer
-from ..atlas import tests_near
+from .. import record
 from ..core import config
-from ..core.config import ARTIFACTS, ROOT
+from ..core.config import ROOT
 from ..core.store import get_store
-from ..models import surrogate
 from ..search.index import search
-from ..search.query_parser import parse
-from ..vision import pipeline as vision
-from ..vision.frames import frame_paths, read_frame
-from . import views
 
-app = FastAPI(title="Freefall Atlas API", version="0.1.0")
+app = FastAPI(title="Freefall Atlas API", version="1.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.add_middleware(GZipMiddleware, minimum_size=2000)
 
@@ -42,28 +41,6 @@ async def timing(request: Request, call_next):
     resp = await call_next(request)
     resp.headers["Server-Timing"] = f"app;dur={(time.perf_counter() - t0) * 1000:.1f}"
     return resp
-
-
-@app.on_event("startup")
-def _warm():
-    """Compute the first screens' payloads before anyone asks, so the first click is as fast as the tenth."""
-    import threading
-
-    def work():
-        try:
-            _meta()
-            api_explore()
-            api_insights()
-            for tid in topics.TOPICS:
-                api_topic(tid)
-                for m in topics.topic(tid)["materials"]:
-                    api_topic(tid, m["material"])
-            api_lab_grid("gas", labgrid.items()["gas"][0], 0.0, "N2")
-            api_lab_grid("droplet", "n-heptane", 0.0, "N2")
-        except Exception as e:                      # warming is an optimisation, never a reason to fail to start
-            print("warm-up skipped:", e)
-    threading.Thread(target=work, daemon=True).start()
-
 
 def _clean(o):
     """JSON-safe: NaN → None, numpy → python."""
@@ -105,144 +82,9 @@ def cached(key: tuple, fn):
 def health():
     return {"ok": True}
 
-
-@lru_cache(maxsize=1)
-def _meta():
-    st = get_store()
-    mc = config.models_cfg()
-    cards = {}
-    for mid in mc["models"]:
-        p = surrogate.MODEL_DIR / f"{mid}.card.json"
-        if p.exists():
-            cards[mid] = json.loads(p.read_text(encoding="utf-8"))
-    cats = {c: sorted(st.usable_tests()[c].dropna().unique().tolist()) for c in ["fuel", "material", "diluent"]}
-    return {
-        "demo": bool(st.tests["demo"].any()),
-        # which loaded tables are real and which are the synthetic stand-in, so every screen can say so precisely
-        "loaded": {"real": [config.datasets()[d]["title"] for d in sorted(st.tests.loc[~st.tests["demo"], "dataset"].unique())],
-                   "demo": [config.datasets()[d]["title"] for d in sorted(st.tests.loc[st.tests["demo"], "dataset"].unique())]},
-        "counts": {"investigations": len(st.investigations), "tests": int((~st.tests.excluded).sum()),
-                   "documents": len(st.documents), "chunks": len(st.chunks), "media": len(st.media)},
-        "variables": config.variables(), "glossary": st.glossary,
-        "concepts": json.loads(st.concepts.to_json(orient="records")),
-        "presets": config.presets(), "models": cards, "categories": cats,
-        "datasets": {k: {"title": v["title"], "demo": v.get("demo", False), "adapter": v["adapter"],
-                         "enabled": bool(v.get("enabled", True))}
-                     for k, v in config.datasets().items()},
-    }
-
-
-@app.get("/api/meta")
-def meta():
-    return J(_meta())
-
-
-# ------------------------------------------------------------------ atlas + search
-@app.get("/api/atlas")
-def get_atlas():
-    return J(views.atlas())
-
-
-@app.get("/api/navigate")
-def navigate(q: str, k: int = 12):
-    p = parse(q)
-    sr = search(q, k=k)
-    res = sr["results"]
-    best = None
-    if p.investigations:
-        best = f"inv:{p.investigations[0]}"
-    elif res:
-        best = res[0]["node"]
-    near = tests_near(get_store().tests, p.conditions, p.categories, k=8) if p.conditions else []
-    paths = views.next_paths(best, p.as_dict()) if best else []
-    if p.conditions and best and not best.startswith("ds:"):
-        paths = [c for c in paths if not c["label"].startswith("tests near")]
-        bn = views.node(best) or {}
-        ds = (bn.get("datasets") or [None])[0] or             ("bass2" if ("material" in p.categories or "flow_cm_s" in p.conditions) else "flex")
-        paths.insert(0, {"label": "tests near " + ", ".join(c["text"] for c in p.chips if c["var"] in p.conditions),
-                         "kind": "node", "node": f"ds:{ds}", "conditions": p.conditions})
-    if p.question:
-        paths.insert(0, {"label": "answer with sources", "kind": "answer", "q": q})
-    return J({"query": q, "parsed": p.as_dict(), "best": best, "results": res, "tests_near": near,
-              "paths": paths[:7], "ms": sr["ms"]})
-
-
 @app.get("/api/search")
 def api_search(q: str, k: int = 20, types: str | None = None, investigation: str | None = None):
     return J(search(q, k=k, types=types.split(",") if types else None, investigation=investigation))
-
-
-@app.get("/api/answer")
-def api_answer(q: str, role: str = "researcher"):
-    return J(answer(q, role))
-
-
-@app.get("/api/node/{nid:path}")
-def api_node(nid: str, role: str = "researcher"):
-    def build():
-        out = views.focus_view(nid, role)
-        return None if "error" in out else out
-    return cached(("node", nid, role), build)
-
-
-# ------------------------------------------------------------------ home topics, explore, insights
-@app.get("/api/topic/{tid}")
-def api_topic(tid: str, material: str | None = None):
-    return cached(("topic", tid, material), lambda: topics.topic(tid, material))
-
-
-@app.get("/api/atmosphere")
-def api_atmosphere():
-    return J(atmosphere.payload())
-
-
-@app.get("/api/places")
-def api_places():
-    return relevance.places()
-
-
-@app.get("/api/places/{pid}")
-def api_place(pid: str):
-    out = cached(("place", pid), lambda: relevance.rank(pid))
-    if out is None:
-        raise HTTPException(404, "unknown place")
-    return out
-
-
-@app.get("/api/explore")
-def api_explore():
-    return cached(("explore",), explore_mod.explore)
-
-
-@app.get("/api/insights")
-def api_insights():
-    return cached(("insights",), insights_mod.insights)
-
-
-@app.get("/api/lab/items")
-def api_lab_items():
-    return J(labgrid.items())
-
-
-@app.get("/api/lab/grid")
-def api_lab_grid(mode: str = "gas", item: str = "30% butane", gravity: float = 0.0, diluent: str = "N2"):
-    if mode not in labgrid.AXES:
-        raise HTTPException(404, "unknown mode")
-    return cached(("grid", mode, item, round(gravity, 3), diluent), lambda: labgrid.grid(mode, item, round(gravity, 3), diluent))
-
-
-@app.get("/api/groups/{dataset}")
-def api_groups(dataset: str, mode: str = "regime"):
-    from ..atlas import group_tests
-    return J(group_tests(get_store().tests.reset_index(drop=True), dataset, mode))
-
-
-@app.get("/api/relationships/{dataset}")
-def api_rel(dataset: str):
-    rel = json.loads((ARTIFACTS / "relationships.json").read_text(encoding="utf-8"))
-    if dataset not in rel:
-        raise HTTPException(404)
-    return J(rel[dataset])
 
 
 # ------------------------------------------------------------------ data + provenance
@@ -326,151 +168,7 @@ def api_doc_file(doc_id: str):
     return FileResponse(ROOT / d.file, media_type="application/pdf")
 
 
-# ------------------------------------------------------------------ models / scenario lab
-class Scenario(BaseModel):
-    scenario: dict
-    mode: str = "droplet"
-
-
-@app.get("/api/models")
-def api_models():
-    return J(_meta()["models"])
-
-
-@app.post("/api/scenario")
-def api_scenario(body: Scenario):
-    sc = body.scenario
-    st = get_store()
-    if body.mode == "droplet":
-        burn = surrogate.predict("droplet_burn", sc)
-        rate = surrogate.predict("droplet_k", sc)
-        rep = surrogate.replay(sc)
-    elif body.mode == "gas":
-        burn = surrogate.predict("gas_sustain", sc)
-        rate, rep = None, None          # no rate model for the gas flames: the PSI table has no burning rate
-    else:
-        raise HTTPException(404, "unknown mode: use 'droplet' or 'gas'")
-    nearest_ids = [n["test_id"] for n in burn["nearest"]]
-    rows = json.loads(st.tests.loc[nearest_ids].drop(columns=["flags"]).to_json(orient="records"))
-    for r, n in zip(rows, burn["nearest"]):
-        r["distance"] = n["distance"]
-    # morph: nearest test that has media, within configured distance
-    morph = {"mode": "model", "reason": "no real test with footage within range"}
-    if body.mode == "droplet":
-        b = surrogate.load("droplet_burn")
-        x = b["enc"].transform(pd.DataFrame([{f: sc.get(f) for f in b["card"]["features"]}]).fillna(
-            {f: b["enc"].mean.get(f, 0) for f in b["enc"].numeric}))[0]
-        maxd = config.models_cfg()["applicability"].get("morph_max_distance", 1.5)
-        cands = []
-        for tid in vision.media_by_test():
-            if tid in b["ids"]:
-                i = b["ids"].index(tid)
-                cands.append((float(np.sqrt(((b["X"][i] - x) ** 2).sum())), tid))
-        cands.sort()
-        footage = [{"test_id": t, "distance": round(d, 3),
-                    "kind": (vision.media_by_test()[t].get("backlit") or {}).get("kind", "footage"),
-                    "row": json.loads(st.tests.loc[[t]].drop(columns=["flags"]).to_json(orient="records"))[0]}
-                   for d, t in cands[:4]]
-        if cands and cands[0][0] <= maxd:
-            morph = {"mode": "real", "test_id": cands[0][1], "distance": round(cands[0][0], 3), "max_distance": maxd}
-        else:
-            morph = {"mode": "model", "nearest_distance": round(cands[0][0], 3) if cands else None, "max_distance": maxd}
-    else:
-        footage = []
-    return J({"burn": burn, "rate": rate, "replay": rep, "nearest_tests": rows, "morph": morph, "footage": footage})
-
-
-class AdvisorReq(BaseModel):
-    model: str
-    target: str | None = None
-    box: dict | None = None
-    base: dict | None = None
-
-
-@app.post("/api/advisor")
-def api_advisor(body: AdvisorReq):
-    box = body.box
-    if body.target:
-        t = next(t for t in config.presets()["targets"] if t["id"] == body.target)
-        box = {"o2_frac": t["o2_frac"], "pressure_kpa": t["pressure_kpa"]}
-    return J(surrogate.advisor(body.model, box or {}, base=body.base))
-
-
-@app.get("/api/gapmap")
-def api_gap():
-    st = get_store()
-    t = st.usable_tests()
-    pts = t[["test_id", "dataset", "o2_frac", "pressure_kpa", "gravity_g", "burned"]].dropna(subset=["o2_frac", "pressure_kpa"])
-    return J({"points": pts.to_dict("records"), "targets": config.presets()["targets"],
-              "note": "No partial-gravity tests exist; target environments at 0.165 g / 0.38 g are untested by construction."})
-
-
-# ------------------------------------------------------------------ refinery
-@app.get("/api/refinery")
-def api_refinery():
-    return J(json.loads((ARTIFACTS / "refinery.json").read_text(encoding="utf-8")))
-
-
-# ------------------------------------------------------------------ vision
-@app.get("/api/vision/tests")
-def api_vision_tests():
-    out = []
-    st = get_store()
-    for tid, views_ in vision.media_by_test().items():
-        r = vision.load_result(tid)
-        row = json.loads(st.tests.loc[[tid]].drop(columns=["flags"]).to_json(orient="records"))[0] if tid in st.tests.index else {}
-        out.append({"test_id": tid, "views": list(views_), "kind": next(iter(views_.values())).get("kind", "footage"),
-                    "processed": bool(r), "fit": r["derived"]["fit"] if r else None,
-                    "validation": r["validation"] if r else None, "row": row})
-    summ = ARTIFACTS / "vision" / "validation_summary.json"
-    return J({"tests": out, "summary": json.loads(summ.read_text(encoding="utf-8")) if summ.exists() else None})
-
-
-@app.get("/api/vision/{test_id}")
-def api_vision(test_id: str):
-    r = vision.load_result(test_id)
-    if not r:
-        raise HTTPException(404, "not processed")
-    return J(r)
-
-
-@lru_cache(maxsize=2048)
-def _frame_png(test_id: str, view: str, i: int) -> bytes:
-    import cv2
-    m = vision.media_by_test()[test_id][view]
-    paths = frame_paths(m)
-    img = read_frame(paths[min(i, len(paths) - 1)], color=True)
-    ok, buf = cv2.imencode(".png", img)
-    return buf.tobytes()
-
-
-@app.get("/api/vision/{test_id}/frame/{i}.png")
-def api_frame(test_id: str, i: int, view: str = "backlit"):
-    if test_id not in vision.media_by_test() or view not in vision.media_by_test()[test_id]:
-        raise HTTPException(404)
-    return Response(_frame_png(test_id, view, i), media_type="image/png", headers={"Cache-Control": "max-age=86400"})
-
-
-class Rerun(BaseModel):
-    params: dict
-
-
-@app.post("/api/vision/{test_id}/rerun")
-def api_rerun(test_id: str, body: Rerun):
-    return {"job": vision.start_job(test_id, body.params)}
-
-
-@app.get("/api/vision/job/{jid}")
-def api_job(jid: str):
-    j = vision.JOBS.get(jid)
-    if not j:
-        raise HTTPException(404)
-    if j["status"] == "done":
-        get_store().reload()
-    return j
-
-
-# ------------------------------------------------------------------ exports
+# ------------------------------------------------------------------ export
 class CsvReq(BaseModel):
     ids: list[str]
     columns: list[str] | None = None
@@ -557,33 +255,19 @@ def api_export_citations(body: CiteReq):
     return J({"text": "\n".join(text), "bibtex": "\n\n".join(bib)})
 
 
+def require_admin(token: str | None) -> None:
+    """Admin routes need the ADMIN_TOKEN header. With no token configured, admin is disabled."""
+    want = os.environ.get("ADMIN_TOKEN", "")
+    if not want or want == "change-me" or token != want:
+        raise HTTPException(401, "Admin token required (header X-Admin-Token).")
+
+
 @app.post("/api/admin/reload")
-def admin_reload():
+def admin_reload(x_admin_token: str | None = Header(default=None)):
+    require_admin(x_admin_token)
     get_store().reload()
-    views.atlas.cache_clear()
-    _meta.cache_clear()
-    surrogate.clear_cache()
     _json_cache.clear()
-    for fn in (topics.topic, explore_mod.explore, insights_mod.insights, labgrid.grid, record._raw_table, relevance.rank):
-        fn.cache_clear()
+    record._raw_table.cache_clear()
     from ..search.index import reload
     reload()
     return {"ok": True}
-
-
-@app.get("/api/envelope")
-def api_envelope(model: str, x: str, y: str, fixed: str = "{}", nx: int = 36, ny: int = 28, logx: bool = False):
-    """Classifier probability on an x–y grid (other features fixed): burn / extinguish regions
-    with the 0.25–0.75 band as uncertainty."""
-    b = surrogate.load(model)
-    card = b["card"]
-    fx = json.loads(fixed)
-    xr, yr = card["ranges"][x], card["ranges"][y]
-    xs = np.geomspace(max(xr[0], 0.3), xr[1], nx) if logx else np.linspace(xr[0], xr[1], nx)
-    ys = np.linspace(yr[0], yr[1], ny)
-    base = {f: fx.get(f, b["enc"].mean.get(f) if f in b["enc"].numeric else b["enc"].cats[f][0]) for f in card["features"]}
-    rows = [{**base, x: float(a), y: float(c)} for c in ys for a in xs]
-    df = pd.DataFrame(rows)[card["features"]]
-    p = b["model"].predict_proba(b["enc"].transform(df))[:, 1]
-    return J({"x": x, "y": y, "xs": xs.tolist(), "ys": ys.tolist(), "p": p.reshape(ny, nx).round(3).tolist(),
-              "fixed": base, "model": model, "label": card["label"]})

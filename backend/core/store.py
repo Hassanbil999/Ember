@@ -28,8 +28,6 @@ class Store:
         self.chunks = rd("chunks")
         self.concepts = rd("concepts")
         self.variables = rd("variables")
-        self.media = rd("media")
-        self.measurements = rd("measurements")
         if not self.tests.empty:
             self.tests["flags"] = self.tests["flags"].map(json.loads)
             self.tests["image_derived"] = self.tests["image_derived"].map(json.loads)

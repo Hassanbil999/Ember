@@ -92,14 +92,6 @@ def test_new_tables_are_real_and_in_the_store():
         assert (t.dataset == ds).sum() > 100 and not t.loc[t.dataset == ds, "demo"].any()
 
 
-def test_gas_flame_question_is_answered_from_real_cfig_data():
-    from backend.answer.engine import answer
-    a = answer("Does a gas flame keep burning at 35% oxygen?")
-    assert a["key"] and all(s["dataset"] == "cfig_normal" for s in a["key"])
-    assert "still burning when the fuel flow was stopped" in a["key"][0]["text"]
-    assert not a["dropped"], "every sentence must pass the verifier"
-    assert [d["demo"] for d in a["data"]] == [False], "the evidence must be the real table only"
-    assert a["chart"]["dataset"] == "cfig_normal"
 
 
 # ------------------------------------------------------------------ solids (BASS-II, BASS, SAFFIRE)
@@ -179,10 +171,6 @@ def test_same_r_rows_ids_and_second_measurements():
     assert "mission_date" not in df.columns or df["mission_date"].isna().all(), "the table gives no year, so none is invented"
 
 
-def test_detection_goal_has_real_data_in_the_ranking():
-    from backend import relevance
-    best = {b["goal"]: b["label"] for b in relevance.rank("iss")["best"]}
-    assert best["detecting fire"] in ("SAME", "SAME-R")
 
 
 # ------------------------------------------------------------------ the remaining PSI tables
@@ -244,8 +232,3 @@ def test_researchers_guide_is_nasas_file_and_quoted_as_nasa():
     assert "Fire Safety" in set(ch.section) and "Solid-Fuel Combustion/Material Flammability" in set(ch.section)
 
 
-def test_answers_quote_the_guide_with_its_page():
-    from backend.answer.engine import answer
-    a = answer("smoke detection on the ISS")
-    src = [s for s in a["sources"] if s.get("doc_id") == "researchers-guide-combustion-science"]
-    assert src and src[0]["citations"][0]["page"] == 26 and not a["dropped"]
