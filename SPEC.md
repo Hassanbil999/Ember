@@ -210,9 +210,11 @@ Fit $X_\text{min}, u^*, k_l, k_h, c$ per material with `scipy.optimize.least_squ
 
 Keep the prototype's tokens, fonts (Barlow Condensed, IBM Plex Sans, IBM Plex Mono), dark single theme and layout.
 
+**Site structure (added 2026-11-14, README Decision AG).** A landing page (`/`) leads to the engine (`/engine`: Simulation, Fire check, Find data, Statistics; the simulation is the front door), the research page (`/research`) and the presentation (`/presentation`). The Simulate and Find data views below keep the prototype's layout; the palette is the brighter Ember one (Decision AL). The other pages are new design.
+
 **Simulate view**
 - Full-bleed stage: particle airflow canvas, scene canvas (duct, sample, char glow, igniter), WebGL flame canvas (the prototype's fragment shader; 2D fallback when WebGL is missing).
-- Left panel "Experiment": presets, sliders (gravity, oxygen, pressure, airflow on a log scale), material toggle, "Find data for these settings". Collapsible.
+- Left panel "Experiment": presets, sliders (gravity, oxygen, pressure, airflow on a log scale), material toggle. Collapsible. The flame stays centred (the camera follows the front), the run starts only on Ignite or Play, and a muteable synthesized fire sound follows the flame (README Decision AP).
 - Right panel "Result": verdict pill and sentence, two numbers, flammability map (click to set O₂ and airflow), evidence (coverage line and nearest test with "Load it"), compare box when a record is loaded, "How this is calculated". Collapsible.
 - Bottom timeline: play/pause, speed (1×, 2×, 5×, 10×), draggable t1/t2 handles and playhead (keyboard-operable sliders), burned-length curve, out/burn-through marker, and the stats line for t1 → t2.
 - The model runs on the server (`/api/simulate`), debounced 150 ms while dragging. Keep a client copy of the model for instant feedback and reconcile with the server result.
@@ -222,9 +224,9 @@ Keep the prototype's tokens, fonts (Barlow Condensed, IBM Plex Sans, IBM Plex Mo
 - Summary line: count, high-credibility count, unverified count, AI summary from `/api/ai/summary` with clickable citations.
 - Result rows: type icon, title (link), subtitle, credibility meter + label + score, "▶ Try" (when a simulatable test exists), "Add", expand (description, credibility factors and formula, test-point table with ▶ Simulate).
 - Export bar appears only when items are selected. The dialog previews CSV/JSON/BibTeX and **downloads a real file** from `/api/export`.
-- Add an "Ask the Atlas" box above the results: question → `/api/ai/ask`, with answers that show their citations.
+- Add an "Ask the NASA sources" box above the results: question → `/api/ai/ask`, with answers that show their citations.
 
-Routing: `#simulate` and `#data`. Keep filters and simulator settings in the URL query so views can be shared.
+Routing: real paths (`/engine`, `/engine/check`, `/engine/data`, `/engine/stats`) with Back/Forward; the old `/#simulate` and `/#data` links redirect and keep their query. Keep filters, simulator settings and fire-check inputs in the URL query so views can be shared.
 
 ## 11. AI rules (Claude via the Anthropic SDK)
 

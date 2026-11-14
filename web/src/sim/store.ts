@@ -14,7 +14,7 @@ class SimStore {
   modelParams: Record<Material, ModelParams> = DEFAULT_PARAMS;
   paramsMeta: ModelParamsResponse['meta'] | null = null;
   series: Series = simulate(this.params, this.modelParams);
-  tl: Timeline = { t: 0, t1: 0, t2: this.series.D, playing: true, speed: 2 };
+  tl: Timeline = { t: 0, t1: 0, t2: this.series.D, playing: false, speed: 2 };   // waits for the user to press play
   presets: Preset[] = [];
   points: TestPoint[] = [];               // simulatable test points (real and seed), for the map and evidence
   pointByCode = new Map<string, TestPoint>();
@@ -48,7 +48,8 @@ class SimStore {
     if (wasEnd) tl.t2 = this.series.D;
     tl.t2 = Math.min(tl.t2, this.series.D); tl.t1 = Math.min(tl.t1, tl.t2 - 0.5);
     if (tl.t1 < 0) tl.t1 = 0;
-    if (restart || !tl.playing) { tl.t = tl.t1; tl.playing = true; }
+    // A new setting rewinds to t1 (or a finished run does); it never starts playing by itself.
+    if (restart || (!tl.playing && tl.t >= tl.t2 - 1e-3)) tl.t = tl.t1;
     tl.t = Math.min(tl.t, this.series.D);
     this.emit();
     this.scheduleServer();

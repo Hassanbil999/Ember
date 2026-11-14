@@ -24,7 +24,7 @@ export function AskBox({ onCite, titles }: { onCite: (ref: Ref) => void; titles:
   const refs: Ref[] = (res?.citations ?? []).map(c => ({ id: c.resource_id, page: c.page, title: c.title || titles[c.resource_id] || c.resource_id }));
   return (
     <section className="ask" aria-labelledby="askTitle">
-      <span className="sec" id="askTitle">Ask the Atlas</span>
+      <span className="sec" id="askTitle">Ask the NASA sources</span>
       <form onSubmit={submit} role="search">
         <label className="sr" htmlFor="askQ">Question</label>
         <input id="askQ" type="text" value={q} onChange={e => setQ(e.target.value)} maxLength={500} autoComplete="off"

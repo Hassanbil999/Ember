@@ -25,6 +25,7 @@ PSI = 6.894757
 
 GAS_FUELS = {"ethane": 2, "propane": 3, "butane": 4}
 DROPLET_FUELS = {"n-heptane": "heptane", "methanol": "methanol"}
+DATASETS = {"gas": "cfig_normal", "droplet": "flex"}          # the one table each question learns from
 
 
 def gas_fuel_parts(label: str) -> tuple[str, int, float] | None:
@@ -56,7 +57,7 @@ class Problem:
 
 
 def _gas_frame(target: str) -> pd.DataFrame:
-    t = get_store().usable_tests("cfig_normal").copy()
+    t = get_store().usable_tests(DATASETS["gas"]).copy()
     parts = t.fuel.map(gas_fuel_parts)
     t = t[parts.notna()].copy()
     parts = parts[parts.notna()]
@@ -71,7 +72,7 @@ def _gas_frame(target: str) -> pd.DataFrame:
 
 
 def _droplet_frame(target: str) -> pd.DataFrame:
-    t = get_store().usable_tests("flex").copy()
+    t = get_store().usable_tests(DATASETS["droplet"]).copy()
     t = t[t.fuel.isin(DROPLET_FUELS)].copy()
     t["fuel_name"] = t.fuel.map(DROPLET_FUELS)
     t["heptane"] = (t.fuel_name == "heptane").astype(float)

@@ -13,7 +13,7 @@ from ..core.config import CONFIG, PROCESSED
 from ..core.store import get_store
 from . import explore
 from .domain import Domain
-from .problems import PROBLEMS, PSI, features_from, gas_fuel_parts
+from .problems import DATASETS, PROBLEMS, PSI, features_from, gas_fuel_parts
 from .train import OUT
 
 ZONE_TEXT = {
@@ -27,6 +27,7 @@ def clear():
     _bundle.cache_clear()
     _domain.cache_clear()
     _links.cache_clear()
+    meta.cache_clear()
 
 
 @lru_cache(maxsize=4)
@@ -73,6 +74,7 @@ def _ranges(df: pd.DataFrame, features: list[str]) -> dict:
             for f in features if f not in ("carbon_n", "heptane", "fuel_share")}
 
 
+@lru_cache(maxsize=1)          # the same answer until the models are retrained (clear() resets it)
 def meta() -> dict:
     out = {}
     for key, pb in PROBLEMS.items():
@@ -81,6 +83,11 @@ def meta() -> dict:
         fuels = sorted(df.fuel.unique().tolist())
         out[key] = {"label": pb.label, "question": pb.question, "fuels": fuels, "ranges": _ranges(df, pb.features),
                     "ranges_by_fuel": {f: _ranges(df[df.fuel == f], pb.features) for f in fuels},
+                    # for the Statistics coverage chart and the page labels
+                    "points": [{"id": r.test_id, "fuel": r.fuel, "o2_pct": round(float(r.o2_pct), 2), "psi": round(float(r.psi), 2),
+                                "burned": int(getattr(r, pb.target))} for r in df.itertuples()],
+                    "features": [{"key": f, "label": pb.feature_labels[f], "unit": pb.units[f]} for f in pb.features],
+                    "investigation": pb.investigation, "psi_id": pb.psi_id, "dataset": DATASETS[key],
                     "not_in_data": NOT_IN_DATA[key], "outcome_yes": pb.outcome_yes, "outcome_no": pb.outcome_no, "card": b["card"]}
     return out
 

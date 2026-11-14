@@ -29,7 +29,7 @@ export function AdminVerify() {
   useEffect(() => { if (token) void load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [origin]);
 
   async function decide(code: string, action: 'verify' | 'reject' | 'edit', fields?: Record<string, unknown>) {
-    if (action === 'reject' && !confirm(`Reject ${code}? It will be removed from the Atlas.`)) return;
+    if (action === 'reject' && !confirm(`Reject ${code}? It will be removed from the catalog.`)) return;
     try {
       const r = await call(`/api/admin/test-points/${encodeURIComponent(code)}/${action}`, { method: 'POST', body: JSON.stringify({ by: who, fields }) });
       const fit = r.model_params ? Object.entries(r.model_params as Record<string, { n_points: number; source: string }>).map(([m, v]) => `${m}: ${v.source}`).join('; ') : '';
@@ -93,7 +93,7 @@ export function AdminVerify() {
             <p className="moremsg">{data.decisions} decisions recorded so far.</p>
           </>
         )}
-        <p><a className="link" href="/#simulate">Back to the Atlas</a></p>
+        <p><a className="link" href="/engine">Back to the engine</a></p>
       </div>
     </main>
   );

@@ -8,7 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.predict import report, service
-from backend.predict.problems import PSI, gas_fuel_parts
+from backend.predict.problems import PROBLEMS, PSI, gas_fuel_parts
 
 pytestmark = pytest.mark.skipif(not service.available(), reason="fire-check models not trained (python -m backend.ingest predict)")
 
@@ -106,6 +106,41 @@ def test_report_escapes_what_it_prints():
     res["inputs"][0]["value"] = "<script>alert(1)</script>"
     html = report.render(res, datetime.now(timezone.utc))
     assert "<script>alert(1)</script>" not in html and "&lt;script&gt;" in html
+
+
+@pytest.mark.parametrize("req", [
+    {"problem": "gas", "fuel": "30% butane", "o2_pct": 38, "psi": 14.5, "fuel_flow": 1},
+    {"problem": "droplet", "fuel": "n-heptane", "o2_pct": 13, "psi": 10.5, "d0_mm": 4},
+])
+def test_the_estimate_is_inside_the_range_shown_with_it(req):
+    """These inputs once gave a full-data estimate just outside the range shown with it (e.g. 26 %, range 27–31 %)."""
+    e = service.check(req)["estimate"]
+    assert e and e["low"] <= e["probability"] <= e["high"]
+
+
+def test_meta_gives_each_fuel_its_own_tested_range_and_the_tests_behind_it():
+    m = service.meta()
+    for key, pb in PROBLEMS.items():
+        assert len(m[key]["points"]) == m[key]["card"]["n_tests"]
+        assert {f["key"] for f in m[key]["features"]} == set(pb.features)
+        for fuel, ranges in m[key]["ranges_by_fuel"].items():
+            for f, (lo, hi) in ranges.items():
+                plo, phi = m[key]["ranges"][f]
+                assert plo <= lo <= hi <= phi, (key, fuel, f)
+    # pure propane was only tested near sea-level pressure, though gas jets as a whole went down to ~7 psi
+    assert m["gas"]["ranges_by_fuel"]["propane"]["psi"][0] > 13 > m["gas"]["ranges"]["psi"][0]
+
+
+def test_model_cards_carry_the_roc_curve_behind_each_auc():
+    """The Statistics page draws these lines; each must be the curve its reported AUC was computed from."""
+    for key in PROBLEMS:
+        card = service._bundle(key)["card"]
+        for r in card["comparison"][1:]:
+            roc = r["roc"]
+            assert roc[0] == [0.0, 0.0] and roc[-1] == [1.0, 1.0]
+            assert all(a[0] <= b[0] and a[1] <= b[1] for a, b in zip(roc, roc[1:]))
+            area = sum((b[0] - a[0]) * (a[1] + b[1]) / 2 for a, b in zip(roc, roc[1:]))
+            assert abs(area - r["auc"]) < 0.01, (key, r["model"], area, r["auc"])
 
 
 def test_a_real_co2_mix_is_answered_not_always_untested():

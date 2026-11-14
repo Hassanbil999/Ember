@@ -127,7 +127,7 @@ export function FindDataView({ active, filters: F, setFilters, investigations, o
   const invName = (slug: string | null) => investigations.find(i => i.slug === slug)?.name ?? slug ?? '';
 
   return (
-    <section id="view-data" className="view" role="tabpanel" aria-labelledby="tab-data" hidden={!active}>
+    <section id="view-data" className="view" aria-label="Find data" hidden={!active}>
       <div className="dwrap">
         <div className="dtop">
           <div className="r1">

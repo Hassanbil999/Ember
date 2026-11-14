@@ -3,10 +3,13 @@
    update every frame through sim.onTick, outside React. */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { at, DT, fmtT, SAMPLE_MM } from '../sim/model';
+import { fireSound } from '../sim/sound';
 import { sim, useSim } from '../sim/store';
 
 const ICON_PLAY = <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4l13 8-13 8z" /></svg>;
 const ICON_PAUSE = <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4h4v16H6zM14 4h4v16h-4z" /></svg>;
+const ICON_SOUND = <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4zM16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" /></svg>;
+const ICON_MUTE = <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4zM17 9l5 6M22 9l-5 6" /></svg>;
 
 export function Timeline() {
   const s = useSim();
@@ -17,6 +20,8 @@ export function Timeline() {
   const tStat = useRef<HTMLSpanElement>(null);
   const [W, setW] = useState(0);
   const drag = useRef<null | 't1' | 't2' | 'play'>(null);
+  const [soundOn, setSoundOn] = useState(fireSound.enabled);
+  useEffect(() => fireSound.onChange(() => setSoundOn(fireSound.enabled)), []);
 
   useEffect(() => {
     if (!track.current) return;
@@ -92,12 +97,13 @@ export function Timeline() {
   return (
     <div className="timeline" id="timeline" aria-label="Timeline">
       <div className="tl-row">
-        <button className="play" id="playBtn" aria-label={tl.playing ? 'Pause' : 'Play'} onClick={() => sim.togglePlay()}>{tl.playing ? ICON_PAUSE : ICON_PLAY}</button>
+        <button className="play" id="playBtn" aria-label={tl.playing ? 'Pause' : 'Play'} onClick={() => { fireSound.unlock(); sim.togglePlay(); }}>{tl.playing ? ICON_PAUSE : ICON_PLAY}</button>
         <span className="tnow" id="tNow" ref={tNow} aria-live="off" />
         <label className="sr" htmlFor="speed">Playback speed</label>
         <select className="speed" id="speed" value={tl.speed} onChange={e => sim.setSpeed(+e.target.value)}>
           <option value="1">1×</option><option value="2">2×</option><option value="5">5×</option><option value="10">10×</option>
         </select>
+        <button className="snd" id="soundBtn" aria-pressed={soundOn} aria-label="Fire sound" title={soundOn ? 'Sound on' : 'Sound off'} onClick={() => fireSound.toggle()}>{soundOn ? ICON_SOUND : ICON_MUTE}</button>
         <span className="tstat" id="tStat" ref={tStat} />
       </div>
       <div className="track" id="track" ref={track} onPointerDown={onDown} onPointerMove={onDrag}

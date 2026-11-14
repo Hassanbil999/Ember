@@ -7,7 +7,7 @@ const reduced = typeof window !== 'undefined' && !!(window.matchMedia && window.
 export const isWide = () => window.innerWidth > 1100;
 
 interface Particle { x: number; y: number; px: number; py: number; age: number; life: number; dep: number }
-interface Geom { I: number; xmm: number; fx: number; fy: number; len: number; wid: number; round: number; ang: number; soot: number; turb: number; speed: number; vmag: number; ub: number }
+interface Geom { I: number; xmm: number; off: number; fx: number; fy: number; len: number; wid: number; round: number; ang: number; soot: number; turb: number; speed: number; vmag: number; ub: number }
 
 const FS = `precision mediump float;
 uniform vec2 u_res; uniform float u_dpr; uniform float u_time; uniform vec2 u_anchor;
@@ -68,7 +68,10 @@ export class StageEngine {
     this.sx = sC.getContext('2d')!;
     this.initGL();
     this.resize();
-    for (let i = 0; i < 90; i++) this.frame(1 / 60);
+    // Pre-fill the airflow trails (90 frames) without drawing the flame each time; then one full frame.
+    const G = this.flameGeom();
+    for (let i = 0; i < 90; i++) { this.stepParticles(1 / 60, G); this.drawTrails(); }
+    this.frame(0);
   }
 
   get hasWebGL() { return !!this.gl; }
@@ -107,9 +110,10 @@ export class StageEngine {
     const S = (16 + Math.min(56, 3 * Math.max(r.margin, 1.2))) * (0.45 + 0.55 * Math.min(1, I * 1.2));
     const ang = vmag < 0.2 ? -Math.PI / 2 : Math.atan2(-ub, u);
     const thick = state.mat === 'pmma' ? 10 : 3;
-    const fx = this.xs0 + (this.xs1 - this.xs0) * xmm / SAMPLE_MM;
+    // The flame stays at the centre of the view; the sample is drawn shifted by `off` so its burning front sits there.
+    const fx = (this.xs0 + this.xs1) / 2, off = fx - (this.xs0 + (this.xs1 - this.xs0) * xmm / SAMPLE_MM);
     const soot = Math.min(1, Math.max(0.06, 0.1 + 0.8 * Math.sqrt(g) * (0.55 + (state.o2 - 15) / 40)));
-    return { I, xmm, fx, fy: this.ys - thick / 2, len: S * (1 + 2 * e), wid: S * (0.9 - 0.4 * e), round: 1 - e, ang, soot,
+    return { I, xmm, off, fx, fy: this.ys - thick / 2, len: S * (1 + 2 * e), wid: S * (0.9 - 0.4 * e), round: 1 - e, ang, soot,
              turb: Math.min(1, 0.95 * Math.sqrt(g)) * (reduced ? 0.5 : 1), speed: (0.35 + 0.05 * vmag) * (reduced ? 0.4 : 1), vmag, ub };
   }
 
@@ -182,23 +186,26 @@ export class StageEngine {
     if (state.g > 0.01) this.arrow(c, gx, yT + 10, gx, yT + 10 + Math.max(12, 40 * Math.sqrt(state.g)));
     c.fillStyle = 'rgba(176,186,206,.85)'; c.textAlign = 'right';
     c.fillText(state.g < 0.01 ? 'no gravity' : state.g.toFixed(2) + ' g', gx - 12, yT + 22); c.textAlign = 'left';
-    // sample
-    const thick = state.mat === 'pmma' ? 10 : 3, fx = G.fx;
+    // sample: drawn shifted so the burning front stays under the centred flame; clipped to the view between the panels
+    const thick = state.mat === 'pmma' ? 10 : 3, fx = G.fx, s0 = xs0 + G.off, s1 = xs1 + G.off;
+    c.save(); c.beginPath(); c.rect(box.l, 0, box.r - box.l, H); c.clip();
     c.fillStyle = state.mat === 'pmma' ? '#2e3850' : '#c7b48c';
-    c.fillRect(fx, ys - thick / 2, xs1 - fx, thick);
+    c.fillRect(fx, ys - thick / 2, Math.max(0, s1 - fx), thick);
     const bt = state.mat === 'pmma' ? thick * 0.55 : thick;
     c.fillStyle = state.mat === 'pmma' ? '#151a26' : '#3e352e';
-    c.fillRect(xs0, ys - bt / 2, Math.max(0, fx - xs0), bt);
-    if (G.I > 0.02 && fx > xs0) {
-      const gw = Math.min(60, fx - xs0);
+    c.fillRect(s0, ys - bt / 2, Math.max(0, fx - s0), bt);
+    if (G.I > 0.02 && fx > s0) {
+      const gw = Math.min(60, fx - s0);
       const gr = c.createLinearGradient(fx - gw, 0, fx, 0);
       gr.addColorStop(0, 'rgba(255,90,30,0)'); gr.addColorStop(1, 'rgba(255,110,40,' + (0.75 * G.I) + ')');
       c.fillStyle = gr; c.fillRect(fx - gw, ys - bt / 2 - 0.5, gw, bt + 1);
     }
-    c.fillStyle = 'rgba(148,158,179,.55)'; c.fillRect(xs0 - 4, ys - 12, 2, 24); c.fillRect(xs1 + 2, ys - 12, 2, 24);
-    c.fillStyle = 'rgba(148,158,179,.7)'; c.fillText('10 cm sample', xs0, ys + 26);
+    c.fillStyle = 'rgba(148,158,179,.55)'; c.fillRect(s0 - 4, ys - 12, 2, 24); c.fillRect(s1 + 2, ys - 12, 2, 24);
     const t = sim.tl.t;
-    if (t < IGN) { const a = 1 - t / IGN; c.strokeStyle = 'rgba(255,120,60,' + a + ')'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(xs0 + 2, ys - 11); c.lineTo(xs0 + 8, ys + 11); c.stroke(); }
+    if (t < IGN) { const a = 1 - t / IGN; c.strokeStyle = 'rgba(255,120,60,' + a + ')'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(s0 + 2, ys - 11); c.lineTo(s0 + 8, ys + 11); c.stroke(); }
+    c.restore();
+    c.fillStyle = 'rgba(148,158,179,.7)'; c.textAlign = 'center';
+    c.fillText(G.xmm.toFixed(0) + ' of 100 mm burned', fx, ys + 30); c.textAlign = 'left';
     if (!this.gl && G.I > 0.02) this.drawFlame2D(c, G);
   }
 
