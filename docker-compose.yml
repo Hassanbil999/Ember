@@ -1,6 +1,6 @@
 services:
   app:
-    build: { context: ., dockerfile: backend/Dockerfile }
+    build: .
     ports: ["8000:8000"]
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}

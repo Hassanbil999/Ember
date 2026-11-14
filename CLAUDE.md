@@ -31,7 +31,8 @@ Existing backend kept: Python + FastAPI (`backend/`), data in Parquet + DuckDB (
 - Dev servers: `python run.py dev` (API :8000 with reload, Vite :5173)
 - Load data: `python run.py ingest [canonical|existing|seed|fit|all]` (= `python -m backend.ingest <step>`); `canonical` is the team's cleaning pipeline, unchanged
 - Unit tests: `python -m pytest backend/tests -q` · e2e: `python run.py e2e` · both: `python run.py test`
-- Container: `docker compose up --build`
+- Container: `docker compose up --build` (root `Dockerfile`: builds the web app, runs `ingest all` at build time)
+- Code map: `backend/catalog/` = adapter layer to SPEC §5 (`build.py` existing, `seed.py`, `query.py` read side); `backend/api/routes_*.py` = SPEC §9; `backend/sim/model.py` = SPEC §8; `web/src/sim/` = stage, model copy, store
 
 ## Secrets
 Use `.env` (see `.env.example`, merged with any existing env file). Never commit keys.

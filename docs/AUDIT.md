@@ -289,3 +289,20 @@ Legend: ✅ direct · 🔁 transform · 🌱 from `seed.json` (gap filled, stays
 | **G** | Presets. The old `config/presets.yaml` has Moon base at 30 % / 10.2 psi; the prototype has 34 % / 8.2 psi (NASA's 2024 exploration-atmosphere recommendation, `r-ea`). | Use the **prototype/seed presets** (the §8.5 anchors and the §13 smoke path depend on them). |
 
 Also: `stash@{0}` holds the fixture-regenerated demo files from your working tree (timestamp and CRLF changes only). I plan to drop it in step 2 unless you want it kept.
+
+---
+
+## 7. As built (M1): how the mapping was implemented
+
+Approved 2026-11-14 with proposals A–G (README Decisions). Code: `backend/catalog/build.py` (`ingest existing`) and `backend/catalog/seed.py` (`ingest seed`). Output tables: `data/processed/atlas_*.parquet`, also in `atlas.duckdb`.
+
+| Table | Rows | Notes |
+|---|---|---|
+| `atlas_investigations` | 8 real groups + 2 seed (`sofie`, `ea`) | `members` holds each real PSI investigation (PSI ids, DOIs, years, platform, test matrix). `origin` = psi \| seed. |
+| `atlas_resources` | 17 real (15 PSI test tables + FLEX-2 test plan + NASA Researcher's Guide) + 17 seed | `investigations` (list) allows multi-investigation resources such as the Guide. `doi` and `psi_id` are kept. The PSI rows score 94 (High). |
+| `atlas_test_points` | 1,781 real + 12 seed | 1,694 real points verified. 87 real points are unverified: 79 because a used value was derived (e.g. "~ 22.1" approximate O₂, gravity worked out from the platform) and 8 because they are flagged implausible. `unverified_reason` says which. `extra` (JSON) keeps droplet and gas variables that §5 has no column for. |
+| `atlas_resource_points` | 1,781 + seed links | PSI table ↔ its rows; seed `points` lists. |
+| `atlas_chunks` | 161 | The Guide only (Decision D). |
+| `atlas_presets`, `atlas_model_params` | 5, 2 | From seed (Decision G) and the §8.1 defaults. `ingest fit` replaces the parameters once at least 4 verified points exist. |
+
+Gaps still open after M1: `s3_key` (null everywhere until `ingest psi`, M5), embeddings in `chunks` (LSA index, M4), `verified_by`/`verified_at` for seed rows (set by the admin verify page, M5).

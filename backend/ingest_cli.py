@@ -3,6 +3,9 @@
     canonical  the team's existing cleaning pipeline (backend/ingest.py), unchanged: raw PSI tables and
                PDFs → validated canonical tables in data/processed/. Its outputs are gitignored, so a
                clean checkout runs it once; it never edits data/raw/.
+    existing   map those tables onto the SPEC §5 model (backend/catalog/build.py): investigations,
+               resources, test_points, resource_points, chunks. Reads only; never re-cleans.
+    seed       add data/seed.json rows only where no real row exists (backend/catalog/seed.py)
     all        every step in order (the default).
 """
 from __future__ import annotations
@@ -12,8 +15,8 @@ import time
 
 from .core.config import PROCESSED
 
-STEPS = ["canonical"]
-OUTPUTS = ["tests.parquet", "chunks.parquet"]          # what `run.py start` needs before it can serve
+STEPS = ["canonical", "existing", "seed"]
+OUTPUTS = ["tests.parquet", "atlas_resources.parquet", "atlas_test_points.parquet", "atlas_presets.parquet"]          # what `run.py start` needs before it can serve
 
 
 def outputs_present() -> bool:
@@ -23,6 +26,12 @@ def outputs_present() -> bool:
 def run_step(step: str) -> dict:
     if step == "canonical":
         from .ingest import run
+        return run()
+    if step == "existing":
+        from .catalog.build import run
+        return run()
+    if step == "seed":
+        from .catalog.seed import run
         return run()
     raise SystemExit(f"unknown step {step!r}; choose from {', '.join(STEPS + ['all'])}")
 

@@ -12,6 +12,7 @@ import json
 import os
 import re
 import time
+from contextlib import asynccontextmanager
 from datetime import date
 from functools import lru_cache
 
@@ -30,7 +31,23 @@ from ..core.config import ROOT
 from ..core.store import get_store
 from ..search.index import search
 
-app = FastAPI(title="Freefall Atlas API", version="1.0.0")
+@asynccontextmanager
+async def lifespan(_app):
+    """Build the catalog read model in the background at startup, so the first request is fast (SPEC §12)."""
+    import threading
+
+    def warm():
+        try:
+            from ..catalog.query import catalog
+            catalog()
+        except Exception as e:                      # warming is an optimisation, never a reason to fail to start
+            print("warm-up skipped:", e)
+    threading.Thread(target=warm, daemon=True).start()
+    yield
+
+
+app = FastAPI(title="Freefall Atlas API", version="1.0.0", lifespan=lifespan,
+              description="NASA microgravity combustion data (PSI) for spacecraft and habitat fire safety. SPEC §9.")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.add_middleware(GZipMiddleware, minimum_size=2000)
 
@@ -271,3 +288,32 @@ def admin_reload(x_admin_token: str | None = Header(default=None)):
     from ..search.index import reload
     reload()
     return {"ok": True}
+
+
+# ------------------------------------------------------------------ SPEC §9 routers
+from .routes_ai import router as ai_router  # noqa: E402
+from .routes_catalog import router as catalog_router  # noqa: E402
+from .routes_export import router as export_router  # noqa: E402
+
+app.include_router(catalog_router)
+app.include_router(ai_router)
+app.include_router(export_router)
+
+
+# ------------------------------------------------------------------ the web app (keep this section last)
+WEB_DIST = ROOT / "web" / "dist"
+
+
+@app.get("/{path:path}", include_in_schema=False)
+def web_app(path: str):
+    """Serve the built React app (web/dist) on the same port as the API. Unknown paths get index.html,
+    so client routes such as /admin/verify work; /api/* never reaches here unless it does not exist."""
+    if path.startswith("api/"):
+        raise HTTPException(404, "No such API route")
+    if not (WEB_DIST / "index.html").exists():
+        return PlainTextResponse("Freefall Atlas API is running. The web app is not built yet: run `python run.py build`.", status_code=503)
+    f = (WEB_DIST / path).resolve()
+    if path and f.is_file() and WEB_DIST.resolve() in f.parents:
+        cache = "public, max-age=31536000, immutable" if "/assets/" in f.as_posix() else "no-cache"
+        return FileResponse(f, headers={"Cache-Control": cache})
+    return FileResponse(WEB_DIST / "index.html", headers={"Cache-Control": "no-cache"})

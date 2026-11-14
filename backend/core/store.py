@@ -28,6 +28,10 @@ class Store:
         self.chunks = rd("chunks")
         self.concepts = rd("concepts")
         self.variables = rd("variables")
+        # SPEC §5 tables written by the adapter layer (backend/catalog)
+        self.atlas = {n: rd(f"atlas_{n}") for n in ("investigations", "resources", "test_points", "resource_points",
+                                                     "chunks", "presets", "model_params")}
+        self.version = getattr(self, "version", 0) + 1
         if not self.tests.empty:
             self.tests["flags"] = self.tests["flags"].map(json.loads)
             self.tests["image_derived"] = self.tests["image_derived"].map(json.loads)
