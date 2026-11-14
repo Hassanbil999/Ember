@@ -406,7 +406,7 @@ datasets:
     # The synthetic droplet and solid reports are left out: they would contradict the real tables.
     # What remains are two context notes compiled by the platform authors from the challenge brief;
     # they are not NASA documents and keep the "demo" label until NASA documents replace them.
-    files: [detection_suppression_notes.pdf, fire_safety_context.pdf]
+    files: [researchers_guide_combustion_science.pdf, detection_suppression_notes.pdf, fire_safety_context.pdf]
     license: "Compiled context notes (platform authors, not NASA) — CC0."
 
 # Validation rules, applied to every tabular dataset after normalization.

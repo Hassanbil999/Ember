@@ -26,7 +26,8 @@ Stated plainly, because honest limits are part of the product.
 - The PSI tables are downloaded by `python run.py fetch` and checked against pinned SHA-256 checksums; on 2026-11-13 the FLEX file in the repo was byte-identical to the one PSI serves. Source URL, checksum and retrieval time of every table are in `data/raw/psi_manifest.json`. If PSI corrects a table later, the fetch keeps the old file and saves the new one beside it for review.
 - Eight investigations have loaded table data (FLEX, CFI-G, ACME, BASS, BASS-II, Saffire-I, -II, -III). The other catalog entries are **metadata only**; their nodes are hollow and say "no test data yet".
 - Catalog **years are approximate**; **PSI ids and DOIs are empty** until filled from PSI. Nothing was invented.
-- The two "context notes" PDFs restate facts from the challenge brief. They are not NASA documents and are labeled as such.
+- **Quoted passages come mostly from NASA's *A Researcher's Guide to: Combustion Science* (2015, 56 pages)**, checksum-verified against NASA's file. Its table of contents, acronym list and garbled hardware tables are not quoted. It predates BASS-II, SAFFIRE and CFI-G and does not discuss the Moon or partial gravity, so those answers rest on the test data.
+- The two "context notes" PDFs restate facts from the challenge brief (for example the planned Moon-base atmosphere). They are not NASA documents, are labelled as such wherever they are quoted, and stay only until a NASA source for those facts is loaded.
 
 ## Partial gravity
 - **PSI contains no partial-gravity combustion data.** Lunar (0.165 g) and Martian (0.38 g) scenarios are always flagged `untested`. The droplet and gas-flame models have only microgravity data and do not take gravity as an input, so the gravity setting does not change their prediction; the screen says so. The only real 1g comparison is SAFFIRE-2's ground tests, shown as measurements, not modelled.
@@ -61,6 +62,7 @@ Stated plainly, because honest limits are part of the product.
 ## Search and answers
 - Dense retrieval uses local LSA. It is weaker than a neural embedder on paraphrases. `FA_EMBEDDER=st` enables MiniLM if sentence-transformers is installed. There is no cross-encoder rerank.
 - The query parser understands common units and phrasings ("30 percent oxygen", "0.3 O2", "10 psi", "moon base"), not arbitrary language. Unparsed words fall back to keyword search.
+- A passage is quoted only through a sentence that shares at least two of the question's key words. This keeps off-topic sentences out, but some broad questions ("why do flames behave differently in microgravity?") get no answer even though the guide discusses them; the home page's microgravity starting point covers that one.
 - The template answer composer picks a metric from keywords (burn share, K, extinction diameter, spread rate). Unusual questions may get a passage-only (*Documented*) answer.
 - The citation verifier checks that quoted spans exist verbatim and that every number matches a cited row value, a recomputed aggregate, or the user's own query. It does **not** judge whether a sentence's reasoning is correct.
 

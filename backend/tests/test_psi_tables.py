@@ -224,3 +224,27 @@ def test_every_downloaded_psi_table_is_used():
     from backend.core.config import CONFIG
     flex2 = next(i for i in yaml.safe_load((CONFIG / "investigations.yaml").read_text(encoding="utf-8"))["investigations"] if i["id"] == "FLEX-2")
     assert "test matrix" in flex2["test_matrix"].lower(), "FLEX-2's PSI table is a test plan, shown as such"
+
+
+# ------------------------------------------------------------------ NASA's Researcher's Guide
+def test_researchers_guide_is_nasas_file_and_quoted_as_nasa():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("fetch_psi", RAW.parents[1] / "scripts" / "fetch_psi.py")
+    fp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fp)
+    folder, name, pinned, _ = fp.DOCUMENTS[0]
+    assert hashlib.sha256((RAW / folder / name).read_bytes()).hexdigest() == pinned
+    from backend.core.store import get_store
+    st = get_store()
+    doc = st.documents.loc["researchers-guide-combustion-science"]
+    assert not doc.demo and doc.pages == 56 and "NASA" in doc.citation
+    ch = st.chunks[st.chunks.doc_id == "researchers-guide-combustion-science"]
+    assert len(ch) > 100 and not ch.page.isin([6, 7]).any(), "the table of contents is never quoted"
+    assert "Fire Safety" in set(ch.section) and "Solid-Fuel Combustion/Material Flammability" in set(ch.section)
+
+
+def test_answers_quote_the_guide_with_its_page():
+    from backend.answer.engine import answer
+    a = answer("smoke detection on the ISS")
+    src = [s for s in a["sources"] if s.get("doc_id") == "researchers-guide-combustion-science"]
+    assert src and src[0]["citations"][0]["page"] == 26 and not a["dropped"]
