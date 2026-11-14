@@ -135,55 +135,14 @@ def test_api_never_returns_a_flagged_number(api, st):
         assert r["gravity"] is None or not r["gravity"][0].isdigit()
 
 
-@pytest.mark.parametrize("tid", ["moon-base", "iss-cabin", "microgravity", "untested"])
-def test_topics_separate_measured_inferred_untested(api, tid):
-    t = api.get(f"/api/topic/{tid}").json()
-    assert t["finding"] and t["grade"]["label"] and t["visual"]["kind"]
-    for k in ("measured", "inferred", "untested"):
-        assert t[k]["summary"] and isinstance(t[k]["items"], list)
-    assert t["untested"]["items"], "every answer states what was never tested"
-    assert t["sources"], "every answer cites a source passage"
-    assert t["demo"] is False, "no synthetic test data is loaded any more"
 
 
-def test_moon_base_answer_for_one_material(api):
-    t = api.get("/api/topic/moon-base", params={"material": "PMMA"}).json()
-    assert t["material"] == "PMMA" and "PMMA" in t["finding"] and "22.2%" in t["finding"]
-    assert t["grade"]["label"] == "Not tested"               # no PMMA test at Moon-base oxygen, no test at lunar gravity
-    assert any("Moon gravity" in i["text"] for i in t["untested"]["items"])
-    assert all(m["verdict"].startswith("tested only at") for m in t["materials"]), "no real solid test reaches 30 % O2"
 
 
-def test_moon_base_answer_uses_only_real_data(api):
-    t = api.get("/api/topic/moon-base").json()
-    assert "No solid material has ever been burned in orbit" in t["finding"]
-    pts = t["visual"]["points"]
-    assert pts and {p["dataset"] for p in pts} <= {"flex", "cfig_normal"}
-    assert t["visual"]["band"]["o2_frac"][1] == pytest.approx(0.222)
 
 
-def test_explore_and_insights_payloads(api):
-    e = api.get("/api/explore").json()
-    ids = {i["id"] for i in e["investigations"]}
-    for g in e["groupings"].values():
-        assert all(m in ids for grp in g for m in grp["members"])
-    assert all(len(v) <= 4 for v in e["links"].values()), "only the strongest few relationships are sent"
-    ins = api.get("/api/insights").json()["insights"]
-    assert 5 <= len(ins) <= 8
-    for i in ins:
-        assert i["sentence"].endswith(".") and i["visual"]["kind"] and i["source"] and i["studio"]
 
 
-def test_lab_grid_shape_and_domain(api):
-    g = api.get("/api/lab/grid", params={"mode": "gas", "item": "30% butane"}).json()
-    assert g["source"] == "real CFI-G gas-flame" and g["rate_label"] is None
-    n = 1
-    for a in g["axes"]:
-        n *= len(a["values"])
-    assert len(g["p"]) == len(g["rate"]) == len(g["dist"]) == n
-    assert all(0 <= p <= 1 for p in g["p"])
-    assert g["cv"]["accuracy"] > g["cv"]["baseline"], "the model is reported against its baseline"
-    assert max(g["dist"]) > g["edge"], "the grid reaches beyond the tested range and says so"
 
 
 # ---------------------------------------------------------------- the real FLEX table (NASA PSI-69)
@@ -206,92 +165,17 @@ def test_disruption_is_explained_not_blank(st):
 
 
 # ---------------------------------------------------------------- atmosphere trade physiology (NASA OCHMO briefs)
-def test_breathing_limits_match_the_nasa_briefs():
-    from backend.atmosphere import breathing, pio2_mmhg
-    assert pio2_mmhg(101.325, 0.21) == pytest.approx(149.7, abs=0.3)            # the brief's own worked example
-    assert breathing(101.325, 0.21)["status"] == "normal"
-    assert breathing(8.2 * 6.894757, 0.34)["status"] == "mild"                  # exploration atmosphere: just above the floor
-    assert pio2_mmhg(8.2 * 6.894757, 0.34) == pytest.approx(128, abs=1.5)
-    assert breathing(8.2 * 6.894757, 0.25)["status"] == "too_low"
-    assert breathing(30.0, 0.9)["status"] == "too_rich"
 
 
-def test_prebreathe_estimate_reproduces_known_protocols():
-    from backend.atmosphere import prebreathe
-    iss = prebreathe(14.7 * 6.894757, 0.21)
-    assert iss["r0"] == pytest.approx(2.70, abs=0.02)
-    assert 3.5 * 60 < iss["minutes"] < 4.6 * 60          # NASA's in-suit protocol from 14.7 psi is 4 hours
-    assert prebreathe(8.2 * 6.894757, 0.34)["minutes"] == 0   # the reason the exploration atmosphere was chosen
-    camp = prebreathe(10.2 * 6.894757, 0.265)
-    assert 0 < camp["minutes"] < 90                       # the 10.2 psi campout leaves a short in-suit pre-breathe
 
 
-def test_atmosphere_payload_cites_its_sources(api):
-    a = api.get("/api/atmosphere").json()
-    assert {r["id"] for r in a["references"]} == {"iss", "campout", "exploration"}
-    assert all(s["url"].startswith("https://") and "nasa.gov" in s["url"] for s in a["sources"])
-    assert a["constants"]["pio2_floor_mmhg"] == 127 and a["constants"]["r_accept"] == 1.65 and a["caveats"]
 
 
-def test_every_place_ranks_every_investigation_with_reasons():
-    from backend import relevance
-    for p in relevance.places():
-        d = relevance.rank(p["id"])
-        scores = [r["score"] for r in d["rows"]]
-        assert scores == sorted(scores, reverse=True) and len(d["rows"]) >= 15
-        for r in d["rows"]:
-            assert set(r["parts"]) == {"burns", "air", "gravity", "evidence"}
-            assert all(0 <= part["score"] <= 3 and part["why"].endswith(".") for part in r["parts"].values())
-            assert r["score"] == sum(part["score"] for part in r["parts"].values())
 
 
-def test_partial_gravity_never_scores_as_tested():
-    from backend import relevance
-    for pid in ("moon_base", "rover", "mars"):
-        d = relevance.rank(pid)
-        assert not d["gravity_tested"]
-        assert all(r["parts"]["gravity"]["score"] <= 2 for r in d["rows"])
-        assert any("partial-gravity" in g["text"] for g in d["gaps"])
-    assert all(r["parts"]["gravity"]["score"] == 3 for r in relevance.rank("iss")["rows"])
 
 
-def test_demo_rows_never_count_as_real_evidence_in_the_ranking():
-    """Full marks for evidence need real rows; demo-only rows score 1 and are marked; no rows score 0."""
-    from backend import relevance
-    from backend.core.store import get_store
-    t = get_store().usable_tests()
-    for r in relevance.rank("iss")["rows"]:
-        mine = t[t.investigation_id == r["label"]]
-        real = int((~mine.demo.astype(bool)).sum())
-        ev = r["parts"]["evidence"]
-        assert ev["score"] == (3 if real else 1 if len(mine) else 0)
-        assert bool(ev.get("demo")) == (len(mine) > 0 and real == 0)
-    assert next(r for r in relevance.rank("iss")["rows"] if r["label"] == "FLEX")["parts"]["evidence"]["score"] == 3
-    rows = relevance.rank("iss")["rows"]
-    assert not any(r["parts"]["evidence"].get("demo") for r in rows), "no demo rows are loaded any more"
-    for label in ("BASS-II", "FLEX", "CFI-G", "Saffire-II"):       # real PSI tables now: full evidence score
-        assert next(r for r in rows if r["label"] == label)["parts"]["evidence"]["score"] == 3, label
 
 
-def test_missing_pressure_is_never_reported_as_a_mismatch():
-    """A table with no pressure column is matched on oxygen only and says so; with neither value it is 'not known'."""
-    from backend import relevance
-    from backend.core.store import get_store
-    t = get_store().usable_tests()
-    for r in relevance.rank("iss")["rows"]:
-        mine = t[t.investigation_id == r["label"]]
-        air = r["parts"]["air"]
-        if len(mine) and mine.pressure_kpa.isna().all():
-            if mine.o2_frac.notna().any():
-                assert air.get("o2_only") and air["score"] <= 2 and "oxygen only" in air["why"]
-            else:
-                assert air.get("unknown") and "neither" in air["why"]
 
 
-def test_solids_are_matched_on_oxygen_alone_in_the_ranking():
-    """BASS-II records no pressure: its air match must say so, never claim 0 tests in a place's air by pressure."""
-    from backend import relevance
-    iss = next(r for r in relevance.rank("iss")["rows"] if r["label"] == "BASS-II")["parts"]["air"]
-    assert iss["score"] >= 1 and "records no pressure" in iss["why"]
-    moon = next(r for r in relevance.rank("moon_base")["rows"] if r["label"] == "BASS-II")["parts"]["air"]
-    assert moon["score"] == 0 and "22.2%" in moon["why"]

@@ -1,6 +1,6 @@
 # Known limitations
 
-Stated plainly, because honest limits are part of the product.
+Stated plainly, because honest limits are part of the product. The data limits below come from the old site and still hold; the simulator's limits are added in M2.
 
 ## Data
 - **All loaded test data is real NASA PSI data.** Loaded as published: FLEX droplets (PSI-69, 274 tests of methanol and n-heptane, 2009–2011), CFI-G normal gas flames (PSI-159, 179 tests, 2021), ACME Flame Design normal gas flames (PSI-10, 207 tests, 2019), and the solid-material tables BASS-II, BASS and SAFFIRE-1/2/3 (below). The synthetic BASS-II-shaped fixture that stood in for solids is switched off (`enabled: false`, kept only for adapter tests). What is still not NASA material: the two context-notes PDFs and the Image Lab test patterns (below).
@@ -29,45 +29,16 @@ Stated plainly, because honest limits are part of the product.
 - **Quoted passages come mostly from NASA's *A Researcher's Guide to: Combustion Science* (2015, 56 pages)**, checksum-verified against NASA's file. Its table of contents, acronym list and garbled hardware tables are not quoted. It predates BASS-II, SAFFIRE and CFI-G and does not discuss the Moon or partial gravity, so those answers rest on the test data.
 - The two "context notes" PDFs restate facts from the challenge brief (for example the planned Moon-base atmosphere). They are not NASA documents, are labelled as such wherever they are quoted, and stay only until a NASA source for those facts is loaded.
 
+## Simulator (SPEC §8)
+- **Illustrative, not a design tool.** A reduced-order flame-limit model for two solid materials (cotton-fiberglass fabric, acrylic/PMMA) with parameters from published BASS-II limits and the Saffire-I spread rate. Droplets and gas flames are not simulated.
+- **Not fitted to the NASA tables yet, and the screen says so.** `ingest fit` needs at least 4 *verified* fabric or PMMA tests that report oxygen, pressure, airflow and a burned / went-out outcome. The loaded PSI tables have none: the solid-material tables give no cabin pressure, BASS-II gives no airflow in cm/s and no outcome column, and the one SAFFIRE-2 test with an outcome and a spread rate reports its oxygen as approximate ("~ 22.1"). The model therefore uses the SPEC §8.1 defaults.
+- **The simulator's reference points are starter rows.** The acrylic and fabric points on the flammability map (BASS2-*, SAF1-C, SAF3-C) come from `data/seed.json` and are labelled *starter row · unverified* until someone checks them against the cited papers. The only real NASA point on the map is SAF2-2-5-UG (unverified, for the reason above).
+- Loading a test whose table gives no pressure runs it at 14.7 psi, and the compare box says so.
+- "Extrapolated" is judged against the loaded points: oxygen above the highest solid-fuel test with an outcome (22.1 %), or pressure below the lowest tested.
+
 ## Partial gravity
 - **PSI contains no partial-gravity combustion data.** Lunar (0.165 g) and Martian (0.38 g) scenarios are always flagged `untested`. The droplet and gas-flame models have only microgravity data and do not take gravity as an input, so the gravity setting does not change their prediction; the screen says so. The only real 1g comparison is SAFFIRE-2's ground tests, shown as measurements, not modelled.
-
-## Models
-- Surrogates (Gaussian processes) **interpolate the loaded tests**; they are not physics models and cannot extrapolate physics. Extrapolations are greyed out.
-- Cross-validation groups by campaign. With 5 campaigns per dataset the CV estimates are noisy. On the real FLEX data the droplet burn/extinction classifier does **not** beat the base rate on accuracy (0.86 vs 0.87, because 87 % of decided tests end in extinction); it does on Brier score and AUC (0.82). The simulator says so in words. The extinction-diameter model is the strongest (R² 0.83), the burning-rate model moderate (R² 0.56). The CFI-G gas-flame model (still burning vs went out by itself, from oxygen, pressure, fuel and fuel flow) is right 81 % of the time on test days it has not seen against 77 % for the base rate (AUC 0.80). It has no burning-rate counterpart: the CFI-G table records no rate, so the simulator shows none for gas flames.
-- The applicability domain is distance-based. It does not detect a region that is dense in data but where the response changes abruptly.
-- Sensitivity is local (±10 % of each tested range at the current scenario), not a global importance measure.
-- The next-experiment advisor proposes points of maximum predictive uncertainty. It is a **research aid**, does not model test cost or hardware limits, and holds gravity at µg (the nearest testable proxy).
-- **The flame's look is art; its behaviour is data.** Size, colour family, lean, stretch and whether it is lit follow the model; in a replay the droplet's size over time and the moment and manner of the ending follow the test's measured burning rate, extinction diameter and burn time. The flicker, glow and exact shape are drawn, not simulated. Replays longer than 12 s are sped up and say so.
-- The sound is generated in the browser from the same numbers. The breathing sound follows the inspired-oxygen limits of the NASA brief; it is a cue, not a physiological model.
-- The GPU scene was measured on one machine only (Intel UHD integrated graphics, Chrome): 120 fps live and during a replay. On machines without a GPU the app uses the flat flame instead. Other graphics cards, browsers and phones are not tested.
-- The simulator's flame is an **illustration driven by the model's outputs** (chance of burning, predicted rate) and by simple rules for shape and colour. It is not a combustion simulation and is labelled as such on screen.
-- The simulator interpolates a precomputed grid (37 × 13 × 11 points per fuel). Between grid points the value is a linear blend, so it can differ slightly from a direct model call.
-- In gas-flame mode the scene draws the CFI-G spherical burner like a droplet of fixed size; the flame's size follows the fuel-flow slider, not a predicted rate.
-
-## Atmosphere trade
-- Breathing limits (inspired oxygen 127 and 149 mmHg, at least 30 % inert gas) and the spacewalk model (tissue ratio 1.65 for a 4.3 psi suit, 360-minute half-life) are taken from NASA OCHMO technical briefs TB-003 and TB-037. They are not derived from the combustion data.
-- The pre-breathe time is a **first-order estimate**: one tissue compartment, body in equilibrium with the cabin, pure-oxygen wash-out. It reproduces the 4-hour protocol from ISS air (4 h 16 min) but it is not a validated protocol; NASA validates those in chamber tests.
-- The fire layer is the simulator's model for one fuel at a fixed third condition (3 mm droplet, or 1 mg/s of gas to the burner). A cell counts as supported only inside the pressures and oxygen levels that were really tested; elsewhere it is hatched.
-- FLEX tested nothing below about 10.3 psi, so on the droplet layer the planned 8.2 psi / 34 % habitat atmosphere falls in the hatched area. CFI-G includes tests at about 7.4 psi (0.5 bar). These are statements about these datasets, not about all NASA testing.
-- Droplets and gas jets are not habitat materials. The map shows how real flames behave across cabin atmospheres; it has no solid-material layer, because no real solid table records pressure.
-
-## Image Lab
-- The test patterns were generated from the retired synthetic droplet table and are validated against it (mean error 0.5 %); they are not linked to any real FLEX test.
-- The only loaded media are **programmatic test patterns** (dark disc on a bright background; bright ring on dark). Extractors measure them within 0.8 % of the known diameters (unit tests require < 2 %). **This proves the pipeline, not its accuracy on real flame footage**, which has soot, glare, fibre supports, out-of-focus edges and drifting droplets.
-- The backlit extractor assumes one dominant dark object and a uniform backlight estimated from the frame border. The flame extractor uses a luminosity threshold; the red/blue ratio is only a rough proxy for soot radiation.
-- Events (ignition, extinction, burnout, disruption) use simple thresholds and may need per-test tuning through the correction loop.
-- Background jobs are in-process threads: they don't survive a server restart, and there's no queue for large batches.
 
 ## Search and answers
 - Dense retrieval uses local LSA. It is weaker than a neural embedder on paraphrases. `FA_EMBEDDER=st` enables MiniLM if sentence-transformers is installed. There is no cross-encoder rerank.
 - The query parser understands common units and phrasings ("30 percent oxygen", "0.3 O2", "10 psi", "moon base"), not arbitrary language. Unparsed words fall back to keyword search.
-- A passage is quoted only through a sentence that shares at least two of the question's key words. This keeps off-topic sentences out, but some broad questions ("why do flames behave differently in microgravity?") get no answer even though the guide discusses them; the home page's microgravity starting point covers that one.
-- The template answer composer picks a metric from keywords (burn share, K, extinction diameter, spread rate). Unusual questions may get a passage-only (*Documented*) answer.
-- The citation verifier checks that quoted spans exist verbatim and that every number matches a cited row value, a recomputed aggregate, or the user's own query. It does **not** judge whether a sentence's reasoning is correct.
-
-## Engineering
-- Docker Compose files are provided but were not run on the build machine (no Docker available). The verified path is `python run.py start`.
-- The Studio report lives in the browser's localStorage. It is per-browser and not shared.
-- In the headless test browser (no GPU) the simulator falls back to the flat flame and measures 44–60 fps depending on machine load; in real Chrome on this laptop the GPU scene holds 120 fps (`docs/PERF.md`).
-- Desktop-first. Not tuned for phones or for widths below ~1200 px.
