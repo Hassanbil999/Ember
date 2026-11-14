@@ -6,6 +6,16 @@ NASA Space Apps 2026: an AI-powered dashboard of NASA microgravity combustion re
 
 **How it works, in plain language:** [docs/methods/](docs/methods/README.md) explains the data, cleaning and outliers, preprocessing, models and evaluation, with every number reproducible by `python scripts/evaluate_methods.py`.
 
+## For judges
+
+- **Live app:** https://mohamad-755--freefall-atlas-web.us-east.modal.run (no login, no keys; the first visit after a quiet spell takes a few seconds to wake up)
+- **Challenge:** NASA Space Apps 2026, *Flame in Freefall*: summarize, rank and interpret NASA microgravity combustion findings for fire safety in human exploration.
+- **What it does:** an engineer or student picks an environment (ISS, Moon base, rover, Mars base) and a fuel. The app shows what NASA actually measured near those conditions, estimates whether a fire keeps burning where the tests allow it, and says plainly where nothing has been tested. **Find data** ranks NASA research by fit to the chosen environment and by credibility, and summarizes it with citations. **Report** exports the result with its NASA sources.
+- **How it meets the brief:** *summarize* (cited AI and template summaries), *rank* (best fit for an environment, credibility scores), *interpret* (Fire check with tested / estimated / untested zones, gaps computed from the data).
+- **NASA data is the core:** 19 NASA PSI experimental tables (1,848 tests), NASA's *Researcher's Guide to Combustion Science* and 33 NASA NTRS reports. Every number links back to a PSI table row or a document page.
+- **Why you can trust it:** models are scored on whole NASA test campaigns they never saw and are used only if they beat a no-skill baseline; nothing is estimated far from real tests. Plain-language method: [docs/methods/](docs/methods/README.md). Known limits: [docs/LIMITS.md](docs/LIMITS.md).
+- **Use of AI (SI):** see [References and AI use](#references-and-ai-use) at the end.
+
 ## Run it
 
 ```
@@ -79,3 +89,26 @@ Choices made where the brief was open. Newest last. The old site's data decision
 | AD | Earth limiting-oxygen values (ethane 11, propane 11.5, butane 12 % O₂ with nitrogen; Perry's Handbook) appear as a labelled **reference** in the check and report, never as training data. No value is shown for heptane or methanol because none was verified. | Outside data adds context without mixing measurement types. |
 | AE | The **report** is a fixed template (HTML in the app's typefaces, prints to PDF): conditions, zone, estimates with ranges, nearest NASA tests with source rows, what moves the estimate, model comparison, limits, PSI id and DOI. No generated prose. | An engineering record must say only what the result supports. |
 | AF | **Free AI option**: `backend/ai/llm.py` also speaks the OpenAI-compatible chat API (standard library HTTPS), used when no Anthropic key is set. The cite-or-refuse checks are unchanged. | Ask and the summary can run on a free tier. |
+
+## References and AI use
+
+### Use of AI (SI)
+- **Code:** this repository's code, tests and documentation were written with the help of an AI coding assistant, **Claude (Anthropic), through Claude Code**. Commits made with it carry a `Co-Authored-By: Claude` line. The team chose the idea, the data and the decisions, and reviewed the results.
+- **In the app:** the AI summary and *Ask* use a large language model (Claude via the Anthropic API, or a free OpenAI-compatible provider such as Groq or Google AI Studio). Every AI sentence must cite a NASA source and use only numbers found in it, or it is removed (Decision S). Without a key the app uses templates. Optional AI extraction of test points from NASA PDFs stays *unverified* until a person checks it.
+- **Not AI:** the fire-check estimates are classical statistical models (scikit-learn) trained on NASA tables; the report contains no generated prose. No AI-generated images, audio or video are used, and no NASA logos or branding are reproduced.
+
+### NASA data
+- NASA Physical Sciences Informatics (PSI) experimental tables, https://psi.nasa.gov: FLEX PSI-69 (doi:10.60555/mbq8-0451), FLEX-2 PSI-68 (10.60555/byp8-h018), CFI PSI-39 (10.60555/m6pj-a914), CFI-G PSI-159 (10.60555/cyt1-kh64), ACME Flame Design PSI-10 (10.60555/w4zy-bt45), ACME BRE PSI-20 (10.60555/vb93-3y72), ACME CLD Flame PSI-21 (10.60555/23e1-9950), ACME E-FIELD PSI-22 (10.60555/se5a-8c73), ACME s-Flame PSI-23 (10.60555/k57n-p030), BASS-II PSI-25 (10.60555/4qc4-de67), BASS PSI-26 (10.60555/58h4-dy80), SAFFIRE-1 PSI-98 (10.60555/0t15-1z43), SAFFIRE-2 PSI-99 (10.60555/2chp-m469), SAFFIRE-3 PSI-100 (10.60555/040q-4h36), SAME-R PSI-101 (10.60555/2np7-jv14), SAME PSI-102 (10.60555/gd4k-8h62), SLICE PSI-106 (10.60555/pm12-rg61), SPICE PSI-107 (10.60555/9kbh-e962). Checksums in `data/raw/psi_manifest.json`.
+- NASA, *A Researcher's Guide to: Combustion Science* (2015), NP-2015-10-034-JSC.
+- NASA Technical Reports Server (NTRS) records and report text: `data/raw/ntrs/` (33 records).
+
+### Other data (kept apart from NASA data, never used to train a model)
+- ZARM drop tower, Bremen: Ries, Krieger, Meyer, Eigenbrod (2026), Zenodo doi:10.5281/zenodo.18479713, CC BY-NC 4.0 (funded by the German Space Agency at DLR).
+- Earth limiting-oxygen reference values: Green & Perry, *Perry's Chemical Engineers' Handbook*, 8th ed. (McGraw-Hill, 2007), §23 (`config/outside_reference.yaml`).
+- Starter rows in `data/seed.json` (from the team's prototype), labelled *placeholder / unverified*.
+
+### Code and libraries
+- Python: FastAPI, Uvicorn, Pydantic, pandas, PyArrow, NumPy, SciPy, scikit-learn, DuckDB, PyYAML, rank-bm25, PyMuPDF, openpyxl, httpx, Anthropic Python SDK, pytest.
+- Web: React 18, Vite, TypeScript, Vitest, Playwright. Fonts: Barlow Condensed, IBM Plex Sans, IBM Plex Mono (Google Fonts).
+- Hosting: Docker, Modal.
+- Methods cited in `docs/methods/`: grouped cross-validation, Brier score and calibration practice from clinical prediction research (van den Goorbergh et al. 2022; Riley et al. 2019), OECD QSAR applicability-domain principle.
