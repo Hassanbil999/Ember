@@ -54,7 +54,7 @@ function Slider({ label, value, text, min, max, step, tested, onChange, id }: {
       {/* where real tests exist on this axis: the slider says how far from data you are */}
       <div className="relative -mt-1 h-4" aria-hidden>
         <div className="absolute inset-x-0 top-1 h-px" style={{ background: "var(--line)" }} />
-        {tested && <div className="absolute top-0.5 h-[3px] rounded" style={{ left: pos(tested[0]), right: `calc(100% - ${pos(tested[1])})`, background: "var(--text-3)" }} />}
+        {tested && <div className="absolute top-0 h-[5px] rounded" title="Range covered by real tests" style={{ left: pos(tested[0]), right: `calc(100% - ${pos(tested[1])})`, background: "var(--text-2)" }} />}
       </div>
     </div>
   );
@@ -130,7 +130,7 @@ function Inner() {
     }
     // heat drives the drawing only: the droplet's predicted burning rate, or for a gas flame its fuel supply
     const heat = grid.rate_label ? Math.min(1, rate / (maxRate * 0.7)) : Math.min(1, (third - th.min) / (th.max - th.min) + 0.15);
-    return { p, rate, status, conf, best, away, partial, heat };
+    return { p, rate, status, conf, best, away, partial, heat, offRange };
   }, [grid, o2, pk, third, gravity, th, maxRate]);
 
   // breathing: the oxygen that reaches the lungs at this pressure and oxygen level (limits from NASA OCHMO-TB-003)
@@ -171,6 +171,26 @@ function Inner() {
   const tone = !out || out.status === "outside" ? "var(--nodata)" : burns ? "var(--flame)" : "var(--ext)";
   const set = <T,>(fn: (v: T) => void) => (v: T) => { stopReplay.current(); setPreset(null); fn(v); };
   const live = out && out.status !== "outside" ? Math.min(1, Math.max(0, (out.p - 0.2) / 0.45)) : 0;
+
+  // "No data here" must say where the data is, and offer the way back to it
+  const AXIS: Record<string, { name: string; num: (v: number) => string; unit: string; get: number; put: (v: number) => void }> = {
+    o2_frac: { name: "oxygen", num: (v) => (v * 100).toFixed(0), unit: "%", get: o2, put: setO2 },
+    pressure_kpa: { name: "pressure", num: (v) => (v / PSI).toFixed(1), unit: " psi", get: pk, put: setPk },
+    [th.var]: { name: th.label.toLowerCase(), num: (v) => v.toFixed(th.digits), unit: ` ${th.unit}`, get: third, put: setThird },
+  };
+  const fmtAxis = (k: string, v: number) => AXIS[k].num(v) + AXIS[k].unit;
+  const span = (k: string) => grid?.tested[k] ? `${AXIS[k].num(grid.tested[k][0])}–${fmtAxis(k, grid.tested[k][1])}` : "";
+  const tested = grid ? Object.keys(AXIS).filter((k) => grid.tested[k]).map((k) => `${span(k)} ${AXIS[k].name}`) : [];
+  const testedText = tested.length > 1 ? `${tested.slice(0, -1).join(", ")} and ${tested.at(-1)}` : tested[0] ?? "";
+  const off = out?.status === "outside" ? out.offRange : [];
+  const backToData = () => {
+    stopReplay.current(); setPreset(null);
+    if (off.length) {
+      off.forEach((k) => { const [lo, hi] = grid!.tested[k]; AXIS[k].put(Math.min(hi, Math.max(lo, AXIS[k].get))); });
+    } else if (out?.best) {
+      setO2(out.best.o2_frac); setPk(out.best.pressure_kpa); setThird(out.best[th.var]);
+    }
+  };
   useFlameSound(sound, { life: rp ? (rp.done ? 0 : 1) : live, heat: out?.heat ?? 0, flow: 0, strain });
 
   return (
@@ -205,6 +225,19 @@ function Inner() {
                 {out.status === "outside" ? "No data here" : burns ? "Keeps burning" : "Goes out"}
               </p>
               {out.status !== "outside" && <p className="mt-2 text-base text-ink-2"><span className="mono text-ink">{Math.round(out.p * 100)}%</span> chance of sustained burning</p>}
+              {out.status === "outside" && (
+                <div className="mt-3 max-w-[46ch] text-base text-ink-2" data-no-data-why>
+                  <p>Real {(grid?.source ?? "").replace(/^real /, "")} tests ran at {testedText}.</p>
+                  <p className="mt-1 text-ink">
+                    {off.length
+                      ? <>You are at {off.map((k) => `${fmtAxis(k, AXIS[k].get)} ${AXIS[k].name}`).join(" and ")}, outside that range. Nothing is predicted here rather than guessed.</>
+                      : <>Each setting is inside that range, but no real test combined them like this, so nothing is predicted.</>}
+                  </p>
+                  <button className="btn pointer-events-auto mt-3 h-9" data-back-to-data onClick={backToData}>
+                    {off.length ? `Bring ${off.map((k) => AXIS[k].name).join(" and ")} back to the tested range` : "Go to the nearest real test"}
+                  </button>
+                </div>
+              )}
             </div>
           )}
           <p className="pointer-events-none absolute bottom-4 left-6 right-6 flex flex-wrap items-end justify-between gap-2 text-sm text-ink-3">
