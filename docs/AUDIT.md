@@ -11,6 +11,9 @@ How it was checked: the existing pipeline was run **in a scratch copy** of the r
 
 ## 0. Summary
 
+> **Update 2026-11-14 (merge of `real-psi-data`):** three more PSI tables were added after this audit: SLICE (PSI-106), ACME CLD Flame (PSI-21) and ACME s-Flame (PSI-23). The pipeline now reads **19 tables, 1,903 rows, of which 1,848 are usable** (the same 55 excluded). In the §5 model that is 1,848 real test points: 1,738 verified, 110 unverified (the 87 below plus the 23 s-Flame tests, whose oxygen levels are derived from "~21" / "~30"). The counts in the tables below are the audit's original snapshot.
+
+
 - **Stack:** Python 3 + FastAPI + pandas, with storage in Parquet + one DuckDB file (no database server). The frontend is Next.js 15 + React 19 + Tailwind. Tasks run through `run.py` (and a `Makefile` that calls it). Docker Compose files exist but the team never ran them.
 - **Real data:** 16 NASA PSI experimental tables (CSV) fetched with checksums, plus NASA's *Researcher's Guide to Combustion Science* (PDF). The pipeline produces **1,836 tests, of which 1,781 are usable** (55 excluded with logged reasons), 17 investigations, 3 documents and 170 text chunks.
 - **Does it run today?** The backend and tests do. A clean checkout does not.

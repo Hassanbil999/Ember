@@ -26,7 +26,8 @@ def _real(problem: str):
         r = t[(t.dataset == "cfig_normal") & t.burned.notna() & t.o2_frac.notna() & t.fuel_flow_mg_s.notna()].iloc[0]
         return r, {"problem": "gas", "fuel": r.fuel, "o2_pct": r.o2_frac * 100, "psi": r.pressure_kpa / PSI, "fuel_flow": r.fuel_flow_mg_s}
     r = t[(t.dataset == "flex") & t.burned.notna() & t.d0_mm.notna() & (t.diluent == "N2")].iloc[0]
-    return r, {"problem": "droplet", "fuel": r.fuel, "o2_pct": r.o2_frac * 100, "psi": r.pressure_kpa / PSI, "d0_mm": r.d0_mm, "diluent": "N2"}
+    return r, {"problem": "droplet", "fuel": r.fuel, "o2_pct": r.o2_frac * 100, "psi": r.pressure_kpa / PSI, "d0_mm": r.d0_mm,
+               "co2_pct": (r.co2_frac or 0) * 100, "he_pct": (r.he_frac or 0) * 100}
 
 
 def test_fuel_labels_parse_into_what_the_fuel_is():
@@ -69,7 +70,7 @@ def test_models_are_used_only_if_they_beat_the_baseline_on_unseen_campaigns():
 
 
 def test_estimate_between_tests_has_a_range_and_drivers():
-    res = service.check({"problem": "droplet", "fuel": "n-heptane", "o2_pct": 19, "psi": 14.7, "d0_mm": 3, "diluent": "N2"})
+    res = service.check({"problem": "droplet", "fuel": "n-heptane", "o2_pct": 19, "psi": 14.7, "d0_mm": 3})
     assert res["zone"] in ("estimated", "tested")
     e = res["estimate"]
     assert 0 <= e["low"] <= e["high"] <= 1 and 0 <= e["probability"] <= 1
@@ -109,10 +110,10 @@ def test_report_escapes_what_it_prints():
 
 @pytest.mark.parametrize("req", [
     {"problem": "gas", "fuel": "30% butane", "o2_pct": 38, "psi": 14.5, "fuel_flow": 1},
-    {"problem": "droplet", "fuel": "n-heptane", "o2_pct": 13, "psi": 10.5, "d0_mm": 4, "diluent": "N2"},
+    {"problem": "droplet", "fuel": "n-heptane", "o2_pct": 13, "psi": 10.5, "d0_mm": 4},
 ])
 def test_the_estimate_is_inside_the_range_shown_with_it(req):
-    """These inputs once gave a full-data estimate just outside the fold-model spread (e.g. 26 %, range 27–31 %)."""
+    """These inputs once gave a full-data estimate just outside the range shown with it (e.g. 26 %, range 27–31 %)."""
     e = service.check(req)["estimate"]
     assert e and e["low"] <= e["probability"] <= e["high"]
 
@@ -140,3 +141,90 @@ def test_model_cards_carry_the_roc_curve_behind_each_auc():
             assert all(a[0] <= b[0] and a[1] <= b[1] for a, b in zip(roc, roc[1:]))
             area = sum((b[0] - a[0]) * (a[1] + b[1]) / 2 for a, b in zip(roc, roc[1:]))
             assert abs(area - r["auc"]) < 0.01, (key, r["model"], area, r["auc"])
+
+
+def test_a_real_co2_mix_is_answered_not_always_untested():
+    """NASA mixed 45–70 % CO₂ with nitrogen; the old input set CO₂ to everything but oxygen and was always untested."""
+    from backend.core.store import get_store
+    t = get_store().usable_tests("flex")
+    r = t[(t.diluent == "CO2") & t.burned.notna() & t.d0_mm.notna()].iloc[0]
+    res = service.check({"problem": "droplet", "fuel": r.fuel, "o2_pct": r.o2_frac * 100, "psi": r.pressure_kpa / PSI,
+                         "d0_mm": r.d0_mm, "co2_pct": r.co2_frac * 100, "he_pct": 0})
+    assert res["zone"] == "tested" and res["nearest"][0]["code"] == r.test_id
+    with pytest.raises(ValueError):
+        service.check({"problem": "droplet", "fuel": "n-heptane", "o2_pct": 40, "psi": 14.7, "d0_mm": 3, "co2_pct": 70})
+
+
+def test_hints_are_per_fuel_and_airflow_is_explained():
+    m = service.meta()
+    assert m["gas"]["ranges_by_fuel"]["propane"]["psi"][0] > 13          # pure propane: tested near 1 atm only
+    assert m["gas"]["ranges"]["psi"][0] < 8                               # all fuels together reach lower pressure
+    assert "Airflow" in m["gas"]["not_in_data"] and "still air" in m["droplet"]["not_in_data"]
+
+
+def test_untested_offers_the_nearest_tested_conditions():
+    res = service.check({"problem": "gas", "fuel": "propane", "o2_pct": 34, "psi": 8.2, "fuel_flow": 1})
+    assert res["zone"] == "untested" and res["suggestion"]
+    s = res["suggestion"]
+    again = service.check({"problem": "gas", "fuel": s["fuel"], "o2_pct": s["o2_pct"], "psi": s["psi"], "fuel_flow": s["fuel_flow"]})
+    assert again["zone"] == "tested"
+    assert service.check({"problem": "gas", "fuel": "propane", "o2_pct": 34, "psi": 14.7, "fuel_flow": 1, "gravity_g": 0.166})["suggestion"] is None
+
+
+def test_burn_time_and_calibration_are_reported():
+    res = service.check({"problem": "droplet", "fuel": "n-heptane", "o2_pct": 19, "psi": 14.7, "d0_mm": 3})
+    assert any(q["label"] == "Burn time" and q["unit"] == "s" and q["low"] <= q["value"] <= q["high"] for q in res["quantities"])
+    m = res["model"]
+    assert 0 < m["skill"] < 1 and len(m["calibration"]) == 5 and "bootstrap" in m["range_method"]
+
+
+def test_validation_errors_are_readable(client):
+    r = client.post("/api/fire-check", json={"problem": "gas", "fuel": "propane", "o2_pct": 21, "psi": 0, "fuel_flow": 1})
+    assert r.status_code == 422 and isinstance(r.json()["detail"], list)      # the web client turns this list into text
+
+
+# ------------------------------------------------------------------ oxygen line and next tests
+MOON_PROPANE = {"problem": "gas", "fuel": "propane", "o2_pct": 34, "psi": 8.2, "fuel_flow": 1.0}
+ISS_METHANOL = {"problem": "droplet", "fuel": "methanol", "o2_pct": 21, "psi": 14.7, "d0_mm": 3}
+
+
+def test_oxygen_line_shows_a_chance_only_where_a_single_check_would():
+    res = service.check(ISS_METHANOL)
+    ol = res["oxygen_line"]
+    for p in ol["points"][::7]:
+        single = service.check({**ISS_METHANOL, "o2_pct": p["o2_pct"]})
+        assert p["zone"] == single["zone"]
+        assert (p["p"] is None) == (single["zone"] == "untested")
+        if p["p"] is not None:
+            assert 0 <= p["low"] <= p["high"] <= 1, "the fold range is a real range"
+
+
+def test_oxygen_line_crossing_sits_inside_the_estimated_stretch():
+    L = service.check(ISS_METHANOL)["oxygen_line"]
+    spans = L["estimated_spans"]
+    assert L["line"]["o2_pct"] is not None
+    assert any(a <= L["line"]["o2_pct"] <= b for a, b in spans)
+    assert all(t["burned"] in (0, 1) for t in L["tests"]) and any(t["near_settings"] for t in L["tests"])
+
+
+def test_untested_request_still_gets_next_tests_inside_the_hardware_range():
+    res = service.check(MOON_PROPANE)
+    assert res["zone"] == "untested" and res["estimate"] is None
+    assert res["oxygen_line"]["line"] is None, "no line where nothing is estimated"
+    nt = res["next_tests"]
+    assert 1 <= len(nt) <= 3
+    b = service._bundle("gas")
+    feats = b["features"]
+    for n in nt:
+        for k, v in n["inputs"].items():
+            col = b["X"][:, feats.index(k)]
+            assert col.min() - 1e-6 <= v <= col.max() + 1e-6, f"{k} outside what the hardware has done"
+        assert n["committee_low"] <= n["committee_high"] and n["nearest_distance"] > 0
+    keys = list(nt[0]["inputs"])
+    assert len({tuple(n["inputs"][k] for k in keys) for n in nt}) == len(nt), "three different experiments"
+
+
+def test_report_has_the_line_and_the_next_tests(client):
+    body = client.post("/api/fire-check/report", json=ISS_METHANOL).text
+    assert "Where is the line?" in body and "<svg" in body and "50 % at" in body
+    assert "Tests that would teach the model most" in body and "Query by committee" in body

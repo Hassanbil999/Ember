@@ -6,7 +6,8 @@ from types import SimpleNamespace
 import pytest
 from fastapi.testclient import TestClient
 
-from backend.ai import ask as ask_mod, cache, llm
+from backend.ai import ask as ask_mod
+from backend.ai import cache, llm
 from backend.ai.cite import Source, check
 
 

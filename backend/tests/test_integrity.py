@@ -7,7 +7,8 @@ from fastapi.testclient import TestClient
 
 from backend.core.store import get_store
 from backend.core.units import is_flagged, normalize
-from backend.record import gravity_label, test_record as build_record
+from backend.record import gravity_label
+from backend.record import test_record as build_record
 
 
 @pytest.fixture(scope="module")

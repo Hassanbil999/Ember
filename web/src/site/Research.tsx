@@ -18,7 +18,7 @@ function useMoonAir(d: SiteData | null) {
       ...d.meta.gas.fuels.map(fuel => ({ kind: 'Gas jet, 0.5 mg/s', req: { problem: 'gas' as const, fuel, fuel_flow: 0.5, d0_mm: 3 } })),
       ...d.meta.droplet.fuels.map(fuel => ({ kind: 'Drop, 3 mm, nitrogen', req: { problem: 'droplet' as const, fuel, fuel_flow: 1, d0_mm: 3 } })),
     ];
-    Promise.all(reqs.map(r => api.fireCheck({ ...r.req, o2_pct: 34, psi: 8.2, gravity_g: 0, diluent: 'N2' }).catch(() => null)))
+    Promise.all(reqs.map(r => api.fireCheck({ ...r.req, o2_pct: 34, psi: 8.2, gravity_g: 0, co2_pct: 0, he_pct: 0 }).catch(() => null)))
       .then(out => setRows(reqs.map((r, i) => ({ fuel: r.req.fuel, kind: r.kind, res: out[i] }))));
   }, [d]);
   return rows;
@@ -90,7 +90,7 @@ export function Research() {
               </tbody>
             </table></div>
           )}
-          <p><b>Uncertainty.</b> A chance estimate is shown with the lowest and highest answer of five models, each trained without one group of campaigns. Measured quantities carry a 90 % range from the errors on unseen campaigns. Both are honest about campaign-to-campaign variation but are not a full uncertainty analysis: the 90 % coverage is computed on the same errors that set the range, and the model choice and its reported score come from the same cross-validation, so scores may be slightly optimistic. Charts: <Link className="link" to="/engine/stats">Statistics</Link>.</p>
+          <p><b>Uncertainty.</b> A chance estimate is shown with the 10th–90th percentile of 15 models, each refitted on NASA campaigns drawn with replacement. Measured quantities, including burn time, carry a 90 % range from the errors on unseen campaigns. Both are honest about campaign-to-campaign variation but are not a full uncertainty analysis: the 90 % coverage is computed on the same errors that set the range, and the model choice and its reported score come from the same cross-validation, so scores may be slightly optimistic. Charts: <Link className="link" to="/engine/stats">Statistics</Link>.</p>
         </section>
 
         <section><h2>5. Results</h2>

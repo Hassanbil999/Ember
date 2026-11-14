@@ -68,7 +68,10 @@ export class StageEngine {
     this.sx = sC.getContext('2d')!;
     this.initGL();
     this.resize();
-    for (let i = 0; i < 90; i++) this.frame(1 / 60);
+    // Pre-fill the airflow trails (90 frames) without drawing the flame each time; then one full frame.
+    const G = this.flameGeom();
+    for (let i = 0; i < 90; i++) { this.stepParticles(1 / 60, G); this.drawTrails(); }
+    this.frame(0);
   }
 
   get hasWebGL() { return !!this.gl; }

@@ -243,3 +243,29 @@ dialog.fc{width:min(860px,96vw)}
 .pill.zone-untested{background:transparent;color:var(--muted);border:1px dashed #4a5672}
 tr.flash td{animation:flash 1.6s ease}
 @media (prefers-reduced-motion:reduce){ tr.flash td{animation:none} }
+.fc-err{font-size:12px;color:#f3b07a;margin-top:2px}
+.fc-num input[aria-invalid="true"]{border-color:#b8742f}
+.fc-stale{margin:0;font-size:12.5px;color:#f3b07a}
+.fc-res.stale{opacity:.55}
+.fc-stats{flex-wrap:wrap;gap:16px 28px}
+.sim-zone{margin:0;font-size:12.5px;color:var(--muted)}
+.sim-zone.untested{color:#cfd5e2}
+.sim-zone .badge{margin-left:0}
+.badge.solid{border-style:solid}
+.outside{font-size:12.5px;color:var(--muted);border-left:2px dashed #4a5672;padding-left:10px}
+.outside b{color:var(--ink);font-weight:500}
+/* Fire check: oxygen line and next tests */
+.ol{margin:0;display:flex;flex-direction:column;gap:6px}
+.ol svg{width:100%;height:auto;display:block;touch-action:none}
+.ol-ax{font:11px var(--font-mono);fill:var(--muted)}
+.ol-lab{font:500 11.5px var(--font-body);fill:var(--ink)}
+.ol-legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted)}
+.ol-legend span{display:inline-flex;align-items:center;gap:6px}
+.ol-legend .sw{display:inline-block;width:12px;height:12px;border-radius:50%}
+.ol-legend .sw.line{width:16px;height:2px;border-radius:1px;background:var(--ink)}
+.ol-legend .sw.dot.b{background:var(--burn)}.ol-legend .sw.dot.o{background:var(--cool)}
+.ol-legend .sw.hollow{border:1.5px solid var(--muted)}
+.ol-legend .sw.hatch{border-radius:2px;background:repeating-linear-gradient(45deg,var(--line) 0 2px,transparent 2px 5px);border:1px solid var(--line)}
+.ol-tip{min-height:1.4em}
+.ol-warn{margin:0;color:var(--focus)}
+.fc-next{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:13px}

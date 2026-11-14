@@ -108,6 +108,8 @@ test('fire check: no number outside NASA tests, an estimate between them, a repo
   await expect(fc.locator('#fcZone')).toHaveText('Untested');
   await expect(fc.locator('#fcProb')).toHaveCount(0);
   await expect(fc.locator('#fcNear tbody tr').first()).toBeVisible();
+  await fc.locator('#fcSuggest').click();                                       // one click to the nearest NASA test
+  await expect(fc.locator('#fcZone')).toHaveText('Tested');
 
   // a heptane drop between tests: an estimate with its range
   await fc.locator('#fcDrop').click();
@@ -118,6 +120,18 @@ test('fire check: no number outside NASA tests, an estimate between them, a repo
   await expect(fc.locator('#fcProb')).toContainText('%');
   await expect(fc.locator('.fc-say .range')).toContainText('Range');
   await expect(page).toHaveURL(/problem=droplet.*o2=19/);                      // the check can be shared as a link
+
+  // drops take CO₂ and helium as NASA mixed them (nitrogen is the rest); more than 100 % in total is refused
+  await setRange(fc.locator('#fcCo2'), 30);
+  await expect(fc.locator('#fcZone')).toBeVisible();
+  await setRange(fc.locator('#fcHe'), 50);
+  await setRange(fc.locator('#fcCo2'), 60);
+  await expect(fc.locator('#fcErr')).toContainText('more than 100 %');
+  await setRange(fc.locator('#fcHe'), 0);
+  await setRange(fc.locator('#fcCo2'), 0);
+  await expect(fc.locator('#fcZone')).toHaveText(/Estimated|Tested/);
+  await expect(fc.locator('.ol svg')).toBeVisible();                            // where is the line?
+  await expect(fc.locator('#fcNext li').first()).toBeVisible();                 // which test next?
 
   // Moon gravity is chosen on the page and never gets a number
   await fc.locator('#fcGMoon').click();
@@ -184,4 +198,16 @@ test('site: landing → simulation, statistics, research and presentation, deep 
   await expect(page).toHaveURL(/\/presentation\/4$/);
   await expect(page.locator('.slide.on')).toContainText('NASA tests loaded');
   expect(errors, errors.join('\n')).toEqual([]);
+});
+
+test('simulator: outside tested conditions it shows a trend, not numbers; acrylic shows the outside-NASA spread data', async ({ page }) => {
+  await page.goto('/?g=0.166&o2=34&p=8.2&u=10&mat=fabric#simulate');
+  await expect(page.locator('#simZone')).toContainText('Untested here');
+  await expect(page.locator('#sSpread')).toHaveText('—');
+  await expect(page.locator('#verdictText')).not.toContainText('×');
+  await page.goto('/?g=0&o2=21&p=14.7&u=10&mat=pmma#simulate');
+  await expect(page.locator('#simZone')).toContainText('Illustrative');
+  await expect(page.locator('#sSpread')).toContainText('≈');
+  await expect(page.locator('#zarm')).toContainText('outside NASA');
+  await expect(page.locator('#zarm')).toContainText('doi:10.5281/zenodo.18479713');
 });

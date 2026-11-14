@@ -11,6 +11,7 @@ import yaml
 
 from ..core.config import CONFIG, PROCESSED
 from ..core.store import get_store
+from . import explore
 from .domain import Domain
 from .problems import DATASETS, PROBLEMS, PSI, features_from, gas_fuel_parts
 from .train import OUT
@@ -62,6 +63,17 @@ def available() -> bool:
     return all((OUT / f"{k}.joblib").exists() for k in PROBLEMS)
 
 
+NOT_IN_DATA = {
+    "gas": "Airflow is not an input: CFI-G records no surrounding airflow, only the fuel jet.",
+    "droplet": "Airflow is not an input: every FLEX drop here burned in still air (no imposed flow).",
+}
+
+
+def _ranges(df: pd.DataFrame, features: list[str]) -> dict:
+    return {f: [round(float(df[f].min()), 3), round(float(df[f].max()), 3)]
+            for f in features if f not in ("carbon_n", "heptane", "fuel_share")}
+
+
 @lru_cache(maxsize=1)          # the same answer until the models are retrained (clear() resets it)
 def meta() -> dict:
     out = {}
@@ -69,17 +81,14 @@ def meta() -> dict:
         b = _bundle(key)
         df = pb.frame()
         fuels = sorted(df.fuel.unique().tolist())
-        cont = [f for f in pb.features if f not in ("carbon_n", "heptane", "fuel_share")]
-        span = lambda d, f: [round(float(d[f].min()), 3), round(float(d[f].max()), 3)]  # noqa: E731
-        ranges = {f: span(df, f) for f in cont}
-        # The domain check compares a request with tests of the SAME fuel, so the hints must too.
-        by_fuel = {fu: {f: span(g, f) for f in cont} for fu, g in df.groupby("fuel")}
-        points = [{"id": r.test_id, "fuel": r.fuel, "o2_pct": round(float(r.o2_pct), 2), "psi": round(float(r.psi), 2),
-                   "burned": int(getattr(r, pb.target))} for r in df.itertuples()]
-        features = [{"key": f, "label": pb.feature_labels[f], "unit": pb.units[f]} for f in pb.features]
-        out[key] = {"label": pb.label, "question": pb.question, "fuels": fuels, "ranges": ranges, "ranges_by_fuel": by_fuel,
-                    "points": points, "features": features, "investigation": pb.investigation, "psi_id": pb.psi_id, "dataset": DATASETS[key],
-                    "outcome_yes": pb.outcome_yes, "outcome_no": pb.outcome_no, "card": b["card"]}
+        out[key] = {"label": pb.label, "question": pb.question, "fuels": fuels, "ranges": _ranges(df, pb.features),
+                    "ranges_by_fuel": {f: _ranges(df[df.fuel == f], pb.features) for f in fuels},
+                    # for the Statistics coverage chart and the page labels
+                    "points": [{"id": r.test_id, "fuel": r.fuel, "o2_pct": round(float(r.o2_pct), 2), "psi": round(float(r.psi), 2),
+                                "burned": int(getattr(r, pb.target))} for r in df.itertuples()],
+                    "features": [{"key": f, "label": pb.feature_labels[f], "unit": pb.units[f]} for f in pb.features],
+                    "investigation": pb.investigation, "psi_id": pb.psi_id, "dataset": DATASETS[key],
+                    "not_in_data": NOT_IN_DATA[key], "outcome_yes": pb.outcome_yes, "outcome_no": pb.outcome_no, "card": b["card"]}
     return out
 
 
@@ -158,20 +167,30 @@ def check(req: dict) -> dict:
            "model": {"chosen": card["chosen"], "n_tests": card["n_tests"], "n_campaigns": card["n_campaigns"],
                      "validation": card["validation"], "comparison": card["comparison"],
                      "auc": best and best["auc"], "brier": best and best["brier"],
-                     "baseline_brier": card["comparison"][0]["brier"], "investigation": pb.investigation, "psi_id": pb.psi_id}}
+                     "baseline_brier": card["comparison"][0]["brier"], "investigation": pb.investigation, "psi_id": pb.psi_id,
+                     "skill": card.get("skill_vs_baseline"), "calibration": card.get("calibration", []), "range_method": card.get("range_method"),
+                     },
+           "not_in_data": NOT_IN_DATA[key], "suggestion": None}
+    # where is the line, and which test would teach the models most (computed in every zone: an untested
+    # request is exactly where a next test matters). Model chances on the line appear only where allowed.
+    res["oxygen_line"], res["next_tests"] = None, []
+    if card["chosen"] and b.get("boot_models"):
+        res["oxygen_line"] = explore.oxygen_line(pb, b, dom, x, g)
+        res["next_tests"] = explore.next_tests(pb, b, dom, x)
     close = [r for r in res["nearest"] if r["close"]] if a["zone"] != "untested" else []
     if close:
         k = sum(r["burned"] for r in close)
         res["tested"] = {"n": len(close), "yes": k, "outcome_yes": pb.outcome_yes, "outcome_no": pb.outcome_no}
+    if a["zone"] == "untested" and a["idx"] and g <= 0.02:
+        res["suggestion"] = _suggest(pb, b, a["idx"][0])
     if a["zone"] == "untested" or not card["chosen"]:
         if not card["chosen"]:
             res["reasons"].append("No model beat the 'always the average' baseline on unseen campaigns, so none is used.")
         return res
-    folds = _prob(b["fold_models"], x[None])
+    boots = _prob(b["boot_models"], x[None])
     drivers, p = _drivers(pb, b, dom, x, a)
-    # The range is the spread of the five fold models; it is widened to include the full-data model's own
-    # estimate, so the number shown never sits outside the range shown with it (README Decision AH).
-    res["estimate"] = {"probability": round(p, 3), "low": round(float(min(folds.min(), p)), 3), "high": round(float(max(folds.max(), p)), 3),
+    lo, hi = np.percentile(boots, [10, 90])
+    res["estimate"] = {"probability": round(p, 3), "low": round(float(min(lo, p)), 3), "high": round(float(max(hi, p)), 3),
                        "outcome_yes": pb.outcome_yes, "outcome_no": pb.outcome_no, "will": pb.will, "model": card["chosen"]}
     res["drivers"] = drivers
     if res["tested"]:
@@ -181,8 +200,8 @@ def check(req: dict) -> dict:
         rc = card["regressions"][target]
         if not rb.get("chosen"):
             continue
-        if target == "extinction_d_mm" and p >= 0.5:
-            continue
+        if (pb.regressions[target].get("only_when") or {}).get("burned") == 0 and p >= 0.5:
+            continue          # a quantity measured only when the flame goes out is not shown when it most likely stays lit
         v = float(rb["model"].predict(x[None])[0])
         q = rb["q90"]
         res["quantities"].append({"label": rc["label"], "unit": rc["unit"], "meaning": rc["meaning"], "value": round(v, 3),
@@ -199,9 +218,24 @@ def _echo(pb, req: dict, x: np.ndarray) -> list[dict]:
         rows.append({"label": "Fuel flow (leak size)", "value": f"{req['fuel_flow']:g} mg/s"})
     else:
         rows.append({"label": "Drop size", "value": f"{req['d0_mm']:g} mm"})
-        rows.append({"label": "Rest of the air", "value": {"N2": "nitrogen", "CO2": "carbon dioxide", "He": "helium"}.get(req.get("diluent", "N2"), "nitrogen")})
+        co2, he = float(req.get("co2_pct") or 0), float(req.get("he_pct") or 0)
+        n2 = max(0.0, 100 - float(req["o2_pct"]) - co2 - he)
+        rows.append({"label": "Rest of the air", "value": f"{n2:g} % nitrogen" + (f", {co2:g} % CO₂" if co2 else "") + (f", {he:g} % helium" if he else "")})
     rows.append({"label": "Gravity", "value": "microgravity" if float(req.get("gravity_g", 0)) <= 0.02 else f"{float(req['gravity_g']):.3g} g"})
     return rows
+
+
+def _suggest(pb, b, i: int) -> dict:
+    """The conditions of the nearest real test of the same fuel, as inputs the engineer can load."""
+    r = _test_row(b["ids"][i])
+    sug = {"code": b["ids"][i], "fuel": r["fuel"], "o2_pct": round(float(r["o2_frac"]) * 100, 2), "psi": round(float(r["pressure_kpa"]) / PSI, 2)}
+    if pb.key == "gas":
+        sug["fuel_flow"] = round(float(r["fuel_flow_mg_s"]), 3)
+    else:
+        sug["d0_mm"] = round(float(r["d0_mm"]), 2)
+        sug["co2_pct"] = round(float(r["co2_frac"] or 0) * 100, 1) if pd.notna(r["co2_frac"]) else 0.0
+        sug["he_pct"] = round(float(r["he_frac"] or 0) * 100, 1) if pd.notna(r["he_frac"]) else 0.0
+    return sug
 
 
 def _reference(key: str, req: dict) -> dict | None:

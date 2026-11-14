@@ -21,7 +21,7 @@ def _float(request: Request, name: str, default: float) -> float:
     try:
         return float(v) if v not in (None, "") else default
     except ValueError:
-        raise HTTPException(422, f"{name} must be a number")
+        raise HTTPException(422, f"{name} must be a number") from None
 
 
 def filters_from(request: Request) -> dict:

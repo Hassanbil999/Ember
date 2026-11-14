@@ -1,5 +1,6 @@
 /* Simulate view (prototype "SIMULATE"): full-bleed stage, Experiment panel, Result panel, timeline. */
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { api, type Zarm } from '../api';
 import { FlammabilityMap } from '../components/FlammabilityMap';
 import { Timeline } from '../components/Timeline';
 import { coverage, nearest } from '../sim/evidence';
@@ -121,15 +122,19 @@ function Controls({ open, onClose }: { open: boolean; onClose: () => void }) {
 function Result({ open, onClose }: { open: boolean; onClose: () => void }) {
   const s = useSim();
   const st = s.params, r = s.series.r;
+  const cov = coverage(st, s.points);
+  const untested = cov.kind !== 'inside';
   let txt: string;
   if (r.burns) {
     const iss = model({ g: 0, o2: 21, p: 14.7, u: 10, mat: st.mat }, s.modelParams);
     const k = r.spread / iss.spread;
-    txt = k >= 1.05 ? k.toFixed(1) + '× faster than in ISS cabin air.' : k <= 0.95 ? (1 / k).toFixed(1) + '× slower than in ISS cabin air.' : 'About as fast as in ISS cabin air.';
+    // outside tested conditions the model gives a direction, not a number (same rule as the fire check)
+    txt = untested
+      ? (k >= 1.05 ? 'Faster than in ISS cabin air.' : k <= 0.95 ? 'Slower than in ISS cabin air.' : 'About as fast as in ISS cabin air.')
+      : k >= 1.05 ? k.toFixed(1) + '× faster than in ISS cabin air.' : k <= 0.95 ? (1 / k).toFixed(1) + '× slower than in ISS cabin air.' : 'About as fast as in ISS cabin air.';
     if (st.u === 0 && st.g > 0.02 && st.g < 0.95) txt += ' The fan is off, but gravity still feeds it about ' + r.ub.toFixed(0) + ' cm/s of flow.';
-  } else txt = (r.regime === 'quench' ? 'Starved of oxygen. ' : 'Blown off by the airflow. ') + 'Needs about ' + r.xlim.toFixed(1) + '% O₂ here.';
+  } else txt = (r.regime === 'quench' ? 'Starved of oxygen. ' : 'Blown off by the airflow. ') + (untested ? 'It would need more oxygen here.' : 'Needs about ' + r.xlim.toFixed(1) + '% O₂ here.');
 
-  const cov = coverage(st, s.points);
   const near = nearest(st, s.points);
   return (
     <aside className={'panel right' + (open ? '' : ' off')} id="panelR" aria-label="Result" data-server={s.server} {...(open ? {} : { inert: '' })}>
@@ -138,9 +143,13 @@ function Result({ open, onClose }: { open: boolean; onClose: () => void }) {
         <span className={'pill ' + (r.burns ? 'burns' : 'out')} id="pill">{r.burns ? <>{ICON_FLAME}Burns</> : <>{ICON_OUT}Goes out</>}</span>
         <p id="verdictText">{txt}</p>
       </div>
+      <p className={'sim-zone' + (untested ? ' untested' : '')} id="simZone">
+        <span className={'badge' + (untested ? '' : ' solid')}>{untested ? 'Untested here' : 'Illustrative'}</span>
+        {untested ? ' Trend only: no NASA solid-fuel test here.' : ' Approximate: a simple model, not yet fitted to NASA tests.'}
+      </p>
       <div className="stats">
-        <div><b id="sSpread">{r.burns ? r.spread.toFixed(1) : '0'}</b><span>spread, mm/s</span></div>
-        <div><b id="sMargin">{(r.margin >= 0 ? '+' : '') + r.margin.toFixed(1)}</b><span>O₂ above limit, pts</span></div>
+        <div><b id="sSpread">{untested ? '—' : r.burns ? '≈ ' + r.spread.toFixed(1) : '0'}</b><span>spread, mm/s</span></div>
+        <div><b id="sMargin">{untested ? '—' : (r.margin >= 0 ? '+' : '') + r.margin.toFixed(1)}</b><span>O₂ above limit, pts</span></div>
       </div>
       <div>
         <FlammabilityMap />
@@ -160,6 +169,7 @@ function Result({ open, onClose }: { open: boolean; onClose: () => void }) {
             {!near.point.verified && <span className="badge" title={near.point.unverified_reason ?? undefined}>{near.point.placeholder ? 'starter row · unverified' : 'unverified'}</span>}
             , {near.point.o2_pct}% O₂, {fmtU(near.point.flow_cm_s)}, {near.point.outcome_text}. <button className="link" data-sim={near.point.code} onClick={() => sim.load(near.point.code)}>Load it</button></p>
         )}
+        {st.mat === 'pmma' && <OutsideZarm o2={st.o2} model={r.burns && !untested ? r.spread : null} />}
       </div>
       <details className="how"><summary>How this is calculated</summary>
         <p>A simple model fitted to two published results: BASS-II limits for acrylic (burns at 17% O₂ in microgravity, not at 18% in normal gravity, no spread below about 0.6 cm/s) and the Saffire-I spread rate of 1.8 mm/s.</p>
@@ -168,6 +178,22 @@ function Result({ open, onClose }: { open: boolean; onClose: () => void }) {
         <p>It shows trends. It is not a design tool.</p>
       </details>
     </aside>
+  );
+}
+
+let zarmCache: Promise<Zarm | null> | null = null;
+
+/* Outside NASA, kept apart: ZARM drop-tower spread rates over thin acrylic, next to the model's number. */
+function OutsideZarm({ o2, model }: { o2: number; model: number | null }) {
+  const [z, setZ] = useState<Zarm | null>(null);
+  useEffect(() => { (zarmCache ??= api.zarm().catch(() => null)).then(setZ); }, []);
+  if (!z || !z.points.length) return null;
+  const p = z.points.reduce((a, b) => (Math.abs(b.o2_frac * 100 - o2) < Math.abs(a.o2_frac * 100 - o2) ? b : a));
+  return (
+    <p id="zarm" className="outside"><span className="badge">outside NASA</span> {z.label}, {z.material}: at {+(p.o2_frac * 100).toFixed(1)}% O₂ and {+(p.pressure_kpa / 6.89476).toFixed(1)} psi,
+      a flame spread at <b>{p.spread_mm_s.toFixed(1)} ± {p.spread_std.toFixed(1)} mm/s</b> (flow {+(p.flow_mm_s / 10).toFixed(0)} cm/s)
+      {model != null ? <>; the model says ≈ {model.toFixed(1)} mm/s here</> : null}.{' '}
+      <a className="link" href={z.url} target="_blank" rel="noopener noreferrer">doi:{z.doi}</a></p>
   );
 }
 

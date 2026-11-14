@@ -9,7 +9,6 @@ from __future__ import annotations
 import csv
 import io
 import json
-import os
 import re
 import time
 from contextlib import asynccontextmanager
@@ -26,11 +25,12 @@ from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Res
 from pydantic import BaseModel
 
 from .. import record
-from .auth import require_admin
 from ..core import config
 from ..core.config import ROOT
 from ..core.store import get_store
 from ..search.index import search
+from .auth import require_admin
+
 
 @asynccontextmanager
 async def lifespan(_app):
@@ -285,12 +285,12 @@ def admin_reload(x_admin_token: str | None = Header(default=None)):
 
 
 # ------------------------------------------------------------------ SPEC §9 routers
+from .routes_admin import router as admin_router  # noqa: E402
 from .routes_ai import router as ai_router  # noqa: E402
 from .routes_catalog import router as catalog_router  # noqa: E402
 from .routes_export import router as export_router  # noqa: E402
-from .routes_admin import router as admin_router  # noqa: E402
-from .routes_sim import router as sim_router  # noqa: E402
 from .routes_predict import router as predict_router
+from .routes_sim import router as sim_router  # noqa: E402
 
 app.include_router(catalog_router)
 app.include_router(ai_router)

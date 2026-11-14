@@ -41,7 +41,7 @@ export function facts(d: SiteData) {
 
 /* The landing page's worked example: Moon-base air in microgravity, a small diluted ethane leak. The answer is
    whatever the engine says today (zone, estimate, the NASA tests behind it); nothing about it is stored here. */
-export const EXAMPLE: FireCheckReq = { problem: 'gas', fuel: '30% ethane', o2_pct: 34, psi: 8.2, fuel_flow: 0.5, d0_mm: 3, diluent: 'N2', gravity_g: 0 };
+export const EXAMPLE: FireCheckReq = { problem: 'gas', fuel: '30% ethane', o2_pct: 34, psi: 8.2, fuel_flow: 0.5, d0_mm: 3, co2_pct: 0, he_pct: 0, gravity_g: 0 };
 export const exampleLink = '/engine/check?problem=gas&fuel=30%25+ethane&o2=34&psi=8.2&flow=0.5&g=0';
 
 let exCache: Promise<FireCheckRes> | null = null;

@@ -6,7 +6,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from ..ai import llm
-from ..ai.ask import ask as ask_atlas, retrieve
+from ..ai.ask import ask as ask_atlas
+from ..ai.ask import retrieve
 from ..ai.summary import summarize
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])

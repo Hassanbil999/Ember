@@ -21,7 +21,8 @@ class CheckReq(BaseModel):
     gravity_g: float = Field(0.0, ge=0, le=1.5)
     fuel_flow: Optional[float] = Field(None, ge=0, le=100, description="gas: fuel flow, mg/s")
     d0_mm: Optional[float] = Field(None, gt=0, le=20, description="droplet: starting drop size, mm")
-    diluent: Literal["N2", "CO2", "He"] = "N2"
+    co2_pct: float = Field(0.0, ge=0, le=100, description="droplet: CO₂ share of the air, %")
+    he_pct: float = Field(0.0, ge=0, le=100, description="droplet: helium share of the air, %")
 
 
 def _run(body: CheckReq) -> dict:

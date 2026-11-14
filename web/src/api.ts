@@ -6,7 +6,7 @@ async function get<T>(path: string): Promise<T> {
   return r.json() as Promise<T>;
 }
 
-const FIELD: Record<string, string> = { o2_pct: 'Oxygen', psi: 'Pressure', fuel_flow: 'Fuel flow', d0_mm: 'Drop size', gravity_g: 'Gravity', fuel: 'Fuel', diluent: 'Rest of the air' };
+const FIELD: Record<string, string> = { o2_pct: 'Oxygen', psi: 'Pressure', fuel_flow: 'Fuel flow', d0_mm: 'Drop size', gravity_g: 'Gravity', fuel: 'Fuel', co2_pct: 'CO₂', he_pct: 'Helium' };
 
 /* FastAPI sends `detail` as a string, or (for validation errors) a list of {loc, msg}: make it one sentence. */
 export function errorText(detail: unknown, fallback: string): string {
@@ -54,7 +54,7 @@ export interface AskResponse {
   citations: { resource_id: string; page: number | null; title: string }[]; passages: AskPassage[];
 }
 
-export interface FireCheckReq { problem: 'gas' | 'droplet'; fuel: string; o2_pct: number; psi: number; gravity_g: number; fuel_flow: number; d0_mm: number; diluent: 'N2' | 'CO2' | 'He' }
+export interface FireCheckReq { problem: 'gas' | 'droplet'; fuel: string; o2_pct: number; psi: number; gravity_g: number; fuel_flow: number; d0_mm: number; co2_pct: number; he_pct: number }
 export interface FireCheckNear { code: string; dataset: string; source_row: number | null; resource_id: string | null; fuel: string; o2_pct: number; psi: number; pressure_kpa: number; outcome: string; burned: number; distance: number; close: boolean; fuel_flow?: number; d0_mm?: number }
 export interface FireCheckRes {
   problem: 'gas' | 'droplet'; label: string; zone: 'tested' | 'estimated' | 'untested'; zone_text: string; reasons: string[]; verdict: string;
@@ -64,7 +64,21 @@ export interface FireCheckRes {
   drivers: { label: string; step: number; unit: string; change_pts: number }[];
   nearest: FireCheckNear[]; tested: { n: number; yes: number; outcome_yes: string; outcome_no: string; agrees?: boolean } | null;
   reference: { meaning: string; source: { label: string; url: string }; note: string; fuel: string; values: { N2: number; CO2: number } | null; missing: string | null } | null;
-  model: { chosen: string | null; n_tests: number; n_campaigns: number; auc: number | null; brier: number | null; baseline_brier: number; investigation: string; psi_id: string };
+  model: { chosen: string | null; n_tests: number; n_campaigns: number; auc: number | null; brier: number | null; baseline_brier: number; investigation: string; psi_id: string; skill: number | null };
+  not_in_data: string;
+  suggestion: { code: string; fuel: string; o2_pct: number; psi: number; fuel_flow?: number; d0_mm?: number; co2_pct?: number; he_pct?: number } | null;
+  oxygen_line: OxygenLine | null;
+  next_tests: NextTest[];
+}
+export interface OxygenLine {
+  points: { o2_pct: number; zone: 'tested' | 'estimated' | 'untested'; p: number | null; low: number | null; high: number | null }[];
+  line: { o2_pct: number | null; range: [number | null, number | null] | null; max_p: number; min_p: number; falls_with_oxygen: { from_o2: number; peak_p: number } | null } | null;
+  tests: { code: string; o2_pct: number; burned: number; near_settings: boolean }[];
+  estimated_spans: [number, number][]; held: string[];
+}
+export interface NextTest {
+  inputs: Record<string, number>; labels: Record<string, string>; units: Record<string, string>;
+  committee_low: number; committee_high: number; nearest_test: string; nearest_burned: number; nearest_distance: number; why: string;
 }
 export interface ModelRow { model: string; auc?: number | null; brier?: number; log_loss?: number; accuracy?: number; mae?: number; beats_baseline?: boolean; roc?: [number, number][] | null }
 export interface ModelCard {
@@ -76,11 +90,15 @@ export interface CheckPoint { id: string; fuel: string; o2_pct: number; psi: num
 export interface ProblemMeta {
   label: string; question: string; fuels: string[]; investigation: string; psi_id: string; dataset: string; outcome_yes: string; outcome_no: string;
   ranges: Record<string, [number, number]>; ranges_by_fuel: Record<string, Record<string, [number, number]>>;
-  points: CheckPoint[]; features: { key: string; label: string; unit: string }[]; card: ModelCard;
+  points: CheckPoint[]; features: { key: string; label: string; unit: string }[]; card: ModelCard; not_in_data: string;
 }
 export type FireCheckMeta = Record<'gas' | 'droplet', ProblemMeta>;
 
+export interface Zarm { label: string; material: string; doi: string; url: string; citation: string; license: string; limits: string[];
+  points: { id: string; o2_frac: number; pressure_kpa: number; flow_mm_s: number; thickness_mm: number; spread_mm_s: number; spread_std: number }[] }
+
 export const api = {
+  zarm: () => get<Zarm>('/api/outside/zarm'),
   fireCheckMeta: () => get<FireCheckMeta>('/api/fire-check/meta'),
   fireCheck: (r: FireCheckReq) => post<FireCheckRes>('/api/fire-check', r),
   dataTables: () => get<ResourceList>('/api/resources?types=data&sort=cred&page_size=200').then(r => r.items),
