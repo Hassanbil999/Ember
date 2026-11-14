@@ -17,6 +17,7 @@ from functools import lru_cache
 
 import pandas as pd
 
+from . import external
 from .api import views
 from .core import config
 from .core.store import get_store
@@ -268,8 +269,10 @@ def _environment(tid: str, material: str | None) -> dict:
                           "blue went out, hollow has no outcome. The shaded band is the oxygen range of the real solid-material tests "
                           "in orbit; their tables record no pressure, so it spans the whole height. The outlined box is the air this place plans to use.")}
     lab_mode = "gas"
+    # outside NASA: shown only where NASA's solid tests in orbit stop short of this place's oxygen; never changes the grade
+    outside = external.spread_card(preset["o2_frac"], place) if preset["o2_frac"] > o2_hi and not sel else None
     return {"finding": finding, "grade": grade, "visual": visual, "measured": measured, "inferred": inferred,
-            "untested": untested, "materials": mats, "material": sel["material"] if sel else None,
+            "untested": untested, "outside": outside, "materials": mats, "material": sel["material"] if sel else None,
             "next": [{"label": "Try this air in the simulator", "href": f"/lab?preset={preset['id']}&mode={lab_mode}"},
                      {"label": "See which experiments matter most here", "href": f"/places?place={spec['target']}"},
                      {"label": "Open the solid-material tests", "href": "/data?dataset=bass2"}]}

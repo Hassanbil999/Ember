@@ -63,6 +63,9 @@ TABLES = [
 DOCUMENTS = [
     ("reports", "researchers_guide_combustion_science.pdf", "5fe046efe4e35e506023e27a9784d041e893026f19c9987591483614aea5d6b6",
      "https://www.nasa.gov/sites/default/files/atoms/files/np-2015-10-034-jsc_combustion_in_reduced_gravity-iss-mini-book-011116-508.pdf"),
+    # outside NASA, shown apart from the PSI tests (config/external.yaml); CC BY-NC 4.0, Zenodo md5 ee54b6e4…
+    ("external", "zarm_metal_barriers_index.csv", "77632b37f49260797f5cbb86b6e8bb40876801a482da38441b87e0e9e0afc6de",
+     "https://zenodo.org/records/18479713/files/index.csv?download=1"),
 ]
 
 
@@ -82,7 +85,8 @@ def fetch_documents(refresh: bool) -> int:
             print(f"FAIL  doc      {name}: {e}")
             problems += 1
             continue
-        if sha256(data) != pinned or not data.startswith(b"%PDF"):
+        wrong_kind = not data.startswith(b"%PDF") if name.endswith(".pdf") else looks_like_html(data)
+        if sha256(data) != pinned or wrong_kind:
             write_atomic(out.with_name(out.name + ".new"), data)
             print(f"DIFF  doc      {name}: NASA's file differs from the pinned checksum; saved as {name}.new for review")
             problems += 1

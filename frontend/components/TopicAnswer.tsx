@@ -47,6 +47,39 @@ function Column({ title, tone, block, k }: { title: string; tone: string; block:
   );
 }
 
+/* Evidence from outside NASA: its own card, dashed and labelled, never merged with the NASA columns or the grade. */
+function Outside({ o }: { o: any }) {
+  return (
+    <section className="card mt-6 p-5" style={{ border: "1.5px dashed var(--text-2)" }} data-outside>
+      <p className="eyebrow">Outside NASA · {o.label}</p>
+      <p className="mt-2 text-base font-medium text-ink">{o.finding}</p>
+      <p className="mt-1 text-sm text-ink-2">{o.summary}</p>
+      <div className="mt-4 overflow-x-auto">
+        <table className="text-sm">
+          <caption className="sr-only">Measured flame-spread rates over {o.material}</caption>
+          <thead><tr className="text-left text-ink-3">
+            <th className="pb-1 pr-6 font-normal">Test</th><th className="pb-1 pr-6 font-normal">Oxygen</th>
+            <th className="pb-1 pr-6 font-normal">Pressure</th><th className="pb-1 pr-6 font-normal">Air against the flame</th>
+            <th className="pb-1 font-normal">Flame spread</th>
+          </tr></thead>
+          <tbody>{o.points.map((p: any) => (
+            <tr key={p.id} className={p.id === o.near_id ? "font-semibold text-ink" : "text-ink-2"}>
+              <td className="mono pr-6">{p.id}</td><td className="mono pr-6">{(p.o2_frac * 100).toFixed(1)}%</td>
+              <td className="mono pr-6">{p.pressure_kpa.toFixed(0)} kPa</td><td className="mono pr-6">{(p.flow_mm_s / 10).toFixed(0)} cm/s</td>
+              <td className="mono">{p.spread_mm_s.toFixed(2)} ± {p.spread_std.toFixed(2)} mm/s</td>
+            </tr>))}
+          </tbody>
+        </table>
+      </div>
+      <ul className="mt-4 space-y-1.5">{o.limits.map((l: string) => <li key={l} className="flex gap-2.5 text-sm text-ink-2"><span className="mt-[7px] h-2 w-2 shrink-0 rounded-full" style={{ background: TONE.warn }} />{l}</li>)}</ul>
+      <p className="mt-4 text-xs text-ink-3">
+        {o.citation} Funded by the {o.funding}. Data: <a className="underline" href={o.url} target="_blank" rel="noreferrer">doi:{o.doi}</a>,{" "}
+        paper: <a className="underline" href={`https://doi.org/${o.paper_doi}`} target="_blank" rel="noreferrer">doi:{o.paper_doi}</a>. License {o.license}.
+      </p>
+    </section>
+  );
+}
+
 export function Next({ items }: { items: { label: string; href: string }[] }) {
   return (
     <section className="mt-10">
@@ -99,6 +132,8 @@ export default function TopicAnswer({ id, material: initial }: { id: string; mat
           <Column k="untested" title="What was never tested" tone="warn" block={t.untested} />
         </div>
       </div>
+
+      {t.outside && <Outside o={t.outside} />}
 
       {t.sources.length > 0 && (
         <section className="mt-10">

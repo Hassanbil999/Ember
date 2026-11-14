@@ -30,6 +30,8 @@ Stated plainly, because honest limits are part of the product.
 - **Quoted passages come mostly from NASA's *A Researcher's Guide to: Combustion Science* (2015, 56 pages)**, checksum-verified against NASA's file. Its table of contents, acronym list and garbled hardware tables are not quoted. It predates BASS-II, SAFFIRE and CFI-G and does not discuss the Moon or partial gravity, so those answers rest on the test data.
 - The two "context notes" PDFs restate facts from the challenge brief (for example the planned Moon-base atmosphere). They are not NASA documents, are labelled as such wherever they are quoted, and stay only until a NASA source for those facts is loaded.
 
+- One source from outside NASA is shown, only on the Moon base screen and in its own dashed "Outside NASA" card: five measured flame-spread rates over thin acrylic (PMMA) from the ZARM drop tower in Bremen (Zenodo doi:10.5281/zenodo.18479713, CC BY-NC 4.0, DLR-funded). It fills the oxygen range where NASA's solid tests in orbit stop (above 22.2%), but a drop tower gives only seconds of microgravity, so it shows how fast a flame spreads, not whether it keeps burning. It is read from its pinned file, never enters the test store, trains no model and never changes an evidence grade.
+
 ## Partial gravity
 - **PSI contains no partial-gravity combustion data.** Lunar (0.165 g) and Martian (0.38 g) scenarios are always flagged `untested`. The droplet and gas-flame models have only microgravity data and do not take gravity as an input, so the gravity setting does not change their prediction; the screen says so. The only real 1g comparison is SAFFIRE-2's ground tests, shown as measurements, not modelled.
 
