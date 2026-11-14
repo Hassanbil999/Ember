@@ -1,11 +1,11 @@
-# The Oxygen Edge (repo: freefall-atlas)
+# Ember (repo: freefall-atlas)
 
-NASA Space Apps 2026 entry: will a small fire keep burning in spacecraft and Moon/Mars habitat air? Built on NASA microgravity combustion research. A landing page (`/`) leads to the **engine** (`/engine`: Overview, Fire check, Simulator, Find data, Models), the **research** page and the **presentation**. The visible name is The Oxygen Edge; repo, package and API names stay Freefall Atlas (README Decision AK).
+NASA Space Apps 2026 entry: will a small fire keep burning in spacecraft and Moon/Mars habitat air? Built on NASA microgravity combustion research. A landing page (`/`) leads to the **engine** (`/engine`: Simulation, Fire check, Find data, Statistics), the **research** page and the **presentation**. The visible name is Ember; repo, package and API names stay Freefall Atlas (README Decision AK). UI style: a product, not a paper: short copy, colour, no Limits sections on pages (README Decision AL).
 
 ## This repo
 - This repo already holds the **old site with real, cleaned NASA data**. We are replacing its UI with the new frontend and connecting that frontend to the existing data. We are not starting over.
 - Target product: `SPEC.md`. **§0 explains how it applies to this repo.** Read it before planning.
-- Simulator and Find data reference: `prototype/index.html`. Match it; do not redesign those two views. Reuse its shader, model and layout code. The landing, engine shell, overview, fire check, models, research and presentation pages are new design in the same tokens and type (README Decision AG, `docs/PROMPT_SITE.md`).
+- Simulator and Find data reference: `prototype/index.html`. Match it; do not redesign those two views. Reuse its shader, model and layout code. The landing, engine shell, fire check, statistics, research and presentation pages are new design on the same type, with the brighter Ember palette (README Decisions AG, AL).
 - Gap-filling starter data: `data/seed.json`. Use it only where the real data has nothing.
 - Audit of the old site: `docs/AUDIT.md` (written in M0). Keep it up to date when the mapping changes.
 

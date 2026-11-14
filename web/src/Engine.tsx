@@ -1,6 +1,6 @@
-/* The engine (/engine/*): one shell with five sections. The simulator's settings and the data filters live in
-   the URL query on their own pages so a view can be shared: /engine/simulator?g=0.166&o2=34&p=8.2&u=10&mat=fabric
-   and /engine/data?types=paper. The fire check keeps its own inputs in its URL. */
+/* The engine (/engine/*): the simulation is the front door (/engine), with the fire check, the data finder and the
+   statistics beside it. The simulator's settings and the data filters live in the URL query so a view can be shared:
+   /engine?g=0.166&o2=34&p=8.2&u=10&mat=fabric and /engine/data?types=paper. The fire check keeps its own inputs. */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from './api';
 import { Link, navigate, title, usePath } from './router';
@@ -9,19 +9,19 @@ import { isWide } from './sim/stage';
 import type { Filters, Investigation, Material } from './types';
 import { emptyFilters, FindDataView } from './views/FindData';
 import { FireCheckPage } from './views/FireCheck';
-import { Models } from './views/Models';
-import { Overview } from './views/Overview';
 import { SimulateView } from './views/Simulate';
+import { Statistics } from './views/Statistics';
 
-type Section = 'overview' | 'check' | 'sim' | 'data' | 'models';
+type Section = 'sim' | 'check' | 'data' | 'stats';
 const SECTIONS: { key: Section; path: string; label: string }[] = [
-  { key: 'overview', path: '/engine', label: 'Overview' },
+  { key: 'sim', path: '/engine', label: 'Simulation' },
   { key: 'check', path: '/engine/check', label: 'Fire check' },
-  { key: 'sim', path: '/engine/simulator', label: 'Simulator' },
   { key: 'data', path: '/engine/data', label: 'Find data' },
-  { key: 'models', path: '/engine/models', label: 'Models' },
+  { key: 'stats', path: '/engine/stats', label: 'Statistics' },
 ];
-const sectionOf = (path: string): Section => SECTIONS.find(s => s.key !== 'overview' && path.startsWith(s.path))?.key ?? 'overview';
+// /engine/simulator, /engine/models and /engine/overview are older addresses of the same pages.
+const sectionOf = (path: string): Section =>
+  path.startsWith('/engine/check') ? 'check' : path.startsWith('/engine/data') ? 'data' : /^\/engine\/(stats|models|overview)/.test(path) ? 'stats' : 'sim';
 const LIST_KEYS = ['types', 'inv', 'purpose', 'fuel', 'env'] as const;
 
 function readUrl(section: Section): Filters {
@@ -42,7 +42,7 @@ function readUrl(section: Section): Filters {
 }
 
 function writeUrl(f: Filters, section: Section) {
-  const path = section === 'sim' ? '/engine/simulator' : '/engine/data';
+  const path = section === 'sim' ? (location.pathname.startsWith('/engine/simulator') ? '/engine/simulator' : '/engine') : '/engine/data';
   if (location.pathname !== path) return;
   const st = sim.params, q = new URLSearchParams();
   q.set('g', String(+st.g.toFixed(3))); q.set('o2', String(st.o2)); q.set('p', String(st.p)); q.set('u', String(+st.u.toFixed(2)));
@@ -100,12 +100,12 @@ export function Engine() {
     if (rid) setFocus({ code, rid, n: Date.now() });
     navigate('/engine/data');
   }
-  const simulate = useCallback((code: string) => { if (sim.load(code)) navigate('/engine/simulator'); }, []);
+  const simulate = useCallback((code: string) => { if (sim.load(code)) navigate('/engine'); }, []);
 
   return (
     <>
       <header className="top">
-        <div className="brand"><h1><Link to="/" title="The Oxygen Edge home">The Oxygen Edge</Link></h1><span>Engine</span></div>
+        <Link to="/" className="logo" title="Ember home"><span className="logo-mark" aria-hidden="true" />Ember</Link>
         <nav className="tabs" aria-label="Engine">
           {SECTIONS.map(x => <Link key={x.key} to={x.path} id={'nav-' + x.key} aria-current={section === x.key ? 'page' : undefined}>{x.label}</Link>)}
         </nav>
@@ -117,9 +117,8 @@ export function Engine() {
         {api_ === 'down' && <span className="err" role="alert">Could not reach the API. The simulator still runs on built-in defaults.</span>}
       </header>
       <main>
-        {section === 'overview' && <Overview />}
         {section === 'check' && <FireCheckPage onOpenTest={openTest} />}
-        {section === 'models' && <Models />}
+        {section === 'stats' && <Statistics />}
         <SimulateView active={section === 'sim'} panelL={panels.l} panelR={panels.r} setPanels={(l, r) => setPanelsState({ l, r })} onFindData={toData} />
         <FindDataView active={section === 'data'} filters={filters} setFilters={setFilters} investigations={investigations} onSimulate={simulate} focus={focus} />
       </main>

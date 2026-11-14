@@ -210,7 +210,7 @@ Fit $X_\text{min}, u^*, k_l, k_h, c$ per material with `scipy.optimize.least_squ
 
 Keep the prototype's tokens, fonts (Barlow Condensed, IBM Plex Sans, IBM Plex Mono), dark single theme and layout.
 
-**Site structure (added 2026-11-14, README Decision AG).** A landing page (`/`) leads to the engine (`/engine`: Overview, Fire check, Simulator, Find data, Models), the research page (`/research`) and the presentation (`/presentation`). The Simulate and Find data views below still port the prototype exactly; the landing, engine shell, overview, fire check, models, research and presentation pages are new design in the same tokens and type.
+**Site structure (added 2026-11-14, README Decision AG).** A landing page (`/`) leads to the engine (`/engine`: Simulation, Fire check, Find data, Statistics; the simulation is the front door), the research page (`/research`) and the presentation (`/presentation`). The Simulate and Find data views below keep the prototype's layout; the palette is the brighter Ember one (Decision AL). The other pages are new design.
 
 **Simulate view**
 - Full-bleed stage: particle airflow canvas, scene canvas (duct, sample, char glow, igniter), WebGL flame canvas (the prototype's fragment shader; 2D fallback when WebGL is missing).
@@ -226,7 +226,7 @@ Keep the prototype's tokens, fonts (Barlow Condensed, IBM Plex Sans, IBM Plex Mo
 - Export bar appears only when items are selected. The dialog previews CSV/JSON/BibTeX and **downloads a real file** from `/api/export`.
 - Add an "Ask the NASA sources" box above the results: question → `/api/ai/ask`, with answers that show their citations.
 
-Routing: real paths (`/engine/simulator`, `/engine/data`, `/engine/check`, …) with Back/Forward; the old `/#simulate` and `/#data` links redirect and keep their query. Keep filters, simulator settings and fire-check inputs in the URL query so views can be shared.
+Routing: real paths (`/engine`, `/engine/check`, `/engine/data`, `/engine/stats`) with Back/Forward; the old `/#simulate` and `/#data` links redirect and keep their query. Keep filters, simulator settings and fire-check inputs in the URL query so views can be shared.
 
 ## 11. AI rules (Claude via the Anthropic SDK)
 

@@ -111,7 +111,7 @@ function Controls({ open, onClose, onFindData }: { open: boolean; onClose: () =>
         <button id="mPmma" aria-pressed={st.mat === 'pmma'} onClick={() => sim.set({ mat: 'pmma' }, true)}>Acrylic rod (PMMA)</button>
       </div>
       <button className="btn" id="toData" onClick={onFindData}>Find data for these settings</button>
-      <Link className="btn" id="toCheck" to={`/engine/check?o2=${st.o2}&psi=${st.p}`}>Check a fuel against NASA tests</Link>
+      <Link className="btn" id="toCheck" to={`/engine/check?o2=${st.o2}&psi=${st.p}`}>Check a fuel</Link>
     </aside>
   );
 }

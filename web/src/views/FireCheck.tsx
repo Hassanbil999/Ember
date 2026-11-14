@@ -1,84 +1,68 @@
-/* Fire check page (/engine/check): an engineer enters fuel and conditions; the server answers from NASA's own
-   outcome-labelled tests. Tested → the real tests answer; estimated → the validated model; untested → no number.
-   The inputs live in the URL, so a check can be shared as a link. */
+/* Fire check (/engine/check): pick a fire, a fuel and the cabin air; the answer comes from NASA's own microgravity
+   tests. Tested → the real tests answer; estimated → the validated model; untested → no number.
+   Sliders show the range NASA tested for the chosen fuel as a lit band. Inputs live in the URL, so a check is a link. */
 import { useEffect, useMemo, useState } from 'react';
 import { api, type FireCheckReq, type FireCheckRes } from '../api';
+import { Gauge } from '../components/Gauge';
 import { EXAMPLE, useSiteData } from '../siteData';
 
-const pct = (p: number) => `${Math.round(p * 100)} %`;
-/* Tested ranges as the domain check sees them: enough decimals that a value shown inside is inside. */
-const rng = (v: number) => String(Math.abs(v) >= 10 ? +v.toFixed(1) : +v.toFixed(2));
 const ZONE: Record<string, string> = { tested: 'Tested', estimated: 'Estimated', untested: 'Untested' };
 const GRAVITY: [string, string][] = [['0', 'Microgravity'], ['0.166', 'Moon'], ['0.38', 'Mars'], ['1', 'Earth']];
+const AIR: [string, number, number][] = [['ISS air', 21, 14.7], ['Moon-base air', 34, 8.2]];
 const DEFAULT_FUEL = { gas: 'propane', droplet: 'n-heptane' } as const;
+const SCALE = { o2: [10, 45, 0.5], psi: [4, 45, 0.1], flow: [0.1, 3.5, 0.05], d0: [0.5, 5, 0.05] } as const;
 
-interface Form { problem: 'gas' | 'droplet'; fuel: string; o2: string; psi: string; flow: string; d0: string; dil: 'N2' | 'CO2' | 'He'; g: string }
+interface Form { problem: 'gas' | 'droplet'; fuel: string; o2: number; psi: number; flow: number; d0: number; g: string }
 
 function readForm(): Form {
   const q = new URLSearchParams(location.search);
+  const num = (k: string, d: number) => { const v = q.get(k); return v != null && v !== '' && isFinite(+v) ? +v : d; };
   const problem = q.get('problem') === 'droplet' ? 'droplet' : 'gas';
-  const dil = q.get('dil');
-  // With no inputs in the link, open on the landing page's worked example (Moon-base air, a small diluted ethane leak).
-  const blank = !q.has('fuel') && !q.has('problem');
+  const blank = !q.has('fuel') && !q.has('problem');          // no inputs: open on the landing page's worked example
   return {
     problem, fuel: q.get('fuel') || (blank ? EXAMPLE.fuel : DEFAULT_FUEL[problem]),
-    o2: q.get('o2') ?? String(EXAMPLE.o2_pct), psi: q.get('psi') ?? String(EXAMPLE.psi),
-    flow: q.get('flow') ?? (blank ? String(EXAMPLE.fuel_flow) : '1'), d0: q.get('d0') ?? '3',
-    dil: dil === 'CO2' || dil === 'He' ? dil : 'N2', g: GRAVITY.some(([v]) => v === q.get('g')) ? q.get('g')! : '0',
+    o2: num('o2', EXAMPLE.o2_pct), psi: num('psi', EXAMPLE.psi), flow: num('flow', blank ? EXAMPLE.fuel_flow : 1), d0: num('d0', 3),
+    g: GRAVITY.some(([v]) => v === q.get('g')) ? q.get('g')! : '0',
   };
 }
 
 function writeForm(f: Form) {
   if (!location.pathname.startsWith('/engine/check')) return;
-  const q = new URLSearchParams({ problem: f.problem, fuel: f.fuel, o2: f.o2, psi: f.psi });
-  if (f.problem === 'gas') q.set('flow', f.flow); else { q.set('d0', f.d0); q.set('dil', f.dil); }
+  const q = new URLSearchParams({ problem: f.problem, fuel: f.fuel, o2: String(f.o2), psi: String(f.psi) });
+  if (f.problem === 'gas') q.set('flow', String(f.flow)); else q.set('d0', String(f.d0));
   q.set('g', f.g);
   const url = '/engine/check?' + q.toString();
   if (location.pathname + location.search !== url) { try { history.replaceState(null, '', url); } catch { /* sandboxed */ } }
 }
 
-/* The request, or the names of the fields that still need a number. */
-function toRequest(f: Form): { req: FireCheckReq | null; missing: string[] } {
-  const n = (s: string) => (s.trim() === '' || !isFinite(+s) ? null : +s);
-  const fields: [string, number | null][] = [['Oxygen', n(f.o2)], ['Pressure', n(f.psi)], f.problem === 'gas' ? ['Fuel flow', n(f.flow)] : ['Drop size', n(f.d0)]];
-  const missing = fields.filter(([, v]) => v == null).map(([k]) => k);
-  if (missing.length) return { req: null, missing };
-  return {
-    req: { problem: f.problem, fuel: f.fuel, o2_pct: n(f.o2)!, psi: n(f.psi)!, gravity_g: +f.g, diluent: f.dil,
-           fuel_flow: f.problem === 'gas' ? n(f.flow)! : 1, d0_mm: f.problem === 'droplet' ? n(f.d0)! : 3 },
-    missing,
-  };
-}
+const toReq = (f: Form): FireCheckReq => ({ problem: f.problem, fuel: f.fuel, o2_pct: f.o2, psi: f.psi, gravity_g: +f.g, diluent: 'N2', fuel_flow: f.flow, d0_mm: f.d0 });
+const nice = (v: number) => String(Math.abs(v) >= 10 ? +v.toFixed(1) : +v.toFixed(2));
 
 export function FireCheckPage({ onOpenTest }: { onOpenTest: (code: string, resourceId: string | null) => void }) {
-  const { data, err: metaErr } = useSiteData();
+  const { data } = useSiteData();
   const meta = data?.meta;
   const [f, setF] = useState<Form>(readForm);
   const [res, setRes] = useState<FireCheckRes | null>(null);
   const [err, setErr] = useState('');
   const [msg, setMsg] = useState('');
-  const { req, missing } = useMemo(() => toRequest(f), [f]);
+  const req = useMemo(() => toReq(f), [f]);
   const key = JSON.stringify(req);
 
   useEffect(() => { writeForm(f); }, [f]);
   useEffect(() => {
-    if (!req) { setRes(null); setErr(`Enter a value for ${missing.join(' and ')}.`); return; }
     let stale = false;
     const t = setTimeout(() => {
       api.fireCheck(req).then(r => { if (!stale) { setRes(r); setErr(''); } })
         .catch(e => { if (!stale) { setRes(null); setErr(String(e.message || e)); } });
-    }, 200);
+    }, 150);
     return () => { stale = true; clearTimeout(t); };
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = (p: Partial<Form>) => { setMsg(''); setF(x => ({ ...x, ...p })); };
   const m = meta?.[f.problem];
-  const fuelRange = (k: string) => m?.ranges_by_fuel[f.fuel]?.[k];
-  const hint = (k: string) => { const r = fuelRange(k); return r ? `NASA tested ${rng(r[0])}–${rng(r[1])} for ${f.fuel}` : ''; };
-  const pick = (problem: 'gas' | 'droplet') => set({ problem, fuel: DEFAULT_FUEL[problem] });
+  const band = (k: string) => m?.ranges_by_fuel[f.fuel]?.[k];
 
   async function download() {
-    if (!req) return;
     setMsg('Preparing…');
     try {
       const file = await api.fireCheckReport(req);
@@ -86,131 +70,98 @@ export function FireCheckPage({ onOpenTest }: { onOpenTest: (code: string, resou
       const a = document.createElement('a'); a.href = url; a.download = file.filename;
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 2000);
-      setMsg(`Saved ${file.filename}. Open it and choose Print to save a PDF.`);
+      setMsg('Saved. Open it and print to PDF.');
     } catch (e) { setMsg('Report failed: ' + (e as Error).message); }
   }
 
-  const num = (id: string, label: string, k: 'o2' | 'psi' | 'flow' | 'd0', unit: string, range: string, step: number) => (
-    <div className="ctl fc-in">
-      <div className="row"><label htmlFor={id}>{label}</label></div>
-      <div className="fc-num"><input id={id} type="number" inputMode="decimal" step={step} value={f[k]} aria-invalid={f[k].trim() === '' || undefined}
-        aria-describedby={id + 'H'} onChange={e => set({ [k]: e.target.value } as Partial<Form>)} /><span className="muted">{unit}</span></div>
-      <span className="hint" id={id + 'H'}>{hint(range)}</span>
-    </div>
-  );
+  const slider = (id: string, label: string, k: 'o2' | 'psi' | 'flow' | 'd0', unit: string, rk: string) => {
+    const [lo, hi, step] = SCALE[k], r = band(rk), pos = (v: number) => `${((Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo)) * 100}%`;
+    return (
+      <div className="fc-slider">
+        <div className="row"><label htmlFor={id}>{label}</label><output htmlFor={id}>{nice(f[k])} <small>{unit}</small></output></div>
+        <input id={id} type="range" className="rng" min={lo} max={hi} step={step} value={f[k]}
+          style={{ ['--a' as string]: r ? pos(r[0]) : '0%', ['--b' as string]: r ? pos(r[1]) : '0%' }}
+          aria-valuetext={`${nice(f[k])} ${unit}${r ? `, NASA tested ${nice(r[0])} to ${nice(r[1])}` : ''}`}
+          onChange={e => set({ [k]: +e.target.value } as Partial<Form>)} />
+      </div>
+    );
+  };
 
   return (
     <section id="view-check" className="view page" aria-labelledby="checkTitle">
       <div className="wrap">
-        <div className="pagehead">
-          <h2 id="checkTitle">Fire check</h2>
-          <p className="muted">Will a small fire keep burning? Answered from NASA's microgravity tests that recorded the outcome. Near a test, the test answers. Between tests, a validated model estimates. Outside them, no number.</p>
-        </div>
+        <h2 id="checkTitle" className="page-title">Fire check</h2>
         <div className="check-grid" id="fireCheck">
-          <aside className="card inputs" aria-label="Conditions">
-            <span className="sec">Conditions</span>
-            <div className="seg" role="group" aria-label="Fire type">
-              <button id="fcGas" aria-pressed={f.problem === 'gas'} onClick={() => pick('gas')}>Gas leak flame<small>CFI-G · {meta?.gas.psi_id ?? 'PSI-159'}</small></button>
-              <button id="fcDrop" aria-pressed={f.problem === 'droplet'} onClick={() => pick('droplet')}>Liquid fuel drop<small>FLEX · {meta?.droplet.psi_id ?? 'PSI-69'}</small></button>
+          <div className="card inputs" aria-label="Conditions">
+            <div className="kind" role="group" aria-label="Fire type">
+              <button id="fcGas" aria-pressed={f.problem === 'gas'} onClick={() => set({ problem: 'gas', fuel: DEFAULT_FUEL.gas })}>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c1 3 5 5.5 5 10a5 5 0 0 1-10 0c0-2.5 1.5-4 2.5-5 .3 1.8 1.2 2.6 2 3 .3-3-1-5.5.5-8z" /></svg>Gas leak</button>
+              <button id="fcDrop" aria-pressed={f.problem === 'droplet'} onClick={() => set({ problem: 'droplet', fuel: DEFAULT_FUEL.droplet })}>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z" /></svg>Fuel drop</button>
             </div>
-            <div className="ctl fc-in">
-              <div className="row"><label htmlFor="fcFuel">Fuel</label></div>
-              <select id="fcFuel" className="sel" value={f.fuel} onChange={e => set({ fuel: e.target.value })}>
-                {(m?.fuels ?? [f.fuel]).map(x => <option key={x} value={x}>{x}</option>)}
-              </select>
+            <div className="chips" id="fcFuel" role="group" aria-label="Fuel">
+              {(m?.fuels ?? [f.fuel]).map(x => <button key={x} className="chip" aria-pressed={f.fuel === x} onClick={() => set({ fuel: x })}>{x}</button>)}
             </div>
-            {num('fcO2', 'Oxygen', 'o2', '%', 'o2_pct', 0.5)}
-            {num('fcP', 'Pressure', 'psi', 'psi', 'psi', 0.1)}
-            {f.problem === 'gas'
-              ? num('fcFlow', 'Fuel flow (leak size)', 'flow', 'mg/s', 'fuel_flow', 0.05)
-              : num('fcD0', 'Drop size', 'd0', 'mm', 'd0_mm', 0.1)}
-            {f.problem === 'droplet' && (
-              <div className="ctl fc-in">
-                <div className="row"><label htmlFor="fcDil">Rest of the air</label></div>
-                <select id="fcDil" className="sel" value={f.dil} onChange={e => set({ dil: e.target.value as Form['dil'] })}>
-                  <option value="N2">Nitrogen</option><option value="CO2">Carbon dioxide</option><option value="He">Helium</option>
-                </select>
-              </div>
-            )}
-            <div className="ctl">
-              <div className="row"><span id="fcGLabel">Gravity</span></div>
-              <div className="chips" role="group" aria-labelledby="fcGLabel">
-                {GRAVITY.map(([v, label]) => <button key={v} className="chip" id={'fcG' + label} aria-pressed={f.g === v} onClick={() => set({ g: v })}>{label}</button>)}
-              </div>
-              <span className="hint">Every NASA test here ran in microgravity. Other gravity gives no number.</span>
+            <div className="chips air" role="group" aria-label="Cabin air">
+              {AIR.map(([label, o2, psi]) => <button key={label} className="chip" aria-pressed={f.o2 === o2 && f.psi === psi} onClick={() => set({ o2, psi })}>{label}</button>)}
             </div>
-            {metaErr && <p className="err">Could not load the tested ranges ({metaErr}).</p>}
-          </aside>
+            {slider('fcO2', 'Oxygen', 'o2', '%', 'o2_pct')}
+            {slider('fcP', 'Pressure', 'psi', 'psi', 'psi')}
+            {f.problem === 'gas' ? slider('fcFlow', 'Leak size', 'flow', 'mg/s', 'fuel_flow') : slider('fcD0', 'Drop size', 'd0', 'mm', 'd0_mm')}
+            <div className="chips" role="group" aria-label="Gravity">
+              {GRAVITY.map(([v, label]) => <button key={v} className="chip" id={'fcG' + label} aria-pressed={f.g === v} onClick={() => set({ g: v })}>{label}</button>)}
+            </div>
+            <p className="key"><i /> range NASA tested for {f.fuel}</p>
+          </div>
 
-          <div className="card results" aria-live="polite">
-            {err && <p className="err" id="fcErr" role="alert">{err}</p>}
+          <div className={'card result zone-' + (res?.zone ?? 'none')} aria-live="polite">
+            {err && <p className="err" role="alert">{err}</p>}
             {!res && !err && <p className="loading">Checking…</p>}
             {res && <Result res={res} onOpenTest={onOpenTest} />}
             <div className="fc-foot">
-              <span className="muted" style={{ fontSize: 12.5 }} id="fcMsg">{msg}</span>
               <button className="btn primary" id="fcReport" disabled={!res} onClick={download}>Download report</button>
+              <span id="fcMsg">{msg}</span>
             </div>
           </div>
         </div>
-        <Limits />
       </div>
     </section>
   );
 }
 
 function Result({ res, onOpenTest }: { res: FireCheckRes; onOpenTest: (code: string, resourceId: string | null) => void }) {
-  const ref = res.reference;
+  const [all, setAll] = useState(false);
+  const t = res.tested, e = res.estimate;
+  const line = res.zone === 'untested' ? (res.reasons[0] ?? 'Outside what NASA tested.')
+    : t ? (t.n === 1 ? `The NASA test at nearly these conditions ${t.yes ? t.outcome_yes : t.outcome_no}.` : `${t.yes} of ${t.n} NASA tests here ${t.outcome_yes}.`)
+    : 'Estimated from the NASA tests around these conditions.';
+  const top = res.drivers[0];
   return (
-    <div className="fc-res" data-zone={res.zone}>
-      <div className="verdict">
-        <span className={'pill zone-' + res.zone} id="fcZone">{ZONE[res.zone]}</span>
-        <p id="fcVerdict">{res.verdict}</p>
-        {res.reasons.length > 0 && <ul className="fc-reasons">{res.reasons.map(r => <li key={r}>{r}</li>)}</ul>}
+    <div className="fc-res">
+      <span className={'zone-pill ' + res.zone} id="fcZone">{ZONE[res.zone]}</span>
+      <div className="fc-main">
+        <Gauge id={e ? 'fcProb' : undefined} p={e ? e.probability : null} low={e?.low} high={e?.high} label={e ? `chance it ${e.will}` : 'no estimate'} />
+        <div className="fc-say">
+          <p id="fcVerdict">{line}</p>
+          {e && <p className="range">Range {Math.round(e.low * 100)}–{Math.round(e.high * 100)}%</p>}
+          {top && <p className="lever">Biggest lever: <b>{top.label.toLowerCase()}</b> ({top.change_pts > 0 ? '+' : ''}{top.change_pts} pts per +{top.step} {top.unit})</p>}
+        </div>
       </div>
-      {(res.estimate || res.quantities.length > 0) && (
-        <div className="stats">
-          {res.estimate && <div><b id="fcProb">{pct(res.estimate.probability)}</b><span>chance it {res.estimate.will}</span><span>range {pct(res.estimate.low)}–{pct(res.estimate.high)} <span className="tag est">model estimate</span></span></div>}
-          {res.quantities.map(q => <div key={q.label} title={q.meaning}><b>{q.value.toFixed(2)}</b><span>{q.label}, {q.unit}</span><span>90 % range {q.low.toFixed(2)}–{q.high.toFixed(2)} <span className="tag est">model estimate</span></span></div>)}
+      {res.quantities.length > 0 && (
+        <div className="qty">
+          {res.quantities.map(q => <div key={q.label} title={q.meaning}><b>{q.value.toFixed(2)}</b><span>{q.label} ({q.unit}) · {q.low.toFixed(2)}–{q.high.toFixed(2)}</span></div>)}
         </div>
       )}
-      {res.drivers.length > 0 && (
-        <p className="muted fc-small">Moves it most: {res.drivers.slice(0, 3).map(d => `${d.label.toLowerCase()} +${d.step} ${d.unit} → ${d.change_pts > 0 ? '+' : ''}${d.change_pts} pts`).join(' · ')}</p>
-      )}
-      {ref && (
-        <p className="fc-small muted" id="fcRef"><span className="tag pub">published value · not a NASA test</span>{' '}
-          {ref.values ? <>Earth limiting oxygen for {ref.fuel}: {ref.values.N2} % O₂ with nitrogen, {ref.values.CO2} % with CO₂.</> : ref.missing}{' '}
-          <a className="link" href={ref.source.url} target="_blank" rel="noreferrer">{ref.source.label.split(',')[0]}</a></p>
-      )}
-      <span className="sec">Nearest NASA tests, same fuel <span className="tag nasa">NASA test</span></span>
-      <div className="tablebox"><table id="fcNear"><thead><tr><th>Test</th><th>Fuel</th><th className="n">O₂ %</th><th className="n">psi</th>
-        <th className="n">{res.problem === 'gas' ? 'Flow mg/s' : 'Drop mm'}</th><th>Measured</th><th className="n">Distance</th><th><span className="sr">Open</span></th></tr></thead>
-        <tbody>{res.nearest.map(r => (
+      <h3 className="sub-h">Closest NASA tests</h3>
+      <div className="tablebox"><table id="fcNear"><thead><tr><th>Test</th><th className="n">O₂ %</th><th className="n">psi</th>
+        <th className="n">{res.problem === 'gas' ? 'mg/s' : 'mm'}</th><th>Result</th><th><span className="sr">Open</span></th></tr></thead>
+        <tbody>{res.nearest.slice(0, all ? undefined : 3).map(r => (
           <tr key={r.code} data-code={r.code}>
-            <td className="num">{r.code}{r.close && <span className="badge">close</span>}</td><td>{r.fuel}</td>
-            <td className="n">{r.o2_pct}</td><td className="n">{r.psi}</td><td className="n">{r.fuel_flow ?? r.d0_mm}</td>
-            <td className={r.burned ? 'oc-b' : 'oc-o'}>{r.outcome}</td><td className="n">{r.distance.toFixed(2)}</td>
+            <td className="num">{r.code}</td><td className="n">{r.o2_pct}</td><td className="n">{r.psi}</td><td className="n">{r.fuel_flow ?? r.d0_mm}</td>
+            <td><span className={'out ' + (r.burned ? 'b' : 'o')}>{r.outcome}</span></td>
             <td><button className="btn small" data-open-test={r.code} onClick={() => onOpenTest(r.code, r.resource_id)}>Open in table</button></td>
           </tr>))}</tbody></table></div>
-      <p className="muted fc-small" id="fcModel">
-        {res.model.chosen
-          ? <>Model: {res.model.chosen}, trained on {res.model.n_tests} {res.model.investigation} tests ({res.model.psi_id}). On {res.model.n_campaigns} NASA campaigns it never saw: AUC {res.model.auc?.toFixed(2)} (chance 0.50), Brier {res.model.brier?.toFixed(3)} vs {res.model.baseline_brier.toFixed(3)} for always guessing the average.</>
-          : <>No model beat the always-the-average baseline on unseen campaigns, so only real tests are shown.</>}
-      </p>
+      {res.nearest.length > 3 && <button className="link" onClick={() => setAll(x => !x)}>{all ? 'Show fewer' : `Show all ${res.nearest.length}`}</button>}
     </div>
-  );
-}
-
-export function Limits() {
-  return (
-    <details className="card limits" open>
-      <summary><span className="sec">Limits</span></summary>
-      <ul>
-        <li>Microgravity only: no NASA test here burned anything at Moon, Mars or Earth gravity, so those give no number.</li>
-        <li>Gas jets and liquid drops only. Solid materials are not covered: their NASA tables record no burned/went-out outcome.</li>
-        <li>Test fuels stand in for cabin fluids: heptane for kerosene-type liquids, methanol for alcohols, ethane/propane/butane for gas leaks.</li>
-        <li>"Kept burning" in the gas-jet tests means still burning when the run ended, at a time the researchers chose.</li>
-        <li>Few tests sit near Moon-base air (34 % O₂, 8.2 psi), so many checks there are untested. A screening tool, not a certification.</li>
-      </ul>
-    </details>
   );
 }

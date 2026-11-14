@@ -7,7 +7,7 @@ import './site.css';
 
 // Old links (/#simulate, /#data, with the simulator settings and filters in the query) keep working.
 if (location.pathname === '/' && /^#(simulate|data)\b/.test(location.hash)) {
-  history.replaceState(null, '', (location.hash.startsWith('#data') ? '/engine/data' : '/engine/simulator') + location.search);
+  history.replaceState(null, '', (location.hash.startsWith('#data') ? '/engine/data' : '/engine') + location.search);
 }
 
 // The landing page loads first and alone; the engine (simulator, shaders, data finder) loads when opened.

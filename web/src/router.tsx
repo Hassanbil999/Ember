@@ -31,5 +31,5 @@ export function Link({ to, onClick, ...rest }: LinkProps) {
 
 /* Set the tab title for a page. */
 export function title(page?: string) {
-  document.title = page ? `${page} · The Oxygen Edge` : 'The Oxygen Edge: will a fire keep burning?';
+  document.title = page ? `${page} · Ember` : 'Ember: will a fire keep burning?';
 }

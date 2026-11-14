@@ -128,3 +128,15 @@ def test_meta_gives_each_fuel_its_own_tested_range_and_the_tests_behind_it():
                 assert plo <= lo <= hi <= phi, (key, fuel, f)
     # pure propane was only tested near sea-level pressure, though gas jets as a whole went down to ~7 psi
     assert m["gas"]["ranges_by_fuel"]["propane"]["psi"][0] > 13 > m["gas"]["ranges"]["psi"][0]
+
+
+def test_model_cards_carry_the_roc_curve_behind_each_auc():
+    """The Statistics page draws these lines; each must be the curve its reported AUC was computed from."""
+    for key in PROBLEMS:
+        card = service._bundle(key)["card"]
+        for r in card["comparison"][1:]:
+            roc = r["roc"]
+            assert roc[0] == [0.0, 0.0] and roc[-1] == [1.0, 1.0]
+            assert all(a[0] <= b[0] and a[1] <= b[1] for a, b in zip(roc, roc[1:]))
+            area = sum((b[0] - a[0]) * (a[1] + b[1]) / 2 for a, b in zip(roc, roc[1:]))
+            assert abs(area - r["auc"]) < 0.01, (key, r["model"], area, r["auc"])

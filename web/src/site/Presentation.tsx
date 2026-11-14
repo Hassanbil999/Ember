@@ -12,7 +12,7 @@ const Draft = () => <span className="draft">draft</span>;
 function slides(d: SiteData | null): { title: string; body: ReactNode }[] {
   const f = d ? facts(d) : null;
   return [
-    { title: 'The Oxygen Edge', body: <div className="s-title">
+    { title: 'Ember', body: <div className="s-title">
       <p className="big">Will a fire keep burning in the air we plan to breathe on the Moon and Mars?</p>
       <p className="muted">NASA Space Apps Challenge 2026</p>
       <p className="muted">Team: names and roles <Draft /></p></div> },
@@ -26,7 +26,7 @@ function slides(d: SiteData | null): { title: string; body: ReactNode }[] {
       <li>Why it matters for the mission <Draft /></li></ul> },
     { title: 'The data', body: f && d ? <div className="s-nums">
       <div><b>{fmt(f.tests)}</b><span>NASA tests loaded, as published</span></div>
-      <div><b>{f.tables}</b><span>NASA PSI tables</span></div>
+      <div><b>{f.experiments}</b><span>NASA experiments ({f.tables} tables)</span></div>
       <div><b>{fmt(f.outcome)}</b><span>with a measured outcome: {d.meta.gas.card.n_tests} gas jets ({d.meta.gas.investigation}, {d.meta.gas.psi_id}) and {d.meta.droplet.card.n_tests} drops ({d.meta.droplet.investigation}, {d.meta.droplet.psi_id})</span></div>
       <p className="muted">Nothing invented: every value traces to its table row. Values read from free-text notes are marked derived.</p></div>
       : <p className="muted">Live numbers appear when the engine is reachable.</p> },
@@ -36,24 +36,19 @@ function slides(d: SiteData | null): { title: string; body: ReactNode }[] {
       <li><b>Tested</b>: real outcomes answer. <b>Estimated</b>: the model, between tests. <b>Untested</b>: no number.</li>
       <li>Every estimate shows its range and what moves it most.</li>
       <li>The nearest NASA tests and a printable report back it up.</li></ol> },
-    { title: 'Live: Moon-base air, a small gas leak', body: <div className="s-example"><ExampleCard compact /><p><Link className="btn primary" to="/engine/check">Open the engine</Link></p></div> },
+    { title: 'Live: Moon-base air, a small gas leak', body: <div className="s-example"><ExampleCard /></div> },
     { title: 'Is it any good?', body: f && d ? <div className="s-nums two">
       <div><b>{f.gasBest?.auc?.toFixed(2)}</b><span>AUC, gas jets, on {f.gas.n_campaigns} NASA campaigns the model never saw (0.50 = chance). Brier {f.gasBest?.brier?.toFixed(3)} vs {f.gas.comparison[0].brier?.toFixed(3)} for always guessing the average.</span></div>
       <div><b>{f.dropBest?.auc?.toFixed(2)}</b><span>AUC, drops, on {f.drop.n_campaigns} unseen campaigns. Brier {f.dropBest?.brier?.toFixed(3)} vs {f.drop.comparison[0].brier?.toFixed(3)}.</span></div>
       <p className="muted">Whole campaigns are hidden in training. A model is used only if it beats the baseline. One command reproduces every score.</p></div>
       : <p className="muted">Live numbers appear when the engine is reachable.</p> },
-    { title: 'What it cannot tell you', body: <ul className="s-list">
-      <li><b>Microgravity only</b>: no NASA test burned anything at Moon or Mars gravity.</li>
-      <li><b>Gas and liquid fuels only</b>: solid-material tables record no outcome.</li>
-      <li>Test fuels stand in for cabin fluids; few tests sit near Moon-base air.</li>
-      <li>A screening check for early design and test planning, not a certification.</li></ul> },
     { title: "What's next", body: <ul className="s-list">
       <li>Partial-gravity tests would turn "untested" into answers for the Moon and Mars. <Draft /></li>
       <li>Solid-material tests that record whether the fire kept burning.</li>
       <li>An inert-gas share input, so CO₂ and helium mixes match how NASA ran them.</li>
       <li>Fit the flame simulator once verified solid-material points exist.</li></ul> },
     { title: 'Thank you', body: <div className="s-title">
-      <p className="big">Try it: <Link className="link" to="/engine">the engine</Link> · <Link className="link" to="/research">the research</Link></p>
+      <p className="big">Try it: <Link className="link" to="/engine">launch the simulation</Link> · <Link className="link" to="/research">read the research</Link></p>
       <p className="muted">Data: NASA Physical Sciences Informatics. Contact and links <Draft /></p></div> },
   ];
 }

@@ -62,11 +62,11 @@ export interface FireCheckRes {
   estimate: { probability: number; low: number; high: number; outcome_yes: string; outcome_no: string; will: string; model: string } | null;
   quantities: { label: string; unit: string; meaning: string; value: number; low: number; high: number }[];
   drivers: { label: string; step: number; unit: string; change_pts: number }[];
-  nearest: FireCheckNear[]; tested: { n: number; yes: number; agrees?: boolean } | null;
+  nearest: FireCheckNear[]; tested: { n: number; yes: number; outcome_yes: string; outcome_no: string; agrees?: boolean } | null;
   reference: { meaning: string; source: { label: string; url: string }; note: string; fuel: string; values: { N2: number; CO2: number } | null; missing: string | null } | null;
   model: { chosen: string | null; n_tests: number; n_campaigns: number; auc: number | null; brier: number | null; baseline_brier: number; investigation: string; psi_id: string };
 }
-export interface ModelRow { model: string; auc?: number | null; brier?: number; log_loss?: number; accuracy?: number; mae?: number; beats_baseline?: boolean }
+export interface ModelRow { model: string; auc?: number | null; brier?: number; log_loss?: number; accuracy?: number; mae?: number; beats_baseline?: boolean; roc?: [number, number][] | null }
 export interface ModelCard {
   question: string; investigation: string; psi_id: string; n_tests: number; n_yes: number; n_campaigns: number; outcome_yes: string; outcome_no: string;
   validation: string; comparison: ModelRow[]; chosen: string | null; features: string[];

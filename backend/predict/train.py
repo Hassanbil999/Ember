@@ -28,7 +28,7 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.gaussian_process import GaussianProcessClassifier, GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel, WhiteKernel
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import brier_score_loss, log_loss, mean_absolute_error, roc_auc_score
+from sklearn.metrics import brier_score_loss, log_loss, mean_absolute_error, roc_auc_score, roc_curve
 from sklearn.model_selection import GroupKFold
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -72,6 +72,14 @@ def _clf_scores(y, p) -> dict:
             "accuracy": round(float(((p > 0.5) == y).mean()), 3)}
 
 
+def _roc(y, p) -> list[list[float]] | None:
+    """ROC curve of the out-of-campaign predictions (the same ones the AUC comes from), for the Statistics chart."""
+    if len(set(y)) < 2:
+        return None
+    fpr, tpr, _ = roc_curve(y, p)
+    return [[round(float(a), 4), round(float(b), 4)] for a, b in zip(fpr, tpr)]
+
+
 def train_classifier(pb: Problem) -> dict:
     df = pb.frame()
     X, y = df[pb.features].to_numpy(float), df[pb.target].astype(int).to_numpy()
@@ -89,6 +97,7 @@ def train_classifier(pb: Problem) -> dict:
         oof_by[name] = oof
         s = _clf_scores(y, oof)
         s["beats_baseline"] = s["brier"] < table[0]["brier"] and s["log_loss"] < table[0]["log_loss"]
+        s["roc"] = _roc(y, oof)
         table.append({"model": name, **s})
     usable = [r for r in table[1:] if r["beats_baseline"]]
     chosen = min(usable, key=lambda r: r["log_loss"])["model"] if usable else None

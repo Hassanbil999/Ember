@@ -38,13 +38,13 @@ export function Research() {
         <header className="paper-head">
           <span className="kicker">Research</span>
           <h1>Will a small fire keep burning in Moon-base air? What NASA's microgravity tests can and cannot say</h1>
-          <p className="muted">The Oxygen Edge · NASA Space Apps Challenge 2026 · numbers on this page are live from the engine{f ? ` (${fmt(f.tests)} NASA tests loaded)` : ''}.</p>
+          <p className="meta">Ember · NASA Space Apps Challenge 2026 · numbers are live from the engine</p>
           <div className="cta">
             <button className="btn small" onClick={() => window.print()}>Print / save as PDF</button>
             {pdf && <a className="btn small" href="/research-paper.pdf" download>Download the paper (PDF)</a>}
-            <Link className="btn small" to="/engine">Open the engine</Link>
+            <Link className="btn ember small" to="/engine">Launch simulation</Link>
           </div>
-          {err && <p className="err">The engine is not reachable ({err}); live numbers are left out rather than shown stale.</p>}
+          {err && <p className="err">The engine is not reachable ({err}).</p>}
         </header>
 
         <section><h2>1. Question</h2>
@@ -90,7 +90,7 @@ export function Research() {
               </tbody>
             </table></div>
           )}
-          <p><b>Uncertainty.</b> A chance estimate is shown with the lowest and highest answer of five models, each trained without one group of campaigns. Measured quantities carry a 90 % range from the errors on unseen campaigns. Both are honest about campaign-to-campaign variation but are not a full uncertainty analysis: the 90 % coverage is computed on the same errors that set the range, and the model choice and its reported score come from the same cross-validation, so scores may be slightly optimistic. Full tables: <Link className="link" to="/engine/models">Models</Link>.</p>
+          <p><b>Uncertainty.</b> A chance estimate is shown with the lowest and highest answer of five models, each trained without one group of campaigns. Measured quantities carry a 90 % range from the errors on unseen campaigns. Both are honest about campaign-to-campaign variation but are not a full uncertainty analysis: the 90 % coverage is computed on the same errors that set the range, and the model choice and its reported score come from the same cross-validation, so scores may be slightly optimistic. Charts: <Link className="link" to="/engine/stats">Statistics</Link>.</p>
         </section>
 
         <section><h2>5. Results</h2>
@@ -107,26 +107,15 @@ export function Research() {
             </table></div>
           ) : <p className="loading">Asking the engine…</p>}
           <p>Near Moon-base air, only some of the diluted gas jets were tested; the pure gases were tested near sea-level pressure only, and no drop was tested below about 10 psi. The gap is the result: it shows where the next microgravity test would teach the most.</p>
-          <ExampleCard compact />
+          <ExampleCard />
         </section>
 
-        <section><h2>6. Limits</h2>
-          <ul>
-            <li><b>Microgravity only.</b> NASA's PSI tables hold no partial-gravity combustion tests, so Moon and Mars gravity always give "untested".</li>
-            <li><b>Gas and liquid fuels only.</b> The solid-material tables (BASS, BASS-II, SAFFIRE) record no burned/went-out outcome and no cabin pressure, so no model learns from solids.</li>
-            <li><b>Stand-in fuels.</b> Heptane stands in for kerosene-type liquids, methanol for alcohols, ethane, propane and butane for gas leaks.</li>
-            <li><b>What "kept burning" means.</b> For gas jets, still burning when the run ended, at a time the researchers chose; the share that kept burning reflects the conditions tested, not a real-world probability.</li>
-            <li><b>Small data.</b> {data ? `${data.meta.gas.card.n_tests} and ${data.meta.droplet.card.n_tests}` : 'A few hundred'} tests; the droplet model beats the baseline only modestly.</li>
-            <li><b>The flame simulator is illustrative.</b> Its solid-material model uses published default parameters, not a fit to NASA tables, and is labelled so on screen.</li>
-          </ul>
-        </section>
-
-        <section><h2>7. Reproduce</h2>
+        <section><h2>6. Reproduce</h2>
           <pre className="cmd"><code>python run.py start            # one command from a clean checkout → http://localhost:8000{'\n'}python run.py ingest predict   # retrain the models and rewrite the model cards</code></pre>
           <p>Every network step writes a committed snapshot, so a clean checkout runs offline and gives the same result; random seeds are fixed.</p>
         </section>
 
-        <section><h2>8. References</h2>
+        <section><h2>7. References</h2>
           <ul className="refs">
             <li>NASA Physical Sciences Informatics experimental tables, each cited with its DOI in the data table above.</li>
             <li>NASA, <i>A Researcher's Guide to: Combustion Science</i> (2015), used for the quoted passages in Find data.</li>

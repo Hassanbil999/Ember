@@ -31,6 +31,7 @@ export function facts(d: SiteData) {
   return {
     tests: d.tables.reduce((s, t) => s + t.points_count, 0),
     tables: d.tables.length,
+    experiments: new Set(d.tables.map(t => t.psi_id).filter(Boolean)).size,   // CFI-G normal and inverse are one experiment
     tablesWithTests: withTests.length,
     outcome: gas.n_tests + drop.n_tests,
     gas, drop,
