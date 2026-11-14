@@ -128,7 +128,7 @@ function Result({ open, onClose }: { open: boolean; onClose: () => void }) {
   const cov = coverage(st, s.points);
   const near = nearest(st, s.points);
   return (
-    <aside className={'panel right' + (open ? '' : ' off')} id="panelR" aria-label="Result" {...(open ? {} : { inert: '' })}>
+    <aside className={'panel right' + (open ? '' : ' off')} id="panelR" aria-label="Result" data-server={s.server} {...(open ? {} : { inert: '' })}>
       <div className="phead"><h2>Result</h2><button className="icon-btn hide-btn" id="closeR" aria-label="Hide result" aria-controls="panelR" aria-expanded={open} onClick={onClose}>{CHEV_R}</button></div>
       <div className="verdict" aria-live="polite">
         <span className={'pill ' + (r.burns ? 'burns' : 'out')} id="pill">{r.burns ? <>{ICON_FLAME}Burns</> : <>{ICON_OUT}Goes out</>}</span>

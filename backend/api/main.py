@@ -294,10 +294,12 @@ def admin_reload(x_admin_token: str | None = Header(default=None)):
 from .routes_ai import router as ai_router  # noqa: E402
 from .routes_catalog import router as catalog_router  # noqa: E402
 from .routes_export import router as export_router  # noqa: E402
+from .routes_sim import router as sim_router  # noqa: E402
 
 app.include_router(catalog_router)
 app.include_router(ai_router)
 app.include_router(export_router)
+app.include_router(sim_router)
 
 
 # ------------------------------------------------------------------ the web app (keep this section last)

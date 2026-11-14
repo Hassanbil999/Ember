@@ -29,6 +29,13 @@ Stated plainly, because honest limits are part of the product. The data limits b
 - **Quoted passages come mostly from NASA's *A Researcher's Guide to: Combustion Science* (2015, 56 pages)**, checksum-verified against NASA's file. Its table of contents, acronym list and garbled hardware tables are not quoted. It predates BASS-II, SAFFIRE and CFI-G and does not discuss the Moon or partial gravity, so those answers rest on the test data.
 - The two "context notes" PDFs restate facts from the challenge brief (for example the planned Moon-base atmosphere). They are not NASA documents, are labelled as such wherever they are quoted, and stay only until a NASA source for those facts is loaded.
 
+## Simulator (SPEC §8)
+- **Illustrative, not a design tool.** A reduced-order flame-limit model for two solid materials (cotton-fiberglass fabric, acrylic/PMMA) with parameters from published BASS-II limits and the Saffire-I spread rate. Droplets and gas flames are not simulated.
+- **Not fitted to the NASA tables yet, and the screen says so.** `ingest fit` needs at least 4 *verified* fabric or PMMA tests that report oxygen, pressure, airflow and a burned / went-out outcome. The loaded PSI tables have none: the solid-material tables give no cabin pressure, BASS-II gives no airflow in cm/s and no outcome column, and the one SAFFIRE-2 test with an outcome and a spread rate reports its oxygen as approximate ("~ 22.1"). The model therefore uses the SPEC §8.1 defaults.
+- **The simulator's reference points are starter rows.** The acrylic and fabric points on the flammability map (BASS2-*, SAF1-C, SAF3-C) come from `data/seed.json` and are labelled *starter row · unverified* until someone checks them against the cited papers. The only real NASA point on the map is SAF2-2-5-UG (unverified, for the reason above).
+- Loading a test whose table gives no pressure runs it at 14.7 psi, and the compare box says so.
+- "Extrapolated" is judged against the loaded points: oxygen above the highest solid-fuel test with an outcome (22.1 %), or pressure below the lowest tested.
+
 ## Partial gravity
 - **PSI contains no partial-gravity combustion data.** Lunar (0.165 g) and Martian (0.38 g) scenarios are always flagged `untested`. The droplet and gas-flame models have only microgravity data and do not take gravity as an input, so the gravity setting does not change their prediction; the screen says so. The only real 1g comparison is SAFFIRE-2's ground tests, shown as measurements, not modelled.
 

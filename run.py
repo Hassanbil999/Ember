@@ -6,7 +6,7 @@
     python run.py dev            API with auto-reload on :8000 + Vite dev server on :5173
     python run.py ingest [step]  canonical | existing | seed | fit | all (default all); see backend/ingest_cli.py
     python run.py fetch          re-download the PSI tables and check their checksums
-    python run.py test           backend tests (pytest) + browser smoke test (Playwright)
+    python run.py test           backend tests (pytest) + model parity (vitest) + browser smoke test (Playwright)
     python run.py e2e            browser smoke test only (starts the app itself)
     python run.py setup          install Python and Node dependencies
     python run.py build          build the web app into web/dist
@@ -123,6 +123,10 @@ def e2e():
 
 def test():
     sh([PY, "-m", "pytest", "backend/tests", "-q"])
+    if WEB.exists():
+        if not (WEB / "node_modules").exists():
+            sh([NPM, "ci", "--no-audit", "--no-fund"], cwd=WEB, shell=SHELL)
+        sh([NPM, "test"], cwd=WEB, shell=SHELL)          # vitest: the browser model matches the server's
     e2e()
 
 

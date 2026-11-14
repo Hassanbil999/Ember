@@ -11,6 +11,7 @@ test('smoke path: lunar rover burns; BASS-II paper → ▶ Simulate → the mode
   await page.getByRole('button', { name: 'Lunar rover, fan off' }).click();
   await expect(page.locator('#pill')).toHaveText(/Burns/);
   await expect(page.locator('#verdictText')).toContainText('gravity still feeds it');
+  await expect(page.locator('#panelR')).toHaveAttribute('data-server', 'ok');      // the server's /api/simulate agrees
 
   await page.getByRole('tab', { name: 'Find data' }).click();
   await page.locator('#types').getByRole('button', { name: /Research paper/ }).click();

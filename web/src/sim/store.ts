@@ -3,6 +3,7 @@
    the timeline never re-renders React (the playhead and clock are updated through onTick listeners). */
 import { useSyncExternalStore } from 'react';
 import type { Material, ModelParams, ModelParamsResponse, Preset, TestPoint } from '../types';
+import { api } from '../api';
 import { DEFAULT_PARAMS, simulate, type Series, type SimState } from './model';
 
 export interface SimParams extends SimState { preset: string; compare: string | null }
@@ -18,6 +19,10 @@ class SimStore {
   points: TestPoint[] = [];               // simulatable test points (real and seed), for the map and evidence
   pointByCode = new Map<string, TestPoint>();
   version = 0;
+  /* server reconciliation (SPEC §10): 'ok' = the server agrees, 'reconciled' = the server's series replaced ours */
+  server: 'pending' | 'ok' | 'reconciled' | 'offline' = 'pending';
+  private simTimer: ReturnType<typeof setTimeout> | undefined;
+  private simSeq = 0;
   private listeners = new Set<() => void>();
   private tickListeners = new Set<() => void>();
 
@@ -45,6 +50,34 @@ class SimStore {
     if (tl.t1 < 0) tl.t1 = 0;
     if (restart || !tl.playing) { tl.t = tl.t1; tl.playing = true; }
     tl.t = Math.min(tl.t, this.series.D);
+    this.emit();
+    this.scheduleServer();
+  }
+
+  /* Debounced 150 ms: the server runs the same model and is the reference. If it disagrees (for example
+     after `ingest fit` changed the parameters), its series replaces the client's. */
+  private scheduleServer() {
+    clearTimeout(this.simTimer);
+    this.server = 'pending';
+    this.simTimer = setTimeout(() => { void this.reconcile(); }, 150);
+  }
+
+  private async reconcile() {
+    const seq = ++this.simSeq;
+    const p = { ...this.params };
+    try {
+      const r = await api.simulate(p);
+      if (seq !== this.simSeq) return;
+      const c = this.series;
+      const same = r.result.burns === c.r.burns && Math.abs(r.result.spread - c.r.spread) < 1e-6 && r.D === c.D;
+      if (!same) {
+        this.series = { r: r.result, D: r.D, n: r.n, I: Float32Array.from(r.I), X: Float32Array.from(r.x_mm), tOut: r.t_out, tEnd: r.t_end };
+        this.tl.t2 = Math.min(this.tl.t2, r.D); this.tl.t = Math.min(this.tl.t, r.D);
+      }
+      this.server = same ? 'ok' : 'reconciled';
+    } catch {
+      if (seq === this.simSeq) this.server = 'offline';
+    }
     this.emit();
   }
 

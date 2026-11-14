@@ -28,7 +28,14 @@ export function filterParams(f: Filters, sim?: SimQuery): URLSearchParams {
   return p;
 }
 
+export interface SimResponse {
+  result: { ub: number; ueff: number; xlim: number; margin: number; burns: boolean; regime: 'burns' | 'quench' | 'blowoff'; spread: number };
+  D: number; n: number; t_out: number | null; t_end: number | null; I: number[]; x_mm: number[];
+  coverage: { kind: string; text: string }; nearest: (TestPoint & { distance: number; match: string })[];
+}
+
 export const api = {
+  simulate: (s: SimQuery) => post<SimResponse>('/api/simulate', { g: s.g, o2: s.o2, psi: s.p, u: s.u, material: s.mat }),
   presets: () => get<Preset[]>('/api/presets'),
   investigations: () => get<Investigation[]>('/api/investigations'),
   modelParams: () => get<ModelParamsResponse>('/api/model-params'),
