@@ -1,11 +1,11 @@
-# Freefall Atlas
+# The Oxygen Edge (repo: freefall-atlas)
 
-NASA Space Apps 2026 entry: an AI-powered dashboard of NASA microgravity combustion research for fire safety in spacecraft and Moon/Mars habitats. Two linked views: **Simulate** (flame and airflow simulator with a timeline) and **Find data** (filtered research with credibility scores and AI summaries).
+NASA Space Apps 2026 entry: will a small fire keep burning in spacecraft and Moon/Mars habitat air? Built on NASA microgravity combustion research. A landing page (`/`) leads to the **engine** (`/engine`: Overview, Fire check, Simulator, Find data, Models), the **research** page and the **presentation**. The visible name is The Oxygen Edge; repo, package and API names stay Freefall Atlas (README Decision AK).
 
 ## This repo
 - This repo already holds the **old site with real, cleaned NASA data**. We are replacing its UI with the new frontend and connecting that frontend to the existing data. We are not starting over.
 - Target product: `SPEC.md`. **§0 explains how it applies to this repo.** Read it before planning.
-- New UI reference: `prototype/index.html`. Match it; do not redesign. Reuse its shader, model and layout code.
+- Simulator and Find data reference: `prototype/index.html`. Match it; do not redesign those two views. Reuse its shader, model and layout code. The landing, engine shell, overview, fire check, models, research and presentation pages are new design in the same tokens and type (README Decision AG, `docs/PROMPT_SITE.md`).
 - Gap-filling starter data: `data/seed.json`. Use it only where the real data has nothing.
 - Audit of the old site: `docs/AUDIT.md` (written in M0). Keep it up to date when the mapping changes.
 
@@ -32,7 +32,7 @@ Existing backend kept: Python + FastAPI (`backend/`), data in Parquet + DuckDB (
 - Load data: `python run.py ingest [canonical|existing|seed|fit|all]` (= `python -m backend.ingest <step>`); `canonical` is the team's cleaning pipeline, unchanged
 - Unit tests: `python -m pytest backend/tests -q` · browser model parity: `cd web && npm test` · e2e: `python run.py e2e` · all: `python run.py test`
 - Container: `docker compose up --build` (root `Dockerfile`: builds the web app, runs `ingest all` at build time)
-- Code map: `backend/catalog/` = adapter layer to SPEC §5 (`build.py` existing, `seed.py`, `query.py` read side); `backend/api/routes_*.py` = SPEC §9; `backend/sim/model.py` = SPEC §8; `web/src/sim/` = stage, model copy, store
+- Code map: `backend/catalog/` = adapter layer to SPEC §5 (`build.py` existing, `seed.py`, `query.py` read side); `backend/api/routes_*.py` = SPEC §9; `backend/sim/model.py` = SPEC §8; `backend/predict/` = fire check; `web/src/sim/` = stage, model copy, store; `web/src/router.tsx` = pathname router; `web/src/Engine.tsx` = engine shell; `web/src/views/` = engine pages; `web/src/site/` = landing, research, presentation
 
 ## Secrets
 Use `.env` (see `.env.example`, merged with any existing env file). Never commit keys.

@@ -6,11 +6,25 @@ async function get<T>(path: string): Promise<T> {
   return r.json() as Promise<T>;
 }
 
+const FIELD: Record<string, string> = { o2_pct: 'Oxygen', psi: 'Pressure', fuel_flow: 'Fuel flow', d0_mm: 'Drop size', gravity_g: 'Gravity', fuel: 'Fuel', diluent: 'Rest of the air' };
+
+/* FastAPI sends `detail` as a string, or (for validation errors) a list of {loc, msg}: make it one sentence. */
+export function errorText(detail: unknown, fallback: string): string {
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    return detail.map(d => {
+      const loc = Array.isArray(d?.loc) ? d.loc[d.loc.length - 1] : '';
+      return `${FIELD[loc] ?? loc}: ${String(d?.msg ?? 'invalid value').replace(/^Value error, /, '')}`.replace(/^: /, '');
+    }).join('. ');
+  }
+  return fallback;
+}
+
 async function post<T>(path: string, body: unknown): Promise<T> {
   const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   if (!r.ok) {
-    let msg = `${r.status}`;
-    try { msg = (await r.json()).detail ?? msg; } catch { /* not JSON */ }
+    let msg = `The server answered ${r.status}.`;
+    try { msg = errorText((await r.json()).detail, msg); } catch { /* not JSON */ }
     throw new Error(msg);
   }
   return r.json() as Promise<T>;
@@ -44,20 +58,39 @@ export interface FireCheckReq { problem: 'gas' | 'droplet'; fuel: string; o2_pct
 export interface FireCheckNear { code: string; dataset: string; source_row: number | null; resource_id: string | null; fuel: string; o2_pct: number; psi: number; pressure_kpa: number; outcome: string; burned: number; distance: number; close: boolean; fuel_flow?: number; d0_mm?: number }
 export interface FireCheckRes {
   problem: 'gas' | 'droplet'; label: string; zone: 'tested' | 'estimated' | 'untested'; zone_text: string; reasons: string[]; verdict: string;
+  inputs: { label: string; value: string }[];
   estimate: { probability: number; low: number; high: number; outcome_yes: string; outcome_no: string; will: string; model: string } | null;
-  quantities: { label: string; unit: string; value: number; low: number; high: number }[];
+  quantities: { label: string; unit: string; meaning: string; value: number; low: number; high: number }[];
   drivers: { label: string; step: number; unit: string; change_pts: number }[];
   nearest: FireCheckNear[]; tested: { n: number; yes: number; agrees?: boolean } | null;
+  reference: { meaning: string; source: { label: string; url: string }; note: string; fuel: string; values: { N2: number; CO2: number } | null; missing: string | null } | null;
   model: { chosen: string | null; n_tests: number; n_campaigns: number; auc: number | null; brier: number | null; baseline_brier: number; investigation: string; psi_id: string };
 }
-export type FireCheckMeta = Record<'gas' | 'droplet', { label: string; fuels: string[]; ranges: Record<string, [number, number]> }>;
+export interface ModelRow { model: string; auc?: number | null; brier?: number; log_loss?: number; accuracy?: number; mae?: number; beats_baseline?: boolean }
+export interface ModelCard {
+  question: string; investigation: string; psi_id: string; n_tests: number; n_yes: number; n_campaigns: number; outcome_yes: string; outcome_no: string;
+  validation: string; comparison: ModelRow[]; chosen: string | null; features: string[];
+  regressions: Record<string, { label: string; unit: string; meaning: string; n_tests: number; validation: string; comparison: ModelRow[]; chosen: string | null; interval90_half_width?: number; interval90_coverage_on_unseen?: number }>;
+}
+export interface CheckPoint { id: string; fuel: string; o2_pct: number; psi: number; burned: number }
+export interface ProblemMeta {
+  label: string; question: string; fuels: string[]; investigation: string; psi_id: string; dataset: string; outcome_yes: string; outcome_no: string;
+  ranges: Record<string, [number, number]>; ranges_by_fuel: Record<string, Record<string, [number, number]>>;
+  points: CheckPoint[]; features: { key: string; label: string; unit: string }[]; card: ModelCard;
+}
+export type FireCheckMeta = Record<'gas' | 'droplet', ProblemMeta>;
 
 export const api = {
   fireCheckMeta: () => get<FireCheckMeta>('/api/fire-check/meta'),
   fireCheck: (r: FireCheckReq) => post<FireCheckRes>('/api/fire-check', r),
+  dataTables: () => get<ResourceList>('/api/resources?types=data&sort=cred&page_size=200').then(r => r.items),
   async fireCheckReport(r: FireCheckReq): Promise<{ text: string; filename: string }> {
     const res = await fetch('/api/fire-check/report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(r) });
-    if (!res.ok) throw new Error(`report: ${res.status}`);
+    if (!res.ok) {
+      let msg = `The server answered ${res.status}.`;
+      try { msg = errorText((await res.json()).detail, msg); } catch { /* not JSON */ }
+      throw new Error(msg);
+    }
     const cd = res.headers.get('Content-Disposition') || '';
     return { text: await res.text(), filename: /filename="?([^";]+)"?/.exec(cd)?.[1] ?? 'fire-check-report.html' };
   },

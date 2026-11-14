@@ -12,7 +12,7 @@ import yaml
 from ..core.config import CONFIG, PROCESSED
 from ..core.store import get_store
 from .domain import Domain
-from .problems import PROBLEMS, PSI, features_from, gas_fuel_parts
+from .problems import DATASETS, PROBLEMS, PSI, features_from, gas_fuel_parts
 from .train import OUT
 
 ZONE_TEXT = {
@@ -67,12 +67,16 @@ def meta() -> dict:
         b = _bundle(key)
         df = pb.frame()
         fuels = sorted(df.fuel.unique().tolist())
-        ranges = {}
-        for f in pb.features:
-            if f in ("carbon_n", "heptane", "fuel_share"):
-                continue
-            ranges[f] = [round(float(df[f].min()), 3), round(float(df[f].max()), 3)]
-        out[key] = {"label": pb.label, "question": pb.question, "fuels": fuels, "ranges": ranges,
+        cont = [f for f in pb.features if f not in ("carbon_n", "heptane", "fuel_share")]
+        span = lambda d, f: [round(float(d[f].min()), 3), round(float(d[f].max()), 3)]  # noqa: E731
+        ranges = {f: span(df, f) for f in cont}
+        # The domain check compares a request with tests of the SAME fuel, so the hints must too.
+        by_fuel = {fu: {f: span(g, f) for f in cont} for fu, g in df.groupby("fuel")}
+        points = [{"id": r.test_id, "fuel": r.fuel, "o2_pct": round(float(r.o2_pct), 2), "psi": round(float(r.psi), 2),
+                   "burned": int(getattr(r, pb.target))} for r in df.itertuples()]
+        features = [{"key": f, "label": pb.feature_labels[f], "unit": pb.units[f]} for f in pb.features]
+        out[key] = {"label": pb.label, "question": pb.question, "fuels": fuels, "ranges": ranges, "ranges_by_fuel": by_fuel,
+                    "points": points, "features": features, "investigation": pb.investigation, "psi_id": pb.psi_id, "dataset": DATASETS[key],
                     "outcome_yes": pb.outcome_yes, "outcome_no": pb.outcome_no, "card": b["card"]}
     return out
 
@@ -163,7 +167,9 @@ def check(req: dict) -> dict:
         return res
     folds = _prob(b["fold_models"], x[None])
     drivers, p = _drivers(pb, b, dom, x, a)
-    res["estimate"] = {"probability": round(p, 3), "low": round(float(folds.min()), 3), "high": round(float(folds.max()), 3),
+    # The range is the spread of the five fold models; it is widened to include the full-data model's own
+    # estimate, so the number shown never sits outside the range shown with it (README Decision AH).
+    res["estimate"] = {"probability": round(p, 3), "low": round(float(min(folds.min(), p)), 3), "high": round(float(max(folds.max(), p)), 3),
                        "outcome_yes": pb.outcome_yes, "outcome_no": pb.outcome_no, "will": pb.will, "model": card["chosen"]}
     res["drivers"] = drivers
     if res["tested"]:

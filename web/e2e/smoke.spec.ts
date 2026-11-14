@@ -14,7 +14,7 @@ test('smoke path: lunar rover burns; BASS-II paper → ▶ Simulate → the mode
   await expect(page.locator('#verdictText')).toContainText('gravity still feeds it');
   await expect(page.locator('#panelR')).toHaveAttribute('data-server', 'ok');      // the server's /api/simulate agrees
 
-  await page.getByRole('tab', { name: 'Find data' }).click();
+  await page.getByRole('link', { name: 'Find data' }).click();
   await page.locator('#types').getByRole('button', { name: /Research paper/ }).click();
   const row = page.locator('li.res', { hasText: 'acrylic rods in BASS-II' });
   await expect(row).toBeVisible();
@@ -92,32 +92,82 @@ test('fire check: no number outside NASA tests, an estimate between them, a repo
   page.on('pageerror', e => errors.push(String(e)));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 
-  await page.goto('/?g=0&o2=34&p=8.2&u=10&mat=fabric#simulate');
+  await page.goto('/engine/simulator?g=0&o2=34&p=8.2&u=10&mat=fabric');
   await page.locator('#toCheck').click();
-  const dlg = page.locator('#fireDlg');
-  await expect(dlg).toBeVisible();
+  await expect(page).toHaveURL(/\/engine\/check\?/);
+  const fc = page.locator('#fireCheck');
   // pure propane was only tested near 14 psi: at 8.2 psi there is no number
-  await expect(dlg.locator('#fcZone')).toHaveText('Untested');
-  await expect(dlg.locator('#fcProb')).toHaveCount(0);
-  await expect(dlg.locator('#fcNear tbody tr').first()).toBeVisible();
+  await fc.locator('#fcFuel').selectOption('propane');
+  await expect(fc.locator('#fcZone')).toHaveText('Untested');
+  await expect(fc.locator('#fcProb')).toHaveCount(0);
+  await expect(fc.locator('#fcNear tbody tr').first()).toBeVisible();
 
   // a heptane drop between tests: an estimate with its range, from a model that beat the baseline
-  await dlg.locator('#fcDrop').click();
-  await dlg.locator('#fcO2').fill('19');
-  await dlg.locator('#fcP').fill('14.7');
-  await dlg.locator('#fcD0').fill('3');
-  await expect(dlg.locator('#fcZone')).toHaveText(/Estimated|Tested/);
-  await expect(dlg.locator('#fcProb')).toContainText('%');
-  await expect(dlg.locator('#fcModel')).toContainText('never saw');
+  await fc.locator('#fcDrop').click();
+  await fc.locator('#fcO2').fill('19');
+  await fc.locator('#fcP').fill('14.7');
+  await fc.locator('#fcD0').fill('3');
+  await expect(fc.locator('#fcZone')).toHaveText(/Estimated|Tested/);
+  await expect(fc.locator('#fcProb')).toContainText('%');
+  await expect(fc.locator('#fcModel')).toContainText('never saw');
+  await expect(page).toHaveURL(/problem=droplet.*o2=19/);                      // the check can be shared as a link
 
-  const [dl] = await Promise.all([page.waitForEvent('download'), dlg.locator('#fcReport').click()]);
+  // Moon gravity is chosen on the page and never gets a number; an empty field asks for a value
+  await fc.locator('#fcGMoon').click();
+  await expect(fc.locator('#fcZone')).toHaveText('Untested');
+  await fc.locator('#fcGMicrogravity').click();
+  await fc.locator('#fcP').fill('');
+  await expect(fc.locator('#fcErr')).toHaveText('Enter a value for Pressure.');
+  await expect(fc.locator('#fcZone')).toHaveCount(0);                         // no stale result next to the message
+  await fc.locator('#fcP').fill('14.7');
+  await expect(fc.locator('#fcZone')).toHaveText(/Estimated|Tested/);
+
+  const [dl] = await Promise.all([page.waitForEvent('download'), fc.locator('#fcReport').click()]);
   const html = readFileSync((await dl.path())!, 'utf8');
   expect(dl.suggestedFilename()).toMatch(/^fire-check-droplet-.*\.html$/);
-  for (const s of ['Nearest NASA tests', 'Model and validation', 'PSI-69', 'IBM+Plex+Sans']) expect(html).toContain(s);
+  for (const s of ['Nearest NASA tests', 'Model and validation', 'PSI-69', 'IBM+Plex+Sans', 'The Oxygen Edge']) expect(html).toContain(s);
 
-  const code = await dlg.locator('#fcNear tbody tr').first().getAttribute('data-code');
-  await dlg.locator('#fcNear tbody tr').first().getByRole('button', { name: 'Open in table' }).click();
+  const code = await fc.locator('#fcNear tbody tr').first().getAttribute('data-code');
+  await fc.locator('#fcNear tbody tr').first().getByRole('button', { name: 'Open in table' }).click();
   await expect(page.locator('#view-data')).toBeVisible();
   await expect(page.locator(`#pt-${code}`)).toBeVisible({ timeout: 15000 });
+  expect(errors, errors.join('\n')).toEqual([]);
+});
+
+test('site: landing → engine, research and presentation, deep links and Back', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(String(e)));
+  page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+
+  await page.goto('/');
+  await expect(page.locator('.hero h1')).toContainText('keep burning');
+  await expect(page.locator('.strip')).toContainText('NASA tests loaded');      // live numbers from the API
+  await expect(page.locator('#example .pill')).toBeVisible();                   // the worked example, answered live
+  await page.locator('#ctaEngine').click();
+  await expect(page).toHaveURL(/\/engine$/);
+  await expect(page.locator('#ovTiles')).toContainText('NASA tests loaded');
+  await expect(page.locator('#covGas svg circle').first()).toBeVisible();
+  await page.locator('#nav-check').click();
+  await expect(page).toHaveURL(/\/engine\/check/);
+  await expect(page.locator('#fcZone')).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/engine$/);
+  await page.goBack();
+  await expect(page.locator('#landing')).toBeVisible();
+
+  const tables = (await (await page.request.get('/api/resources?types=data&page_size=200')).json()).items.length;
+  await page.goto('/research');
+  await expect(page.locator('#psiTables tbody tr')).toHaveCount(tables);
+  await expect(page.locator('#psiTables .badge')).toHaveCount(2);              // the two tables the models learn from
+  await expect(page.locator('#moonAir tbody tr').first()).toBeVisible();
+
+  await page.goto('/presentation/3');
+  await expect(page.locator('#slideNo')).toHaveText(/^3 \/ \d+$/);
+  await page.keyboard.press('ArrowRight');
+  await expect(page).toHaveURL(/\/presentation\/4$/);
+  await expect(page.locator('.slide.on')).toContainText('NASA tests loaded');
+
+  await page.goto('/engine/models');
+  await expect(page.locator('#model-gas table').first()).toContainText('baseline (always the average)');
   expect(errors, errors.join('\n')).toEqual([]);
 });

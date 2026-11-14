@@ -1,7 +1,7 @@
 /* Simulate view (prototype "SIMULATE"): full-bleed stage, Experiment panel, Result panel, timeline. */
-import { useEffect, useRef, useState } from 'react';
-import { FireCheck } from '../components/FireCheck';
+import { useEffect, useRef } from 'react';
 import { FlammabilityMap } from '../components/FlammabilityMap';
+import { Link } from '../router';
 import { Timeline } from '../components/Timeline';
 import { coverage, nearest } from '../sim/evidence';
 import { fmtU, gName, model, sFromU, uFromS } from '../sim/model';
@@ -19,18 +19,17 @@ interface Props {
   panelL: boolean; panelR: boolean;
   setPanels: (l: boolean, r: boolean) => void;
   onFindData: () => void;
-  onOpenTest: (code: string, resourceId: string | null) => void;
 }
 
-export function SimulateView({ active, panelL, panelR, setPanels, onFindData, onOpenTest }: Props) {
+export function SimulateView({ active, panelL, panelR, setPanels, onFindData }: Props) {
   const wide = typeof window !== 'undefined' ? isWide() : true;
   const lOn = panelL || !wide, rOn = panelR || !wide;
   return (
-    <section id="view-sim" className={'view' + (lOn ? '' : ' l-off') + (rOn ? '' : ' r-off')} role="tabpanel" aria-labelledby="tab-sim" hidden={!active}>
+    <section id="view-sim" className={'view' + (lOn ? '' : ' l-off') + (rOn ? '' : ' r-off')} aria-label="Simulator" hidden={!active}>
       <Stage active={active} panelL={lOn} panelR={rOn} />
       <button className="edge left" id="openL" hidden={lOn} aria-controls="panelL" onClick={() => { setPanels(true, panelR); setTimeout(() => document.getElementById('closeL')?.focus()); }}>{ICON_MENU}Controls</button>
       <button className="edge right" id="openR" hidden={rOn} aria-controls="panelR" onClick={() => { setPanels(panelL, true); setTimeout(() => document.getElementById('closeR')?.focus()); }}>Result{CHEV_L}</button>
-      <Controls open={lOn} onClose={() => { setPanels(false, panelR); setTimeout(() => document.getElementById('openL')?.focus()); }} onFindData={onFindData} onOpenTest={onOpenTest} />
+      <Controls open={lOn} onClose={() => { setPanels(false, panelR); setTimeout(() => document.getElementById('openL')?.focus()); }} onFindData={onFindData} />
       <Result open={rOn} onClose={() => { setPanels(panelL, false); setTimeout(() => document.getElementById('openR')?.focus()); }} />
       <Timeline />
     </section>
@@ -78,9 +77,8 @@ function Stage({ active, panelL, panelR }: { active: boolean; panelL: boolean; p
   );
 }
 
-function Controls({ open, onClose, onFindData, onOpenTest }: { open: boolean; onClose: () => void; onFindData: () => void; onOpenTest: (code: string, resourceId: string | null) => void }) {
+function Controls({ open, onClose, onFindData }: { open: boolean; onClose: () => void; onFindData: () => void }) {
   const s = useSim();
-  const [checking, setChecking] = useState(false);
   const st = s.params;
   return (
     <aside className={'panel left' + (open ? '' : ' off')} id="panelL" aria-label="Experiment controls" {...(open ? {} : { inert: '' })}>
@@ -113,8 +111,7 @@ function Controls({ open, onClose, onFindData, onOpenTest }: { open: boolean; on
         <button id="mPmma" aria-pressed={st.mat === 'pmma'} onClick={() => sim.set({ mat: 'pmma' }, true)}>Acrylic rod (PMMA)</button>
       </div>
       <button className="btn" id="toData" onClick={onFindData}>Find data for these settings</button>
-      <button className="btn" id="toCheck" onClick={() => setChecking(true)}>Check a fuel against NASA tests</button>
-      {checking && <FireCheck o2={st.o2} psi={st.p} g={st.g} onClose={() => setChecking(false)} onOpenTest={(c, r) => { setChecking(false); onOpenTest(c, r); }} />}
+      <Link className="btn" id="toCheck" to={`/engine/check?o2=${st.o2}&psi=${st.p}`}>Check a fuel against NASA tests</Link>
     </aside>
   );
 }
