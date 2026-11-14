@@ -25,6 +25,7 @@ CANON_TABLE = {
     "d0_mm": ("mm", LENGTH),
     "thickness_mm": ("mm", LENGTH),
     "diameter_mm": ("mm", LENGTH),
+    "burner_mm": ("mm", LENGTH),
     "extinction_d_mm": ("mm", LENGTH),
     "flow_cm_s": ("cm/s", SPEED),
     "burn_rate_k_mm2_s": ("mm²/s", RATE_AREA),
@@ -57,6 +58,10 @@ PHYSICAL = {
     "heat_duration_s": (0.0, True, None, "A heating time cannot be negative."),
     "smoke_aging_s": (0.0, True, None, "An aging time cannot be negative."),
     "mass_loss_rate_mg_min": (0.0, True, None, "A weight-loss rate cannot be negative."),
+    "burner_mm": (0.0, False, None, "A burner size must be greater than zero."),
+    "oxidizer_o2_frac": (0.0, True, 1.0, "An oxygen fraction must lie between 0 and 100 %."),
+    "ambient_fuel_frac": (0.0, True, 1.0, "A gas fraction must lie between 0 and 1."),
+    "flames_ignited": (0.0, True, None, "A count of flames cannot be negative."),
     "heater_ratio": (0.0, False, None, "A heater resistance ratio must be greater than zero."),
 }
 

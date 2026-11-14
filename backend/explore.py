@@ -45,7 +45,7 @@ def explore() -> dict:
                      "hardware": r.hardware, "platform": r.platform, "years": years, "parent": r.parent,
                      "n_tests": int(counts.get(r.id, 0)), "objectives": r.objectives,
                      "datasets": json.loads(r.datasets) if r.datasets else [],
-                     "years_source": r.years_source, "psi": psi_tables(json.loads(r.psi_ids) if r.psi_ids else [])})
+                     "years_source": r.years_source, "test_matrix": r.test_matrix, "psi": psi_tables(json.loads(r.psi_ids) if r.psi_ids else [])})
     by_id = {i["label"]: i for i in invs}
 
     # link strength between two investigations, with the reasons spelled out

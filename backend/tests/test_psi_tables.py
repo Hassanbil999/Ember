@@ -182,3 +182,45 @@ def test_detection_goal_has_real_data_in_the_ranking():
     from backend import relevance
     best = {b["goal"]: b["label"] for b in relevance.rank("iss")["best"]}
     assert best["detecting fire"] in ("SAME", "SAME-R")
+
+
+# ------------------------------------------------------------------ the remaining PSI tables
+def test_cfi_duplicates_are_excluded_and_logged_not_dropped():
+    _, _, df = _load("cfi")
+    assert len(df) == 87 and int(df.excluded.sum()) == 8
+    assert (df[df.excluded]["flags"].map(lambda f: "duplicate" in f)).all()
+    assert df.loc[df.test_id == "CFI-1206", "pressure_kpa"].iloc[0] == pytest.approx(101.325)       # "1 atm"
+
+
+def test_spice_negative_airflow_is_flagged_and_duration_derived():
+    _, res, df = _load("spice")
+    bad = df[df["flags"].map(lambda f: "impossible_value" in f)]
+    assert len(bad) == 8 and bad.excluded.all() and bad.flow_cm_s.isna().all()        # "-0.28 cm/s" is never converted
+    first = df[~df.excluded].iloc[0]
+    assert first.burn_time_s == 655 and first.fuel == "ethylene"                         # 14:37:08 -> 14:48:03
+
+
+def test_bre_flags_typos_and_never_claims_sustained_burning():
+    _, _, df = _load("acme_bre")
+    flagged = df[df.excluded]
+    assert set(flagged.test_id) == {"BRE-2019-03-07-1", "BRE-2019-04-01-1"}              # "3400%", "2100%"
+    assert "burned" not in df.columns or df["burned"].isna().all(), "ignition is not sustained burning"
+    lit = df[~df.excluded & df.test_end.str.startswith("At least one flame ignited")]
+    assert lit.o2_frac.max() == pytest.approx(0.40)
+
+
+def test_inverse_flame_oxygen_never_enters_cabin_air():
+    _, _, df = _load("cfig_inverse")
+    assert len(df) == 154 and df.test_id.is_unique
+    assert "o2_frac" not in df.columns or df["o2_frac"].isna().all()
+    assert df.oxidizer_o2_frac.max() == pytest.approx(0.85)
+
+
+def test_every_downloaded_psi_table_is_used():
+    loaded = {d for d, c in config.datasets().items() if c.get("enabled", True) and not c.get("demo")}
+    for ds_id in MANIFEST:
+        assert ds_id in loaded or ds_id == "flex2", f"{ds_id} is downloaded but not loaded"
+    import yaml
+    from backend.core.config import CONFIG
+    flex2 = next(i for i in yaml.safe_load((CONFIG / "investigations.yaml").read_text(encoding="utf-8"))["investigations"] if i["id"] == "FLEX-2")
+    assert "test matrix" in flex2["test_matrix"].lower(), "FLEX-2's PSI table is a test plan, shown as such"

@@ -252,6 +252,99 @@ datasets:
       "Note": notes
     units: { "Flow": "cm/s", "Heat time": "s", "Aging": "s" }
 
+  cfi:
+    title: CFI cool-flame droplet tests (NASA PSI-39 experimental table)
+    adapter: psi_cfi
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-39. See the PSI terms of use."
+    constants: { gravity_g: 0.0 }
+    investigations: [CFI]
+    files: ["PSI-39_Experimental table_CFI.csv"]
+    # Conditions only: the table does not record how each droplet flame ended.
+    columns: { "Test id": test_id, "Investigation": investigation_id, "Fuel": fuel, "Pressure": pressure_kpa, "O2": o2_frac,
+               "N2": n2_frac, "He": he_frac, "Date": mission_date, "Note": notes }
+
+  spice:
+    title: SPICE smoke-point gas flames (NASA PSI-107 experimental table)
+    adapter: psi_spice
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-107. See the PSI terms of use."
+    constants: { gravity_g: 0.0 }
+    investigations: [SPICE]
+    files: ["PSI-107_Experimental table_Spice.csv"]
+    columns: { "Test id": test_id, "Investigation": investigation_id, "Fuel": fuel, "Nozzle": burner_mm, "Fuel flow": fuel_flow_mg_s,
+               "Air": flow_cm_s, "Burn": burn_time_s, "Note": notes }
+    units: { "Nozzle": mm, "Fuel flow": "mg/s", "Air": "cm/s", "Burn": s }
+
+  acme_bre:
+    title: ACME Burning Rate Emulator daily summary (NASA PSI-20 experimental table)
+    adapter: psi_bre
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-20. See the PSI terms of use."
+    constants: { gravity_g: 0.0 }
+    investigations: [ACME]
+    files: ["PSI-20_Experimental table_ACME BRE.csv"]
+    # One row per test day and oxygen level listed. The table lists the oxygen levels of flames that ignited;
+    # ignition is not sustained burning, so no burned outcome is set.
+    columns: { "Test id": test_id, "Investigation": investigation_id, "Fuel": fuel, "Burner": burner_mm, "O2": o2_frac,
+               "Flames": flames_ignited, "End": test_end, "Date": mission_date, "Note": notes }
+    units: { "Burner": mm }
+
+  efield:
+    title: ACME E-FIELD Flames daily summary (NASA PSI-22 experimental table)
+    adapter: psi_efield
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-22. See the PSI terms of use."
+    constants: { gravity_g: 0.0 }
+    investigations: [E-FIELD Flames]
+    files: ["PSI-22_Experimental table_ACME E-FIELD Flames.csv"]
+    columns: { "Test id": test_id, "Investigation": investigation_id, "Fuel": fuel, "Flames": flames_ignited, "Date": mission_date, "Note": notes }
+
+  cfig_inverse:
+    title: CFI-G inverse gas flames (NASA PSI-159 experimental table, inverse flames)
+    adapter: psi_gas_flames
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-159. See the PSI terms of use."
+    constants: { gravity_g: 0.0 }
+    investigations: [CFI-G]
+    files: ["PSI-159_Experimental table_CFI-G_Inverse Flames.csv"]
+    id_prefix: "CFIGI-"
+    # Oxygen is blown INTO a fuel atmosphere: XO2 is the oxidizer stream, not the surrounding air, so it is
+    # stored as oxidizer_o2_frac and never mixed into the cabin-air charts or the gas-flame model.
+    columns:
+      "Test id": test_id
+      "Campaign": campaign
+      "Investigation": investigation_id
+      "Fuel": fuel
+      "XO2": oxidizer_o2_frac
+      "Xf  before test": ambient_fuel_frac
+      "approx p (bar)": pressure_kpa
+      "HC burnrate (mg/s)": fuel_flow_mg_s
+      "burn time (sec)": burn_time_s
+      "Outcome": burned
+      "Test end": test_end
+      "Date": mission_date
+    units: { "approx p (bar)": bar }
+    outcome:
+      column: "Self -ext or flow term"
+      ignition_column: "Hot ignition"
+    outcome_map: { "ft": 1, "se": 0 }
+
   flex_demo:        # synthetic stand-in used before the real table was loaded; kept for the adapter tests
     title: Droplet combustion tests (FLEX-shaped demo fixture)
     adapter: flex_droplets

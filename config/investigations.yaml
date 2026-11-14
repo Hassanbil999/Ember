@@ -119,6 +119,7 @@ investigations:
     years_source: approximate (the PSI table gives no year)
     objectives: Multi-component fuels, droplet pairs and arrays, and convective effects on droplet burning.
     psi_ids: [PSI-68]
+    test_matrix: "Planned test matrix in the PSI-68 table (not individual tests): 8 fuels or mixtures (isooctane, n-octane, heptane, decane, ethanol, propanol-glycerol and heptane-isooctane mixtures), droplets 1.5-5 mm, oxygen 17-30 % in nitrogen or helium, 0.5-3 atm, 25 °C, flow 0.1-5 cm/s."
   - id: CFI
     name: Cool Flames Investigation
     pillars: [prevention]
@@ -128,6 +129,7 @@ investigations:
     years: [2017, 2017]
     years_source: PSI test dates
     objectives: Low-temperature (cool flame) droplet burning chemistry in microgravity.
+    datasets: [cfi]
     psi_ids: [PSI-39]
   - id: ACME
     name: Advanced Combustion via Microgravity Experiments
@@ -138,7 +140,7 @@ investigations:
     years: [2019, 2021]
     years_source: PSI test dates
     objectives: Six gas-flame experiments on soot, flame stability and efficiency, including CFI-G and E-FIELD Flames.
-    datasets: [flame_design_normal]
+    datasets: [flame_design_normal, acme_bre]
     psi_ids: [PSI-10, PSI-20]
   - id: CFI-G
     name: Cool Flames Investigation with Gases
@@ -150,7 +152,7 @@ investigations:
     years_source: PSI test dates
     parent: ACME
     objectives: Gaseous cool and hot diffusion flames at oxygen fractions up to 85% O₂.
-    datasets: [cfig_normal]
+    datasets: [cfig_normal, cfig_inverse]
     psi_ids: [PSI-159]
   - id: E-FIELD Flames
     name: Electric-Field Effects on Laminar Diffusion Flames
@@ -162,6 +164,7 @@ investigations:
     years_source: PSI test dates
     parent: ACME
     objectives: Use of electric fields to influence flame shape, soot and stability.
+    datasets: [efield]
     psi_ids: [PSI-22]
   - id: SPICE
     name: Smoke Point In Co-flow Experiment
@@ -172,6 +175,7 @@ investigations:
     years: [2009, 2010]
     years_source: approximate (the PSI table gives no year)
     objectives: Soot formation and smoke points of gas jet flames in a co-flow (MSG flow duct).
+    datasets: [spice]
     psi_ids: [PSI-107]
   - id: SLICE
     name: Structure and Liftoff In Combustion Experiment
