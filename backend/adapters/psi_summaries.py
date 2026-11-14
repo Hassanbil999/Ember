@@ -22,7 +22,8 @@ from ..core.config import RAW
 from .base import AdapterResult, _is_blank, register, tabular_to_canonical
 
 KEEP = lambda v: (None, None) if _is_blank(v) else (str(v), None)   # noqa: E731
-FORMULA = {"ch4": "methane", "c2h4": "ethylene", "c3h8": "propane", "c3h6": "propylene", "c12h26": "n-dodecane"}
+FORMULA = {"ch4": "methane", "c2h4": "ethylene", "c2h6": "ethane", "c3h8": "propane", "c3h6": "propylene",
+           "c12h26": "n-dodecane", "h2": "hydrogen"}
 MONTH = {m: i for i, m in enumerate(["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"], 1)}
 
 
@@ -181,4 +182,108 @@ def load_efield(ds_id: str, cfg: dict) -> AdapterResult:
     for r in rows:
         r["Note"] = (f"{r['_kind']}; mesh polarity {r['_polarity']}; fuel concentrations used: {', '.join(r['_concs'])} "
                      "(daily summary row)")
+    return _derive(_canonical(rows, index, ds_id, cfg), rows, cfg)
+
+
+# ------------------------------------------------------------------ SLICE, ACME CLD Flame, ACME s-Flame (daily summaries)
+def _yyddd(code: str) -> Optional[str]:
+    m = re.match(r"^\s*(\d{2})(\d{3})\s*$", code or "")
+    if not m or not 1 <= int(m.group(2)) <= 366:
+        return None
+    return (date(2000 + int(m.group(1)), 1, 1) + timedelta(days=int(m.group(2)) - 1)).isoformat()
+
+
+def _fuel_as_written(text: str) -> Optional[str]:
+    """A single 'pct formula' is named ('45% CH4' -> 'methane (45%)'); a mixture stays as the table writes it."""
+    t = _clean(text)
+    m = re.search(r"\swith\s+([A-Za-z0-9]+)\s*$", t)
+    if m and m.group(1).lower() in FORMULA:            # "44.4% H2 with CH4" is a fuel mixture, not a diluted fuel
+        return t
+    part = t.split(" with")[0].split(" (")[0].strip(" ,")
+    if re.fullmatch(r"\d+(?:\.\d+)?\s*%\s*[A-Za-z0-9]+", part) and part.split("%")[1].strip().lower() in FORMULA:
+        return gas_name(part)
+    return part or None
+
+
+@register("psi_slice")
+def load_slice(ds_id: str, cfg: dict) -> AdapterResult:
+    raw = _read(ds_id, cfg)
+    rows, index = [], []
+    for i, r in raw.iterrows():
+        cell, fuel_cell = _clean(r["Test Date"]), _clean(r["Fuel Type"])
+        m = re.match(r"^(\d{4}-[A-Za-z]{3}-\d{1,2})\s*(.*)$", cell)
+        if not m:
+            continue
+        d = pd.to_datetime(m.group(1), format="%Y-%b-%d", errors="coerce")
+        when = d.strftime("%Y-%m-%d") if pd.notna(d) else None
+        rows.append({"Test id": f"SLICE-{when or i}", "Fuel": _fuel_as_written(fuel_cell), "Date": when,
+                     "Note": "Daily summary row. As written: " + "; ".join(x for x in (m.group(2), fuel_cell) if x),
+                     "_src": {"Test Date": cell, "Fuel Type": fuel_cell},
+                     "_why": {"fuel": ("Fuel Type", f"read from '{fuel_cell}'"),
+                              "mission_date": ("Test Date", f"'{m.group(1)}' read as a date"),
+                              "notes": ("Fuel Type", "the table's own text, unchanged")}})
+        index.append(i)
+    return _derive(_canonical(rows, index, ds_id, cfg), rows, cfg)
+
+
+@register("psi_cld")
+def load_cld(ds_id: str, cfg: dict) -> AdapterResult:
+    """The Fuel Bottle column counts up row by row (CH4, CH5 ... CH14; C2H4 ... C2H11), the pattern a dragged
+    spreadsheet cell leaves, so it is not used as the fuel: the fuel family comes from the Test Type column."""
+    raw = _read(ds_id, cfg)
+    family = {"methane": "methane", "ethylene": "ethylene"}
+    rows, index = [], []
+    for i, r in raw.iterrows():
+        day = _clean(r["Test Day"])
+        if not day:
+            continue
+        kind, bottle = _clean(r["Test Type"]), _clean(r["Fuel Bottle"])
+        fam = next((v for k, v in family.items() if kind.lower().startswith(k)), None)
+        rows.append({"Test id": f"CLD-{day}", "Fuel": fam, "Flames": _clean(r["Flames ignited"]), "Date": _yyddd(day),
+                     "Note": (f"Daily summary row ({kind}). Fuel bottle as written: '{bottle}'; fuel concentration range "
+                              f"{_clean(r['Fuel conc. Range'])}; fuel / N2 flow settings {_clean(r['Fuel MFC'])} / {_clean(r['N2 MFC'])}. "
+                              "The Fuel Bottle column counts up row by row (CH4, CH5, CH6 ...), a spreadsheet auto-fill pattern, "
+                              "so it is not used as the fuel."),
+                     "_src": {"Test Type": kind, "Test Day": day},
+                     "_why": {"fuel": ("Test Type", f"fuel family from the Test Type '{kind}'" if fam else
+                                       f"the Test Type '{kind}' names no fuel, and the Fuel Bottle column is not reliable"),
+                              "mission_date": ("Test Day", f"'{day}' read as year and day of year (YYDDD), as the table explains"),
+                              "notes": ("Fuel Bottle", "the table's own values, unchanged, with a warning")}})
+        index.append(i)
+    return _derive(_canonical(rows, index, ds_id, cfg), rows, cfg)
+
+
+@register("psi_sflame")
+def load_sflame(ds_id: str, cfg: dict) -> AdapterResult:
+    raw = _read(ds_id, cfg)
+    c_day = next(c for c in raw.columns if c.startswith("Test Day"))
+    c_atm = next(c for c in raw.columns if c.startswith("Atmosphere"))
+    c_fl = next(c for c in raw.columns if c.startswith("Flames Ignited"))
+    rows, index = [], []
+    for i, r in raw.iterrows():
+        day, atm, bottle = _clean(r[c_day]), _clean(r[c_atm]), _clean(r["Fuel Bottle"])
+        if not day:
+            continue
+        mo = _clean(r["Month"]).lower()[:3]
+        when = (date(int(_clean(r["Year"])), MONTH[mo], int(_clean(r["Date"]))).isoformat()
+                if mo in MONTH and _clean(r["Date"]).isdigit() else _yyddd(day))
+        m = re.search(r"with\s+([A-Za-z0-9]+)\s*$", atm)
+        dil_txt = m.group(1) if m else ""
+        dil = {"N2": "N2", "He": "He"}.get(dil_txt)
+        levels = re.findall(r"(\d+(?:\.\d+)?)\s*%", atm)
+        for k, lvl in enumerate(levels, 1):
+            rows.append({"Test id": f"SFLAME-{day}-{k}", "Fuel": _fuel_as_written(bottle), "O2": f"{lvl} %", "Diluent": dil,
+                         "Flames": _clean(r[c_fl]), "Date": when,
+                         "Note": (f"Daily summary row. Atmosphere as written: '{atm}'; fuel bottle as written: '{bottle}'. "
+                                  "The table says the chamber was about 1 atm, with pressure rising during testing; no pressure value is given."
+                                  + ("" if dil or not dil_txt else f" '{dil_txt}' is not a gas (the column counts up N2, N3, N4 ..., "
+                                                                     "a spreadsheet auto-fill pattern), so no diluent is recorded.")),
+                         "_src": {c_atm: atm, "Fuel Bottle": bottle},
+                         "_why": {"o2_frac": (c_atm, f"approximate level {k} of '{atm}' (the table writes ~)"),
+                                  "diluent": (c_atm, f"'with {dil_txt}' in '{atm}'" if dil else
+                                              f"'with {dil_txt}' in '{atm}' is not a gas; no diluent recorded"),
+                                  "fuel": ("Fuel Bottle", f"read from '{bottle}'"),
+                                  "mission_date": ("Year", "Year, Month and Date columns"),
+                                  "notes": (c_atm, "the table's own text, unchanged")}})
+            index.append(i)
     return _derive(_canonical(rows, index, ds_id, cfg), rows, cfg)

@@ -200,7 +200,34 @@ investigations:
     fuel_phase: gas
     platform: ISS / MSG
     years: [2012, 2012]
-    years_source: approximate (no PSI table loaded)
+    years_source: PSI test dates
     objectives: Lifted and attached gas-jet flame structure in co-flow (MSG flow duct).
+    datasets: [slice]
     psi_ids: [PSI-106]
     dois: {PSI-106: 10.60555/pm12-rg61}
+  - id: CLD Flame
+    name: Coflow Laminar Diffusion Flame (ACME)
+    pillars: [prevention]
+    hardware: CIR
+    fuel_phase: gas
+    platform: ISS / CIR (ACME)
+    years: [2017, 2021]
+    years_source: PSI test dates
+    parent: ACME
+    objectives: Coflow methane and ethylene flames from very dilute to sooting, to test computational models at the extremes of fuel dilution (PSI-21).
+    datasets: [acme_cld]
+    psi_ids: [PSI-21]
+    dois: {PSI-21: 10.60555/23e1-9950}
+  - id: s-Flame
+    name: Structure and Response of Spherical Diffusion Flames (ACME)
+    pillars: [prevention]
+    hardware: CIR
+    fuel_phase: gas
+    platform: ISS / CIR (ACME)
+    years: [2019, 2020]
+    years_source: PSI test dates
+    parent: ACME
+    objectives: Soot-free and sooty spherical diffusion flames from a porous burner, in nitrogen or helium at about 21 % and 30 % oxygen, to test transport and chemistry models (PSI-23).
+    datasets: [acme_sflame]
+    psi_ids: [PSI-23]
+    dois: {PSI-23: 10.60555/k57n-p030}
