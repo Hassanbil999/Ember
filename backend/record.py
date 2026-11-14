@@ -164,6 +164,8 @@ def test_record(test_id: str) -> dict | None:
         p = pv.get(var)
         if p is None:
             continue                               # this dataset does not carry the variable
+        if var == "notes" and (row.get(var) is None or (not isinstance(row.get(var), str) and pd.isna(row.get(var)))):
+            continue                               # most tests have no note: no empty row for it
         steps = json.loads(p.steps)
         ops = {s["op"] for s in steps}
         value, unit = display(var, row.get(var))

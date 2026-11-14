@@ -1,8 +1,8 @@
 """Adapters: smoke experiments for fire detection, as published on NASA PSI.
 
   psi_same    SAME experimental table (PSI-102): samples heated to make smoke for detector design.
-  psi_same_r  SAME-R experimental table (PSI-101): five spacecraft materials heated at set heater
-              levels, airflows and aging times.
+  psi_same_r  SAME-R experimental table (PSI-101): five spacecraft materials heated to make smoke, with the
+              table's heater setting (Rt/R0, kept as written), airflow and aging times.
 
 Both tables record the CONDITIONS under which smoke was made, not the smoke measurements (particle
 sizes are not in the PSI tables). So no outcome is set; these tests show what NASA tested for

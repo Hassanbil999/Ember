@@ -191,7 +191,7 @@ variables:
     unit: ""
     kind: number
     role: condition
-    description: The smoke experiments' heater setting, the ratio of the heater's hot to cold resistance as written in the PSI table; a higher value means a hotter sample.
+    description: The heater setting of each smoke run, as the PSI table writes it (Rt/R0). The table does not convert it to a temperature, so neither does this atlas.
     synonyms: [heater, rt/r0, heating temperature, temperature setting]
     valid_range: [0.5, 3]
   heat_duration_s:

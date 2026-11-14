@@ -278,7 +278,7 @@ def _environment(tid: str, material: str | None) -> dict:
 def _microgravity() -> dict:
     """The same samples burned in orbit and on the ground (SAFFIRE-2): what gravity changes."""
     t = get_store().usable_tests("saffire2")
-    t = t[t.burned.notna() & t.material.notna() & ~t.material.str.contains("two-part")]
+    t = t[t.burned.notna() & t.material.notna() & ~t.material.str.contains("two-part") & ~t.material.str.startswith("Not named")]
     ug, g1 = t[t.gravity_g < 0.02], t[t.gravity_g > 0.95]
     items = []
     finding = "With no up, hot gas does not rise: a flame becomes a slow, round shell fed only by whatever air drifts past it."

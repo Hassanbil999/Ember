@@ -124,6 +124,7 @@ datasets:
       "O2": o2_frac
       "Test end": test_end
       "Date": mission_date
+      "Note": notes
     units: { "O2": "%" }
     constants: { gravity_g: 0.0 }
 
@@ -147,6 +148,7 @@ datasets:
       "Flow direction": flow_direction
       "Test end": test_end
       "Date": mission_date
+      "Note": notes
     constants: { gravity_g: 0.0 }
 
   saffire1:
@@ -176,6 +178,7 @@ datasets:
       "Burned": burned
       "Test end": test_end
       "Spread rate": spread_rate_mm_s
+      "Note": notes
     outcome_map: { "1": 1, "0": 0 }
 
   saffire2:

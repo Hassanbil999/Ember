@@ -115,10 +115,10 @@ def test_bass2_rows_and_no_invented_outcome():
 def test_bass2_reads_text_and_says_so():
     _, res, df = _load("bass2")
     r = df.set_index("test_id").loc["BASS2-O4"]
-    assert r.material == "PMMA" and r.sample_shape == "rod" and r.diameter_mm == pytest.approx(9.525)   # 3/8 inch
+    assert r.material == "Not named in the table" and r.sample_shape == "rod" and r.diameter_mm == pytest.approx(9.525)   # 3/8 inch
     assert r.o2_frac == pytest.approx(0.148) and r.mission_date == "2014-07-08"
     by = {p["variable"]: p for p in res.provenance if p["test_id"] == "BASS2-O4"}
-    assert "every rod sample that is named" in by["material"]["steps"][0]["detail"]   # inferred, and the panel says why
+    assert "Every rod sample that the BASS-II table does name is PMMA" in r.notes and "rather than assumed" in r.notes   # context, never inference
     assert by["test_end"]["raw_value"].startswith("Fan display: 5 0.7")
     assert df.set_index("test_id").loc["BASS2-B1"].thickness_mm == pytest.approx(0.1)  # "100 micron"
 
@@ -134,7 +134,8 @@ def test_saffire2_flight_and_ground_rows():
     assert pd.isna(d.loc["SAF2-2-7-UG", "burned"]) and "Nomex was not ignited" in d.loc["SAF2-2-7-UG", "test_end"]
     assert pd.isna(d.loc["SAF2-2-9-UG", "burned"]) and "anchored at the base" in d.loc["SAF2-2-9-UG", "test_end"]
     assert pd.isna(d.loc["SAF2-2-1-1G", "o2_frac"]), "no oxygen level is given for the ground tests"
-    assert d.loc["SAF2-2-6-UG", "material"] == "Cotton-fiberglass fabric (SIBAL)"     # blank cell, row above
+    assert d.loc["SAF2-2-6-UG", "material"] == "Not named in the table"               # blank cell is not assumed
+    assert "row above names Cotton-fiberglass fabric (SIBAL)" in d.loc["SAF2-2-6-UG", "notes"]
 
 
 def test_bass_run_list_flags_impossible_dates():
