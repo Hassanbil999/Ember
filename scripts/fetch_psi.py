@@ -56,6 +56,38 @@ TABLES = [
     ("spice", "PSI-107", "PSI-107_Experimental table_Spice.csv", "fb0d7e60cf5367afb429089e9901d27288f78038efd26c8de1db4fbe04117136"),
 ]
 
+# NASA documents quoted by the answer engine: (folder, file name, pinned sha256, source URL)
+DOCUMENTS = [
+    ("reports", "researchers_guide_combustion_science.pdf", "5fe046efe4e35e506023e27a9784d041e893026f19c9987591483614aea5d6b6",
+     "https://www.nasa.gov/sites/default/files/atoms/files/np-2015-10-034-jsc_combustion_in_reduced_gravity-iss-mini-book-011116-508.pdf"),
+]
+
+
+def fetch_documents(refresh: bool) -> int:
+    """Same rules as the tables: verify what is on disk, never overwrite with a file that differs."""
+    problems = 0
+    for folder, name, pinned, url in DOCUMENTS:
+        out = RAW / folder / name
+        if out.exists() and not refresh:
+            ok = sha256(out.read_bytes()) == pinned
+            print(f"{'OK  ' if ok else 'DIFF'}  doc      {name}  {'kept' if ok else 'on disk differs from the pinned checksum; left untouched'}")
+            problems += not ok
+            continue
+        try:
+            data = fetch(url)
+        except Exception as e:
+            print(f"FAIL  doc      {name}: {e}")
+            problems += 1
+            continue
+        if sha256(data) != pinned or not data.startswith(b"%PDF"):
+            write_atomic(out.with_name(out.name + ".new"), data)
+            print(f"DIFF  doc      {name}: NASA's file differs from the pinned checksum; saved as {name}.new for review")
+            problems += 1
+            continue
+        write_atomic(out, data)
+        print(f"OK    doc      {name}  downloaded")
+    return problems
+
 
 def url_of(acc: str, name: str) -> str:
     return BASE.format(acc=acc, name=urllib.parse.quote(name, safe=""))
@@ -152,6 +184,8 @@ def main(argv: list[str] | None = None) -> int:
     MANIFEST.write_text(json.dumps(dict(sorted(manifest.items())), indent=2) + "\n", encoding="utf-8")
     total = len(a.only) if a.only else len(TABLES)
     print(f"\n{total - problems}/{total} tables OK in {RAW}  (manifest: {MANIFEST.relative_to(RAW.parents[1])})")
+    if not a.only:
+        problems += fetch_documents(a.refresh)
     return 1 if problems else 0
 
 

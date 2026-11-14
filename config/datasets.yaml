@@ -124,6 +124,7 @@ datasets:
       "O2": o2_frac
       "Test end": test_end
       "Date": mission_date
+      "Note": notes
     units: { "O2": "%" }
     constants: { gravity_g: 0.0 }
 
@@ -147,6 +148,7 @@ datasets:
       "Flow direction": flow_direction
       "Test end": test_end
       "Date": mission_date
+      "Note": notes
     constants: { gravity_g: 0.0 }
 
   saffire1:
@@ -176,6 +178,7 @@ datasets:
       "Burned": burned
       "Test end": test_end
       "Spread rate": spread_rate_mm_s
+      "Note": notes
     outcome_map: { "1": 1, "0": 0 }
 
   saffire2:
@@ -207,6 +210,143 @@ datasets:
     id_prefix: SAF3
     columns: *saffire_cols
     outcome_map: { "1": 1, "0": 0 }
+
+  same:
+    title: SAME smoke tests for fire detection (NASA PSI-102 experimental table)
+    adapter: psi_same
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    constants: { gravity_g: 0.0 }
+    investigations: [SAME]
+    files: ["PSI-102_Experimental table_SAME.csv"]
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-102. See the PSI terms of use."
+    # Conditions under which smoke was made for detector design; the smoke measurements are not in the table.
+    columns:
+      "Test id": test_id
+      "Investigation": investigation_id
+      "Material": material
+      "Flow": flow_cm_s
+      "Loss": mass_loss_rate_mg_min
+      "Aging": smoke_aging_s
+      "Note": notes
+    units: { "Flow": "cm/s", "Loss": "mg/min", "Aging": "min" }
+
+  same_r:
+    title: SAME-R smoke tests for fire detection (NASA PSI-101 experimental table)
+    adapter: psi_same_r
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    constants: { gravity_g: 0.0 }
+    investigations: [SAME-R]
+    files: ["PSI-101_Experimental table_SAME-R.csv"]
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-101. See the PSI terms of use."
+    columns:
+      "Test id": test_id
+      "Investigation": investigation_id
+      "Material": material
+      "Flow": flow_cm_s
+      "Heater": heater_ratio
+      "Heat time": heat_duration_s
+      "Aging": smoke_aging_s
+      "Note": notes
+    units: { "Flow": "cm/s", "Heat time": "s", "Aging": "s" }
+
+  cfi:
+    title: CFI cool-flame droplet tests (NASA PSI-39 experimental table)
+    adapter: psi_cfi
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-39. See the PSI terms of use."
+    constants: { gravity_g: 0.0 }
+    investigations: [CFI]
+    files: ["PSI-39_Experimental table_CFI.csv"]
+    # Conditions only: the table does not record how each droplet flame ended.
+    columns: { "Test id": test_id, "Investigation": investigation_id, "Fuel": fuel, "Pressure": pressure_kpa, "O2": o2_frac,
+               "N2": n2_frac, "He": he_frac, "Date": mission_date, "Note": notes }
+
+  spice:
+    title: SPICE smoke-point gas flames (NASA PSI-107 experimental table)
+    adapter: psi_spice
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-107. See the PSI terms of use."
+    constants: { gravity_g: 0.0 }
+    investigations: [SPICE]
+    files: ["PSI-107_Experimental table_Spice.csv"]
+    columns: { "Test id": test_id, "Investigation": investigation_id, "Fuel": fuel, "Nozzle": burner_mm, "Fuel flow": fuel_flow_mg_s,
+               "Air": flow_cm_s, "Burn": burn_time_s, "Note": notes }
+    units: { "Nozzle": mm, "Fuel flow": "mg/s", "Air": "cm/s", "Burn": s }
+
+  acme_bre:
+    title: ACME Burning Rate Emulator daily summary (NASA PSI-20 experimental table)
+    adapter: psi_bre
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-20. See the PSI terms of use."
+    constants: { gravity_g: 0.0 }
+    investigations: [ACME]
+    files: ["PSI-20_Experimental table_ACME BRE.csv"]
+    # One row per test day and oxygen level listed. The table lists the oxygen levels of flames that ignited;
+    # ignition is not sustained burning, so no burned outcome is set.
+    columns: { "Test id": test_id, "Investigation": investigation_id, "Fuel": fuel, "Burner": burner_mm, "O2": o2_frac,
+               "Flames": flames_ignited, "End": test_end, "Date": mission_date, "Note": notes }
+    units: { "Burner": mm }
+
+  efield:
+    title: ACME E-FIELD Flames daily summary (NASA PSI-22 experimental table)
+    adapter: psi_efield
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-22. See the PSI terms of use."
+    constants: { gravity_g: 0.0 }
+    investigations: [E-FIELD Flames]
+    files: ["PSI-22_Experimental table_ACME E-FIELD Flames.csv"]
+    columns: { "Test id": test_id, "Investigation": investigation_id, "Fuel": fuel, "Flames": flames_ignited, "Date": mission_date, "Note": notes }
+
+  cfig_inverse:
+    title: CFI-G inverse gas flames (NASA PSI-159 experimental table, inverse flames)
+    adapter: psi_gas_flames
+    enabled: true
+    demo: false
+    source_urls: ["https://psi.nasa.gov"]
+    doi: null
+    license: "NASA Physical Sciences Informatics (PSI), investigation PSI-159. See the PSI terms of use."
+    constants: { gravity_g: 0.0 }
+    investigations: [CFI-G]
+    files: ["PSI-159_Experimental table_CFI-G_Inverse Flames.csv"]
+    id_prefix: "CFIGI-"
+    # Oxygen is blown INTO a fuel atmosphere: XO2 is the oxidizer stream, not the surrounding air, so it is
+    # stored as oxidizer_o2_frac and never mixed into the cabin-air charts or the gas-flame model.
+    columns:
+      "Test id": test_id
+      "Campaign": campaign
+      "Investigation": investigation_id
+      "Fuel": fuel
+      "XO2": oxidizer_o2_frac
+      "Xf  before test": ambient_fuel_frac
+      "approx p (bar)": pressure_kpa
+      "HC burnrate (mg/s)": fuel_flow_mg_s
+      "burn time (sec)": burn_time_s
+      "Outcome": burned
+      "Test end": test_end
+      "Date": mission_date
+    units: { "approx p (bar)": bar }
+    outcome:
+      column: "Self -ext or flow term"
+      ignition_column: "Hot ignition"
+    outcome_map: { "ft": 1, "se": 0 }
 
   flex_demo:        # synthetic stand-in used before the real table was loaded; kept for the adapter tests
     title: Droplet combustion tests (FLEX-shaped demo fixture)
@@ -269,7 +409,7 @@ datasets:
     # The synthetic droplet and solid reports are left out: they would contradict the real tables.
     # What remains are two context notes compiled by the platform authors from the challenge brief;
     # they are not NASA documents and keep the "demo" label until NASA documents replace them.
-    files: [detection_suppression_notes.pdf, fire_safety_context.pdf]
+    files: [researchers_guide_combustion_science.pdf, detection_suppression_notes.pdf, fire_safety_context.pdf]
     license: "Compiled context notes (platform authors, not NASA) — CC0."
 
 # Validation rules, applied to every tabular dataset after normalization.

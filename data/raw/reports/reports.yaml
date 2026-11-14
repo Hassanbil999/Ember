@@ -50,3 +50,15 @@ documents:
     demo: true
     authors: Freefall Atlas authors
     year: 2026
+  researchers_guide_combustion_science.pdf:
+    title: "A Researcher's Guide to: Combustion Science"
+    investigations: [BASS, SAME, FLEX, FLEX-2, ACME, E-FIELD Flames, SPICE, SLICE]
+    demo: false
+    authors: NASA (S. A. Gokoglu, NASA Glenn Research Center)
+    year: 2015
+    heading_min_size: 13.5
+    tables: false          # its only tables are the contents, acronyms and hardware specs, garbled by extraction
+    skip_pages: [6, 7]     # the table of contents
+    skip_sections: [Table of Contents, Acronyms, "The Complete ISS Researcher's Guide Series"]
+    url: https://www.nasa.gov/sites/default/files/atoms/files/np-2015-10-034-jsc_combustion_in_reduced_gravity-iss-mini-book-011116-508.pdf
+    citation: "NASA (2015). A Researcher's Guide to: Combustion Science. ISS Researcher's Guide Series, NP-2015-10-034-JSC, NASA Glenn Research Center (S. A. Gokoglu)."

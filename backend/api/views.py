@@ -11,6 +11,7 @@ from ..atlas import group_tests
 from ..core import config
 from ..core.config import ARTIFACTS
 from ..core.store import get_store
+from ..explore import psi_tables
 from ..search.index import search
 
 
@@ -185,7 +186,11 @@ def focus_view(nid: str, role: str = "researcher") -> dict:
         t = st.usable_tests()
         t = t[t.investigation_id == n["label"]]
         out["definition"] = inv.objectives
-        out["meta"] = {"PSI id": inv.psi_id or "to be filled from PSI", "DOI": inv.doi or "to be filled from PSI",
+        psi = json.loads(inv.psi_ids) if inv.psi_ids else []
+        dois = json.loads(inv.dois) if inv.dois else {}
+        out["meta"] = {"PSI id": ", ".join(psi) or "no PSI table loaded here",
+                       "DOI": ", ".join(dois[a] for a in psi if a in dois) or "not recorded here",
+                       "psi_tables": psi_tables(psi, dois), "years_source": inv.years_source,
                        "platform": inv.platform, "hardware": inv.hardware, "years": json.loads(inv.years),
                        "license": inv.license, "source": json.loads(inv.source_urls)}
         out["numbers"] = key_numbers(t)

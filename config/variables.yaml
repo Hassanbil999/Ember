@@ -23,7 +23,7 @@ variables:
     description: Total ambient pressure.
     synonyms: [pressure, total pressure, ambient pressure, psi, atm, kpa, bar]
     valid_range: [0.0001, 1000]
-    plausible_range: [5, 350]
+    plausible_range: [5, 600]      # PSI droplet experiments (CFI) ran up to 5 atm (507 kPa)
   o2_pp_kpa:
     label: O₂ partial pressure
     short: pO₂
@@ -148,6 +148,82 @@ variables:
     description: Mass flow of fuel fed to a gas flame (spherical burner); more fuel means a larger flame.
     synonyms: [fuel flow, fuel flow rate, mass flow, burner flow]
     valid_range: [0, 100]
+  burner_mm:
+    label: Burner or nozzle size
+    short: burner
+    unit: mm
+    kind: number
+    role: condition
+    description: Diameter of the burner or fuel nozzle that fed a gas flame.
+    synonyms: [burner, nozzle, burner size, nozzle diameter]
+    valid_range: [0.05, 200]
+  oxidizer_o2_frac:
+    label: Oxygen in the oxidizer stream
+    unit: "mol/mol"
+    display_unit: "%"
+    display_scale: 100
+    kind: number
+    role: condition
+    description: For inverse flames (oxygen blown into fuel), the oxygen fraction of the stream leaving the burner. It is not the oxygen in the surrounding air.
+    synonyms: [oxidizer, inverse flame, oxidizer oxygen]
+    valid_range: [0.0, 1.0]
+  ambient_fuel_frac:
+    label: Fuel in the surrounding gas
+    unit: "mol/mol"
+    display_unit: "%"
+    display_scale: 100
+    kind: number
+    role: condition
+    description: For inverse flames, the fuel fraction of the gas around the burner.
+    synonyms: [ambient fuel, fuel fraction]
+    valid_range: [0.0, 1.0]
+  flames_ignited:
+    label: Flames ignited that day
+    unit: ""
+    kind: number
+    role: meta
+    description: Number of flames ignited on that test day, as a daily summary table reports it.
+    synonyms: [flames ignited, ignitions]
+    valid_range: [0, 1000]
+  heater_ratio:
+    label: Heater setting (Rt/R0)
+    short: Rt/R0
+    unit: ""
+    kind: number
+    role: condition
+    description: The heater setting of each smoke run, as the PSI table writes it (Rt/R0). The table does not convert it to a temperature, so neither does this atlas.
+    synonyms: [heater, rt/r0, heating temperature, temperature setting]
+    valid_range: [0.5, 3]
+  heat_duration_s:
+    label: Heating time
+    unit: s
+    kind: number
+    role: condition
+    description: How long the sample was heated to make smoke.
+    synonyms: [heating time, heating duration, duration]
+    valid_range: [0, 3600]
+  smoke_aging_s:
+    label: Smoke aging time
+    unit: s
+    kind: number
+    role: condition
+    description: How long the smoke was held before it was measured (smoke particles grow as they age).
+    synonyms: [aging, smoke aging, aged smoke, aging time]
+    valid_range: [0, 10000]
+  mass_loss_rate_mg_min:
+    label: Sample weight-loss rate
+    unit: mg/min
+    kind: number
+    role: condition
+    description: How fast the heated sample lost mass while giving off smoke.
+    synonyms: [weight loss, mass loss, weight loss rate]
+    valid_range: [0, 1000]
+  notes:
+    label: Test note
+    kind: category
+    role: meta
+    description: The test's own description or note from the PSI table.
+    synonyms: [note, description, comment]
   material:
     label: Material
     kind: category

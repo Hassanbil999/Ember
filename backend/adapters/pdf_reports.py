@@ -39,11 +39,15 @@ def load_pdfs(ds_id: str, cfg: dict) -> tuple[list[dict], list[dict]]:
             title = m.get("title") or pdf.metadata.get("title") or p.stem
             authors = m.get("authors", "Unknown")
             year = m.get("year", "n.d.")
+            head_size = m.get("heading_min_size")       # documents with unnumbered, larger-font headings
+            skip = set(m.get("skip_sections", []))      # e.g. a table of contents: no claims to quote
+            want_tables = m.get("tables", True)
+            skip_pages = set(m.get("skip_pages", []))
             docs.append({
                 "id": doc_id, "title": title, "file": f"data/raw/{ds_id}/{p.name}", "pages": pdf.page_count,
                 "investigations": m.get("investigations", []), "demo": bool(m.get("demo", cfg.get("demo", False))),
-                "authors": authors, "year": year,
-                "citation": f"{authors} ({year}). {title}. Freefall Atlas corpus file {p.name}.",
+                "authors": authors, "year": year, "url": m.get("url"),
+                "citation": m.get("citation") or f"{authors} ({year}). {title}. Freefall Atlas corpus file {p.name}.",
             })
             section = "Front matter"
             counter: dict[str, int] = {}
@@ -54,7 +58,7 @@ def load_pdfs(ds_id: str, cfg: dict) -> tuple[list[dict], list[dict]]:
                 def flush():
                     text = " ".join(buf).strip()
                     buf.clear()
-                    if len(text) < 25:
+                    if len(text) < 25 or section in skip or pno + 1 in skip_pages:
                         return
                     key = f"{pno + 1}-{slug(section)}"
                     counter[key] = counter.get(key, 0) + 1
@@ -76,9 +80,13 @@ def load_pdfs(ds_id: str, cfg: dict) -> tuple[list[dict], list[dict]]:
                     if not text or text.startswith("DEMO FIXTURE") or text.startswith("Compiled context") or re.fullmatch(r"page \d+", text):
                         continue
                     mh = HEAD.match(text)
-                    if mh and len(text) < 90:
+                    if mh and len(text) < 90 and not head_size:     # numbered lines are list items in such documents
                         flush()
                         section = f"§{mh.group(1)} {mh.group(2).strip()}"
+                        continue
+                    if head_size and max_size >= head_size and len(text) < 90 and pno > 0:
+                        flush()
+                        section = text.replace("’", "'").replace("", "'")
                         continue
                     if max_size >= 15 and pno == 0 and section == "Front matter":
                         continue   # title
@@ -87,7 +95,7 @@ def load_pdfs(ds_id: str, cfg: dict) -> tuple[list[dict], list[dict]]:
                     buf.append(text)
                 flush()
                 try:
-                    for ti, tab in enumerate(page.find_tables().tables):
+                    for ti, tab in enumerate(page.find_tables().tables if want_tables else []):
                         rows = tab.extract()
                         if rows and len(rows) > 1:
                             txt = " | ".join(", ".join(str(c) for c in row if c) for row in rows)

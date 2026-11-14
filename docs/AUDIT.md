@@ -155,3 +155,16 @@ Reviewed before merging: the download script contacts only psi.nasa.gov, uses th
 Result: 932 usable real tests from 8 tables (FLEX, BASS, BASS-II, Saffire-I/II/III, CFI-G, ACME Flame Design); no demo rows remain. One conflict (the "go deeper" links on the place answers), resolved by keeping both sides' intent.
 
 Found while checking: the BASS, BASS-II and Saffire tables record no cabin pressure (BASS records no oxygen either). The place ranking was reading that as "0 tests in this air". It now matches such tables on oxygen alone, capped at 2 of 3 and labelled, and scores "not known" as zero. Tests: 123 backend (one outdated test rewritten, one added) and the browser acceptance test pass.
+
+## 10. Pull request #2 merged: every downloaded PSI table, DOIs, the Researcher's Guide (mohamad-755)
+
+Reviewed before merging: the only new network code downloads NASA's Researcher's Guide to Combustion Science from nasa.gov, checks it against a pinned SHA-256 and never overwrites a file that differs. The committed PDF matches its pinned checksum (checked offline). No other added code touches the network, credentials or deletes files.
+
+Result: 1,781 usable real tests from 13 investigations (adds CFI, CFI-G inverse, SPICE, ACME BRE, E-FIELD, SAME, SAME-R, FLEX-2 summaries); no demo rows, no duplicate test ids. Two conflicts (the place ranking's air rule and its tests): both sides had fixed the same missing-pressure problem; main's rules kept, the contributor's clearer zero-match sentence and both sets of tests kept.
+
+Found while checking (the browser test, not run on the branch, failed three ways):
+- Explore folded every group into a cluster once 13 investigations had data, so two overview layouts showed no experiment at all. Fixed (decision 86).
+- The two flagged ACME BRE rows gave no link to their source row. Fixed (decision 87).
+- Three test steps assumed every flagged row has a pressure value (true when FLEX was the only table). Rewritten to check each row's own flagged values; the provenance wait now waits for the record of the test it opened.
+
+Tests: 134 backend and the browser acceptance test pass on the merged code.

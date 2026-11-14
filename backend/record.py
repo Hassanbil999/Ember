@@ -36,6 +36,13 @@ FIELDS = [
     ("thickness_mm", "Sample thickness", "conditions"),
     ("diameter_mm", "Sample diameter", "conditions"),
     ("fuel_flow_mg_s", "Fuel flow into the flame", "conditions"),
+    ("burner_mm", "Burner or nozzle size", "conditions"),
+    ("oxidizer_o2_frac", "Oxygen in the oxidizer stream (inverse flame)", "conditions"),
+    ("ambient_fuel_frac", "Fuel in the surrounding gas (inverse flame)", "conditions"),
+    ("heater_ratio", "Heater setting (Rt/R0)", "conditions"),
+    ("heat_duration_s", "Heating time", "conditions"),
+    ("mass_loss_rate_mg_min", "Sample weight-loss rate", "conditions"),
+    ("smoke_aging_s", "Smoke aging time before measurement", "conditions"),
     ("gravity_g", "Gravity", "conditions"),
     ("test_end", "How the test ended", "results"),
     ("burned", "Outcome", "results"),
@@ -43,6 +50,8 @@ FIELDS = [
     ("burn_rate_k_mm2_s", "Burning rate (K)", "results"),
     ("extinction_d_mm", "Droplet size when the flame went out", "results"),
     ("spread_rate_mm_s", "Flame spread speed", "results"),
+    ("flames_ignited", "Flames ignited that day", "results"),
+    ("notes", "Test note", "metadata"),
     ("investigation_id", "Experiment", "metadata"),
     ("campaign", "Test campaign", "metadata"),
     ("mission_date", "Test date", "metadata"),
@@ -155,6 +164,8 @@ def test_record(test_id: str) -> dict | None:
         p = pv.get(var)
         if p is None:
             continue                               # this dataset does not carry the variable
+        if var == "notes" and (row.get(var) is None or (not isinstance(row.get(var), str) and pd.isna(row.get(var)))):
+            continue                               # most tests have no note: no empty row for it
         steps = json.loads(p.steps)
         ops = {s["op"] for s in steps}
         value, unit = display(var, row.get(var))
@@ -176,6 +187,10 @@ def test_record(test_id: str) -> dict | None:
             status = "measured"
         if "constant" in ops:
             src = {"kind": "setting", "text": f"Dataset setting for “{_source_name(ds)}”. The source table has no column for this."}
+        elif "derive" in ops and isinstance(p.column, str) and p.column and pd.notna(row.get("_row")):
+            # worked out from one source cell (e.g. one level of a list): still traceable to that cell
+            src = {"kind": "table", "dataset": ds, "row": int(row["_row"]), "column": p.column,
+                   "text": f"Worked out from {_source_name(ds)}, row {int(row['_row'])}, column “{p.column}”: {steps[0]['detail']}"}
         elif "derive" in ops or "not_computed" in ops:
             how = "oxygen fraction × total pressure" if var == "o2_pp_kpa" else steps[0]["detail"]
             src = {"kind": "calculation", "text": f"Worked out here, not read from the source: {how}."}

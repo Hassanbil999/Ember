@@ -141,7 +141,7 @@ with sync_playwright() as p:
             states += 1
     page.locator("[data-view=burns]").click()
     page.wait_for_timeout(350)
-    page.locator("[data-node='inv:BASS-II']").hover()
+    page.locator("[data-kind=inv]").first.hover()                 # any visible experiment: which ones fold into a cluster depends on what is loaded
     page.wait_for_timeout(200)
     lines = page.locator("main svg line").count()
     check(1 <= lines <= 4, f"explore: {lines} relationship lines on hover (expected 1–4)")
@@ -153,13 +153,14 @@ with sync_playwright() as p:
     check(len(flagged) >= 1, "no flagged rows in the data to test against")
     for r in flagged:
         page.goto(BASE + f"/data?dataset={r['dataset']}&test={r['test_id']}")
-        page.wait_for_selector("[data-ready=provenance]")
+        page.wait_for_selector(f"[data-ready=provenance][data-prov-test='{r['test_id']}']")   # this test's record, not the previous one's
         check(page.locator("[data-trail]").count() == 0, f"{r['test_id']}: technical trail visible by default")
         for var in r["invalid"]:
             row = page.locator(f"[data-prov-row={var}]")
             check("Flagged" in row.inner_text(), f"{r['test_id']}.{var}: no Flagged chip")
             check(row.locator("[data-value]").count() == 0, f"{r['test_id']}.{var}: a flagged row renders a value")
-        check("Not computed: input flagged" in page.locator("[data-prov-row=o2_pp_kpa]").inner_text(), f"{r['test_id']}: derived value not marked as not computed")
+        if {"o2_frac", "pressure_kpa"} & set(r["invalid"]):            # partial pressure is derived from these two
+            check("Not computed: input flagged" in page.locator("[data-prov-row=o2_pp_kpa]").inner_text(), f"{r['test_id']}: derived value not marked as not computed")
         first = page.locator("[data-prov-row]").first.get_attribute("data-status")
         check(first == "flagged", f"{r['test_id']}: flagged values are not listed first")
         panel = page.locator("aside[role=dialog]").inner_text()
@@ -167,7 +168,7 @@ with sync_playwright() as p:
         check("Microgravity" in panel or "Earth 1g" in panel, f"{r['test_id']}: gravity is not a regime name")
         check("Assumed (dataset setting)" in panel or r["dataset"] != "flex", f"{r['test_id']}: dataset settings not labelled as assumed")
         check("data/raw" not in panel, f"{r['test_id']}: file paths shown in the normal view")
-        page.locator(f"[data-prov-row=pressure_kpa] > button").click()
+        page.locator(f"[data-prov-row={next(iter(r['invalid']))}] > button").click()   # this test's own flagged value
         check(page.locator("[data-open-source]").is_visible(), f"{r['test_id']}: no link to the source row")
         page.locator("[data-trail-toggle]").check()
         check(page.locator("[data-trail]").count() > 5, f"{r['test_id']}: technical trail did not open")

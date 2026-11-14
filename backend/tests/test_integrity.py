@@ -267,6 +267,10 @@ def test_demo_rows_never_count_as_real_evidence_in_the_ranking():
         assert ev["score"] == (3 if real else 1 if len(mine) else 0)
         assert bool(ev.get("demo")) == (len(mine) > 0 and real == 0)
     assert next(r for r in relevance.rank("iss")["rows"] if r["label"] == "FLEX")["parts"]["evidence"]["score"] == 3
+    rows = relevance.rank("iss")["rows"]
+    assert not any(r["parts"]["evidence"].get("demo") for r in rows), "no demo rows are loaded any more"
+    for label in ("BASS-II", "FLEX", "CFI-G", "Saffire-II"):       # real PSI tables now: full evidence score
+        assert next(r for r in rows if r["label"] == label)["parts"]["evidence"]["score"] == 3, label
 
 
 def test_missing_pressure_is_never_reported_as_a_mismatch():
@@ -283,3 +287,11 @@ def test_missing_pressure_is_never_reported_as_a_mismatch():
             else:
                 assert air.get("unknown") and "neither" in air["why"]
 
+
+def test_solids_are_matched_on_oxygen_alone_in_the_ranking():
+    """BASS-II records no pressure: its air match must say so, never claim 0 tests in a place's air by pressure."""
+    from backend import relevance
+    iss = next(r for r in relevance.rank("iss")["rows"] if r["label"] == "BASS-II")["parts"]["air"]
+    assert iss["score"] >= 1 and "records no pressure" in iss["why"]
+    moon = next(r for r in relevance.rank("moon_base")["rows"] if r["label"] == "BASS-II")["parts"]["air"]
+    assert moon["score"] == 0 and "22.2%" in moon["why"]

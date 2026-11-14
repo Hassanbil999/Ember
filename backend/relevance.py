@@ -67,9 +67,13 @@ def _score(inv: dict, place: dict, tests) -> dict:
             near = o2_only[o2_only.o2_frac.between(*box["o2_frac"])]
             ids, n = near.test_id.tolist(), len(near)
             # a match on oxygen alone is weaker evidence than a match on the whole atmosphere: capped at 2
+            lo, hi = o2_only.o2_frac.min(), o2_only.o2_frac.max()
             parts["air"] = {"score": 2 if n >= 3 else 1 if n else 0, "o2_only": True,
-                            "why": f"{n} of its {len(o2_only)} tests with a recorded oxygen level were run at this place's oxygen level ({o2r}). "
-                                   "Its table does not record pressure, so this is a match on oxygen only."}
+                            "why": (f"{n} of its {len(o2_only)} tests with a recorded oxygen level were run at this place's oxygen level ({o2r})."
+                                    if n else
+                                    f"None of its {len(o2_only)} tests with a recorded oxygen level reached this place's oxygen level ({o2r}): "
+                                    f"they ran at {lo * 100:.1f}–{hi * 100:.1f}% oxygen.")
+                                   + " Its table records no pressure, so this is a match on oxygen only."}
         else:
             parts["air"] = {"score": 0, "unknown": True,
                             "why": "Its table is loaded but records neither the oxygen level nor the pressure of each test, so it cannot be placed in this air."}

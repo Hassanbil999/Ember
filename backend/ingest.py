@@ -17,7 +17,8 @@ from .core.validate import validate
 TEST_COLS = ["test_id", "dataset", "investigation_id", "campaign", "fuel", "material", "diluent", "o2_frac",
              "n2_frac", "co2_frac", "he_frac", "burn_time_s", "test_end",
              "pressure_kpa", "o2_pp_kpa", "flow_cm_s", "d0_mm", "thickness_mm", "diameter_mm", "sample_shape", "flow_direction", "gravity_g", "burned",
-             "burn_rate_k_mm2_s", "extinction_d_mm", "spread_rate_mm_s", "fuel_flow_mg_s", "mission_date", "flags", "invalid", "excluded", "demo", "_row"]
+             "burn_rate_k_mm2_s", "extinction_d_mm", "spread_rate_mm_s", "fuel_flow_mg_s", "heater_ratio", "heat_duration_s", "smoke_aging_s",
+             "mass_loss_rate_mg_min", "burner_mm", "oxidizer_o2_frac", "ambient_fuel_frac", "flames_ignited", "notes", "mission_date", "flags", "invalid", "excluded", "demo", "_row"]
 
 
 def run() -> dict:
@@ -88,16 +89,19 @@ def run() -> dict:
     tests["invalid"] = tests["invalid"].map(lambda d: json.dumps(d if isinstance(d, dict) else {}, ensure_ascii=False))
     tests["image_derived"] = "[]"
     for c in ["n2_frac", "co2_frac", "he_frac", "burn_time_s", "o2_frac", "pressure_kpa", "o2_pp_kpa", "flow_cm_s", "d0_mm", "thickness_mm", "diameter_mm", "gravity_g", "burned",
-              "burn_rate_k_mm2_s", "extinction_d_mm", "spread_rate_mm_s", "fuel_flow_mg_s"]:
+              "burn_rate_k_mm2_s", "extinction_d_mm", "spread_rate_mm_s", "fuel_flow_mg_s",
+              "heater_ratio", "heat_duration_s", "smoke_aging_s", "mass_loss_rate_mg_min",
+              "burner_mm", "oxidizer_o2_frac", "ambient_fuel_frac", "flames_ignited"]:
         tests[c] = pd.to_numeric(tests[c], errors="coerce")
-    for c in ["campaign", "fuel", "material", "sample_shape", "flow_direction", "diluent", "mission_date", "investigation_id", "test_end"]:
+    for c in ["campaign", "fuel", "material", "sample_shape", "flow_direction", "notes", "diluent", "mission_date", "investigation_id", "test_end"]:
         tests[c] = tests[c].astype("string")
 
     invs = []
     for inv in inv_cfg:
         invs.append({**{k: None for k in ["psi_id", "doi", "parent"]}, **inv,
                      "pillars": json.dumps(inv["pillars"]), "years": json.dumps(inv.get("years")),
-                     "datasets": json.dumps(inv.get("datasets", [])),
+                     "datasets": json.dumps(inv.get("datasets", [])), "psi_ids": json.dumps(inv.get("psi_ids", [])), "dois": json.dumps(inv.get("dois", {})),
+                     "years_source": inv.get("years_source", "approximate"), "test_matrix": inv.get("test_matrix"),
                      "license": "See PSI terms of use", "source_urls": json.dumps(["https://psi.nasa.gov"])})
     inv_df = pd.DataFrame(invs)
     concepts = pd.DataFrame([{**c, "investigations": json.dumps(c["investigations"]), "terms": json.dumps(c["terms"])}

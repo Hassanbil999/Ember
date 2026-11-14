@@ -115,10 +115,10 @@ def test_bass2_rows_and_no_invented_outcome():
 def test_bass2_reads_text_and_says_so():
     _, res, df = _load("bass2")
     r = df.set_index("test_id").loc["BASS2-O4"]
-    assert r.material == "PMMA" and r.sample_shape == "rod" and r.diameter_mm == pytest.approx(9.525)   # 3/8 inch
+    assert r.material == "Not named in the table" and r.sample_shape == "rod" and r.diameter_mm == pytest.approx(9.525)   # 3/8 inch
     assert r.o2_frac == pytest.approx(0.148) and r.mission_date == "2014-07-08"
     by = {p["variable"]: p for p in res.provenance if p["test_id"] == "BASS2-O4"}
-    assert "every rod sample that is named" in by["material"]["steps"][0]["detail"]   # inferred, and the panel says why
+    assert "Every rod sample that the BASS-II table does name is PMMA" in r.notes and "rather than assumed" in r.notes   # context, never inference
     assert by["test_end"]["raw_value"].startswith("Fan display: 5 0.7")
     assert df.set_index("test_id").loc["BASS2-B1"].thickness_mm == pytest.approx(0.1)  # "100 micron"
 
@@ -134,7 +134,8 @@ def test_saffire2_flight_and_ground_rows():
     assert pd.isna(d.loc["SAF2-2-7-UG", "burned"]) and "Nomex was not ignited" in d.loc["SAF2-2-7-UG", "test_end"]
     assert pd.isna(d.loc["SAF2-2-9-UG", "burned"]) and "anchored at the base" in d.loc["SAF2-2-9-UG", "test_end"]
     assert pd.isna(d.loc["SAF2-2-1-1G", "o2_frac"]), "no oxygen level is given for the ground tests"
-    assert d.loc["SAF2-2-6-UG", "material"] == "Cotton-fiberglass fabric (SIBAL)"     # blank cell, row above
+    assert d.loc["SAF2-2-6-UG", "material"] == "Not named in the table"               # blank cell is not assumed
+    assert "row above names Cotton-fiberglass fabric (SIBAL)" in d.loc["SAF2-2-6-UG", "notes"]
 
 
 def test_bass_run_list_flags_impossible_dates():
@@ -154,3 +155,97 @@ def test_no_real_solid_test_reaches_moon_base_oxygen():
     t = get_store().tests
     solids = t[t.dataset.isin(["bass2", "bass", "saffire1", "saffire2", "saffire3"])]
     assert solids.o2_frac.max() == pytest.approx(0.222)
+
+
+# ------------------------------------------------------------------ smoke for detection (SAME, SAME-R)
+def test_same_expands_same_conditions_rows_and_says_so():
+    _, res, df = _load("same")
+    d = df.set_index("test_id")
+    assert len(df) == 20 and df.test_id.is_unique
+    assert set(df.material) == {"Teflon", "Kapton", "Silicone Rubber", "Lampwick", "Dibutyl Phthalate"}
+    assert d.loc["SAME-5.3", "smoke_aging_s"] == 1200 and d.loc["SAME-3", "smoke_aging_s"] == 1200   # 20 min, copied from sample 3
+    why = next(p for p in res.provenance if p["test_id"] == "SAME-5.3" and p["variable"] == "flow_cm_s")
+    assert why["steps"][0]["op"] == "derive" and "same conditions as 1-4" in why["steps"][0]["detail"]
+    assert "burned" not in df.columns or df["burned"].isna().all(), "the table records no smoke results"
+
+
+def test_same_r_rows_ids_and_second_measurements():
+    _, _, df = _load("same_r")
+    d = df.set_index("test_id")
+    assert len(df) == 109 and df.test_id.is_unique                    # test 57 appears under two materials
+    assert {"SAMER-LAM-57", "SAMER-TEF-57"} <= set(df.test_id)
+    assert d.loc["SAMER-KAP-61a", "smoke_aging_s"] == 807 and d.loc["SAMER-KAP-61", "heater_ratio"] == 1.38
+    assert d.loc["SAMER-KAP-61a", "notes"].startswith("Second measurement of the smoke from test 61")
+    assert "mission_date" not in df.columns or df["mission_date"].isna().all(), "the table gives no year, so none is invented"
+
+
+def test_detection_goal_has_real_data_in_the_ranking():
+    from backend import relevance
+    best = {b["goal"]: b["label"] for b in relevance.rank("iss")["best"]}
+    assert best["detecting fire"] in ("SAME", "SAME-R")
+
+
+# ------------------------------------------------------------------ the remaining PSI tables
+def test_cfi_duplicates_are_excluded_and_logged_not_dropped():
+    _, _, df = _load("cfi")
+    assert len(df) == 87 and int(df.excluded.sum()) == 8
+    assert (df[df.excluded]["flags"].map(lambda f: "duplicate" in f)).all()
+    assert df.loc[df.test_id == "CFI-1206", "pressure_kpa"].iloc[0] == pytest.approx(101.325)       # "1 atm"
+
+
+def test_spice_negative_airflow_is_flagged_and_duration_derived():
+    _, res, df = _load("spice")
+    bad = df[df["flags"].map(lambda f: "impossible_value" in f)]
+    assert len(bad) == 8 and bad.excluded.all() and bad.flow_cm_s.isna().all()        # "-0.28 cm/s" is never converted
+    first = df[~df.excluded].iloc[0]
+    assert first.burn_time_s == 655 and first.fuel == "ethylene"                         # 14:37:08 -> 14:48:03
+
+
+def test_bre_flags_typos_and_never_claims_sustained_burning():
+    _, _, df = _load("acme_bre")
+    flagged = df[df.excluded]
+    assert set(flagged.test_id) == {"BRE-2019-03-07-1", "BRE-2019-04-01-1"}              # "3400%", "2100%"
+    assert "burned" not in df.columns or df["burned"].isna().all(), "ignition is not sustained burning"
+    lit = df[~df.excluded & df.test_end.str.startswith("At least one flame ignited")]
+    assert lit.o2_frac.max() == pytest.approx(0.40)
+
+
+def test_inverse_flame_oxygen_never_enters_cabin_air():
+    _, _, df = _load("cfig_inverse")
+    assert len(df) == 154 and df.test_id.is_unique
+    assert "o2_frac" not in df.columns or df["o2_frac"].isna().all()
+    assert df.oxidizer_o2_frac.max() == pytest.approx(0.85)
+
+
+def test_every_downloaded_psi_table_is_used():
+    loaded = {d for d, c in config.datasets().items() if c.get("enabled", True) and not c.get("demo")}
+    for ds_id in MANIFEST:
+        assert ds_id in loaded or ds_id == "flex2", f"{ds_id} is downloaded but not loaded"
+    import yaml
+    from backend.core.config import CONFIG
+    flex2 = next(i for i in yaml.safe_load((CONFIG / "investigations.yaml").read_text(encoding="utf-8"))["investigations"] if i["id"] == "FLEX-2")
+    assert "test matrix" in flex2["test_matrix"].lower(), "FLEX-2's PSI table is a test plan, shown as such"
+
+
+# ------------------------------------------------------------------ NASA's Researcher's Guide
+def test_researchers_guide_is_nasas_file_and_quoted_as_nasa():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("fetch_psi", RAW.parents[1] / "scripts" / "fetch_psi.py")
+    fp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fp)
+    folder, name, pinned, _ = fp.DOCUMENTS[0]
+    assert hashlib.sha256((RAW / folder / name).read_bytes()).hexdigest() == pinned
+    from backend.core.store import get_store
+    st = get_store()
+    doc = st.documents.loc["researchers-guide-combustion-science"]
+    assert not doc.demo and doc.pages == 56 and "NASA" in doc.citation
+    ch = st.chunks[st.chunks.doc_id == "researchers-guide-combustion-science"]
+    assert len(ch) > 100 and not ch.page.isin([6, 7]).any(), "the table of contents is never quoted"
+    assert "Fire Safety" in set(ch.section) and "Solid-Fuel Combustion/Material Flammability" in set(ch.section)
+
+
+def test_answers_quote_the_guide_with_its_page():
+    from backend.answer.engine import answer
+    a = answer("smoke detection on the ISS")
+    src = [s for s in a["sources"] if s.get("doc_id") == "researchers-guide-combustion-science"]
+    assert src and src[0]["citations"][0]["page"] == 26 and not a["dropped"]

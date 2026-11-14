@@ -11,7 +11,8 @@ import Passage from "@/components/Passage";
    folded into one cluster per group that opens on click. Positions come from a slot grid, so two
    labels can never share space, and nothing is simulated or recomputed while the pointer moves. */
 
-type Inv = { id: string; label: string; name: string; pillars: string[]; burns: string; fuel_phase: string; platform: string; hardware: string; years: number[] | null; n_tests: number; objectives: string; datasets: string[] };
+type Inv = { id: string; label: string; name: string; pillars: string[]; burns: string; fuel_phase: string; platform: string; hardware: string; years: number[] | null; n_tests: number; objectives: string; datasets: string[];
+  years_source?: string; test_matrix?: string | null; psi?: { accession: string; doi: string | null; doi_url: string | null; file: string | null; url: string | null; rows: number | null }[] };
 type Node = { id: string; kind: "inv" | "cluster"; label: string; sub: string; group: string; r: number; inv?: Inv; members?: string[]; x: number; y: number };
 type Grouping = "burns" | "goal" | "era";
 
@@ -27,7 +28,8 @@ function layout(data: any, grouping: Grouping, open: string | null, W: number, H
   const groups = data.groupings[grouping].map((g: any) => ({
     ...g, members: g.members.filter((id: string) => grouping !== "goal" || `goal:${byId[id].pillars[0]}` === g.id),
   })).filter((g: any) => g.members.length);
-  const build = (collapseData: boolean) => groups.map((g: any) => {
+  // k = how many experiments with data each closed group shows (largest first); the rest fold into its cluster
+  const build = (k: number) => groups.map((g: any) => {
     const nodes: Omit<Node, "x" | "y">[] = [];
     const inv = (id: string) => {
       const i = byId[id];
@@ -35,7 +37,8 @@ function layout(data: any, grouping: Grouping, open: string | null, W: number, H
     };
     if (g.id === open) g.members.forEach(inv);
     else {
-      const shown = collapseData ? [] : g.members.filter((id: string) => byId[id].n_tests > 0);
+      const top = new Set(g.members.filter((id: string) => byId[id].n_tests > 0).sort((a: string, b: string) => byId[b].n_tests - byId[a].n_tests).slice(0, k));
+      const shown = g.members.filter((id: string) => top.has(id));
       const rest = g.members.filter((id: string) => !shown.includes(id));
       shown.forEach(inv);
       if (rest.length === 1) inv(rest[0]);
@@ -43,8 +46,10 @@ function layout(data: any, grouping: Grouping, open: string | null, W: number, H
     }
     return { ...g, nodes };
   });
-  let bands = build(false);
-  if (bands.reduce((n: number, b: any) => n + b.nodes.length, 0) > MAX_NODES) bands = build(true);
+  // fold the smallest experiments first, never all of them at once: the overview must still show experiments
+  const count = (bs: any[]) => bs.reduce((n: number, b: any) => n + b.nodes.length, 0);
+  let k = data.investigations.length, bands = build(k);
+  while (k > 0 && count(bands) > MAX_NODES) bands = build(--k);
 
   const total = bands.reduce((n: number, b: any) => n + b.nodes.length, 0);
   const totalCols = Math.max(bands.length, Math.floor(W / CELL_W));
@@ -88,9 +93,21 @@ function Detail({ id, data, onSelect }: { id: string; data: any; onSelect: (id: 
       <dl className="mt-5 grid grid-cols-[110px_1fr] gap-y-2 text-sm">
         <dt className="text-ink-3">Burns</dt><dd className="text-ink">{inv.burns}</dd>
         <dt className="text-ink-3">Where</dt><dd className="text-ink">{inv.platform}</dd>
-        {inv.years && <><dt className="text-ink-3">Years</dt><dd className="mono text-ink">{inv.years[0]}{inv.years[1] !== inv.years[0] ? `–${inv.years[1]}` : ""}</dd></>}
+        {inv.years && <><dt className="text-ink-3">Years</dt><dd className="text-ink"><span className="mono">{inv.years[0]}{inv.years[1] !== inv.years[0] ? `–${inv.years[1]}` : ""}</span>
+          <span className="ml-2 text-xs text-ink-3">{inv.years_source === "PSI test dates" ? "from the test dates" : "approximate"}</span></dd></>}
+        {inv.psi && inv.psi.length > 0 && <><dt className="text-ink-3">NASA PSI</dt><dd className="text-ink" data-psi>
+          {inv.psi.map((p) => <span key={p.accession + (p.file ?? "")} className="mr-3 inline-block">
+            {p.url ? <a className="mono underline decoration-dotted underline-offset-4 hover:text-flame" href={p.url} target="_blank" rel="noreferrer"
+              title={`Download ${p.file} from NASA PSI (${p.rows} rows)`}>{p.accession}</a> : <span className="mono">{p.accession}</span>}</span>)}
+        </dd></>}
+        {inv.psi && inv.psi.some((p) => p.doi) && <><dt className="text-ink-3">DOI</dt><dd className="text-ink" data-doi>
+          {Array.from(new Map(inv.psi.filter((p) => p.doi).map((p) => [p.doi, p])).values()).map((p) =>
+            <a key={p.doi!} className="mono mr-3 inline-block underline decoration-dotted underline-offset-4 hover:text-flame" href={p.doi_url!} target="_blank" rel="noreferrer"
+              title={`NASA PSI investigation ${p.accession}`}>{p.doi}</a>)}
+        </dd></>}
         <dt className="text-ink-3">Test data</dt>
-        <dd className="text-ink">{inv.n_tests ? `${inv.n_tests} tests loaded` : "None loaded. This entry is a catalogue record only."}</dd>
+        <dd className="text-ink">{inv.n_tests ? `${inv.n_tests} tests loaded` : inv.test_matrix ? "No per-test table in PSI; its test plan is below." : "None loaded. This entry is a catalogue record only."}</dd>
+        {inv.test_matrix && <><dt className="text-ink-3">Test plan</dt><dd className="text-ink" data-test-matrix>{inv.test_matrix}</dd></>}
       </dl>
 
       {inv.n_tests > 0 && d?.numbers && (

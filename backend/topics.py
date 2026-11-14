@@ -222,6 +222,18 @@ def _environment(tid: str, material: str | None) -> dict:
     for f in fire.values():
         m_items.append({"text": f"{_cap(f['label'])} tests in this air range: {f['n_burned']} of the {f['n_known']} with an outcome kept burning",
                         "citation": _rows(f["known_ids"])})
+    # ACME's Burning Rate Emulator imitates a burning solid with a gas burner; its daily summary records oxygen, not pressure
+    bre = st.usable_tests("acme_bre")
+    bre = bre[bre.o2_frac.between(*box["o2_frac"])]
+    lit = bre[bre.test_end.fillna("").str.startswith("At least one flame ignited")]
+    if not sel and len(bre):
+        days = lit.mission_date.nunique()
+        m_items.append({"text": (f"Burning Rate Emulator (ACME), a gas burner that imitates a burning solid: flames ignited at "
+                                 f"{place} oxygen levels on {days} test day{'s' if days != 1 else ''} "
+                                 f"({', '.join(sorted({_pct(v) + '%' for v in lit.o2_frac}))} oxygen; pressure not given in its table)"
+                                 if len(lit) else
+                                 f"Burning Rate Emulator (ACME): no flame recorded as ignited at {place} oxygen levels"),
+                        "citation": _rows(bre.test_id, "o2_frac")})
     measured = {"summary": ("Real solid-material tests in orbit at this oxygen level, then the nearest real flames. "
                             "The solid tables record no pressure."),
                 "citation": _rows(solid_near, "test_id") if solid_near else None, "items": m_items}
@@ -266,7 +278,7 @@ def _environment(tid: str, material: str | None) -> dict:
 def _microgravity() -> dict:
     """The same samples burned in orbit and on the ground (SAFFIRE-2): what gravity changes."""
     t = get_store().usable_tests("saffire2")
-    t = t[t.burned.notna() & t.material.notna() & ~t.material.str.contains("two-part")]
+    t = t[t.burned.notna() & t.material.notna() & ~t.material.str.contains("two-part") & ~t.material.str.startswith("Not named")]
     ug, g1 = t[t.gravity_g < 0.02], t[t.gravity_g > 0.95]
     items = []
     finding = "With no up, hot gas does not rise: a flame becomes a slow, round shell fed only by whatever air drifts past it."

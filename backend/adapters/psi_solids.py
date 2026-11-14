@@ -127,18 +127,19 @@ def _mm(text: Optional[str]) -> Optional[float]:
     return float(v) * {"um": 0.001, "mm": 1.0, "cm": 10.0, "in": 25.4}[u]
 
 
-def fill_unnamed_materials(rows: list[dict], file_label: str) -> None:
-    """Name an unnamed sample only if every named sample of the same shape in this file is one material."""
+def note_unnamed_materials(rows: list[dict], file_label: str) -> None:
+    """A sample whose row does not name its material stays "Not named in the table" (never inferred).
+    The context goes into the test note: which material the file names for samples of that shape."""
     named: dict[str, set] = {}
     for r in rows:
         if r.get("Material") and r["Material"] != UNNAMED and r.get("Shape"):
             named.setdefault(r["Shape"], set()).add(r["Material"])
     for r in rows:
-        if r.get("Material") == UNNAMED and r.get("Shape") and len(named.get(r["Shape"], ())) == 1:
-            mat = next(iter(named[r["Shape"]]))
-            r["Material"] = mat
-            r["_why"]["material"] = (f"the row does not name the material; every {r['Shape']} sample that is named in "
-                                     f"{file_label} is {mat}, so this one is read as {mat}")
+        if r.get("Material") == UNNAMED and r.get("Shape") and named.get(r["Shape"]):
+            mats = " or ".join(sorted(named[r["Shape"]]))
+            r["Note"] = (f"The row does not name the material. Every {r['Shape']} sample that {file_label} does name is {mats}; "
+                         "this one is left unnamed rather than assumed.")
+            r["_why"]["notes"] = f"written from the other rows of {file_label}"
 
 
 # ------------------------------------------------------------------ provenance
@@ -222,9 +223,9 @@ def load_bass2(ds_id: str, cfg: dict) -> AdapterResult:
                      "mission_date": _iso_date(_clean(r["Date"]))[1]},
         })
         index.append(i)
-    fill_unnamed_materials(rows, "the BASS-II table")
-    res = _canonical(rows, index, ds_id, cfg, ("material", "sample_shape", "flow_direction", "test_end", "campaign", "mission_date"))
-    res = _finish(res, rows, {v: "Fuel Sample Material" for v in ("material", "sample_shape", "thickness_mm", "diameter_mm", "flow_direction")}
+    note_unnamed_materials(rows, "the BASS-II table")
+    res = _canonical(rows, index, ds_id, cfg, ("material", "sample_shape", "flow_direction", "test_end", "campaign", "mission_date", "notes"))
+    res = _finish(res, rows, {v: "Fuel Sample Material" for v in ("material", "sample_shape", "thickness_mm", "diameter_mm", "flow_direction", "notes")}
                   | {"test_end": "Fan display / Air display", "mission_date": "Date"})
     for p in res.provenance:
         if p["variable"] == "investigation_id":
@@ -252,9 +253,9 @@ def load_bass(ds_id: str, cfg: dict) -> AdapterResult:
             "_why": {"mission_date": _iso_date(_clean(r["Date"]))[1]},
         })
         index.append(i)
-    fill_unnamed_materials(rows, "the BASS table")
-    res = _canonical(rows, index, ds_id, cfg, ("material", "sample_shape", "flow_direction", "test_end", "mission_date"))
-    res = _finish(res, rows, {v: "Fuel Sample Material" for v in ("material", "sample_shape", "diameter_mm", "flow_direction", "test_end")}
+    note_unnamed_materials(rows, "the BASS table")
+    res = _canonical(rows, index, ds_id, cfg, ("material", "sample_shape", "flow_direction", "test_end", "mission_date", "notes"))
+    res = _finish(res, rows, {v: "Fuel Sample Material" for v in ("material", "sample_shape", "diameter_mm", "flow_direction", "test_end", "notes")}
                   | {"mission_date": "Date"})
     for p in res.provenance:
         if p["variable"] == "investigation_id":
@@ -336,9 +337,10 @@ def load_saffire(ds_id: str, cfg: dict) -> AdapterResult:
         mat = material_of(desc)
         if "pmma" in desc.lower() and "nomex" in desc.lower():
             mat = "PMMA and Nomex (two-part sample)"
-        if not desc and last_mat:
-            mat = last_mat
-            why["material"] = f"the Material cell is blank; the row above names {last_mat} (spreadsheet convention)"
+        note = None
+        if not desc and last_mat:          # a blank cell is not assumed to repeat the row above
+            note = f"The Material cell is blank (the row above names {last_mat}); left unnamed rather than assumed."
+            why["notes"] = "written because the Material cell is blank"
         last_mat = mat or last_mat
         thick = thick_raw if re.search(r"[a-z]", thick_raw, re.I) else (f"{thick_raw} {th_unit}".strip() if thick_raw else "")
         if thick and not re.fullmatch(r"\d*\.?\d+\s*(mm|cm)", thick):
@@ -352,7 +354,8 @@ def load_saffire(ds_id: str, cfg: dict) -> AdapterResult:
         base = {"Investigation": cfg["investigations"][0], "Campaign": cfg["investigations"][0],
                 "Material": mat or UNNAMED,
                 "Shape": None if composite else (shape_of(desc) or ("fabric" if mat and "fabric" in mat.lower() else None)),
-                "Thickness": thick or None, "Flow direction": (_clean(r[c_dir]).lower() or None) if c_dir else None}
+                "Thickness": thick or None, "Flow direction": (_clean(r[c_dir]).lower() or None) if c_dir else None,
+                "Note": note}
         src = {"Material": desc, c_o2 or "": _clean(r[c_o2]) if c_o2 else ""}
         ug_end, ug_text = saffire_outcome(r[c_ug_len], sample_len, notes, composite) if c_ug_len else (None, None)
         flow = _clean(r[c_flow]) if c_flow else ""
@@ -375,8 +378,8 @@ def load_saffire(ds_id: str, cfg: dict) -> AdapterResult:
                          "_why": {**why, "gravity_g": "1g ground test of the same sample, reported in the same row",
                                   "o2_frac": None, "burned": f"from the 1g burn length '{_clean(r[c_1g_len])}'"}})
             index.append(i)
-    res = _canonical(rows, index, ds_id, cfg, ("material", "sample_shape", "flow_direction", "test_end", "campaign"))
-    derived = {"material": "Material", "sample_shape": "Material", "burned": "burn length", "test_end": "burn length"}
+    res = _canonical(rows, index, ds_id, cfg, ("material", "sample_shape", "flow_direction", "test_end", "campaign", "notes"))
+    derived = {"material": "Material", "sample_shape": "Material", "burned": "burn length", "test_end": "burn length", "notes": "Material"}
     if c_o2:
         derived["o2_frac"] = c_o2
     res = _finish(res, rows, derived)

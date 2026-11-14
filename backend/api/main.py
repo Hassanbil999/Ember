@@ -4,6 +4,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import re
 import time
 from datetime import date
 from functools import lru_cache
@@ -512,14 +513,22 @@ def api_export_citations(body: CiteReq):
     st = get_store()
     text, bib = [], []
     year = date.today().year
+    psi_page = "https://psi.nasa.gov/physci/repo/data/investigations/{}"      # where each verified DOI resolves
+    all_dois = {a: d for r in st.investigations.itertuples() for a, d in (json.loads(r.dois) if r.dois else {}).items()}
     for inv_id in body.investigations:
         if inv_id in st.investigations.index:
             inv = st.investigations.loc[inv_id]
-            text.append(f"{inv.id}: {inv['name']}. NASA Physical Sciences Informatics (PSI). "
-                        f"{'DOI ' + inv.doi if inv.doi else 'DOI: to be filled from PSI'}. https://psi.nasa.gov")
+            dois = json.loads(inv.dois) if inv.dois else {}
+            psi = json.loads(inv.psi_ids) if inv.psi_ids else []
+            refs = "; ".join(f"{a}, doi:{dois[a]}" if a in dois else a for a in psi) or "no PSI study recorded"
+            links = ", ".join(f"https://doi.org/{dois[a]}" for a in psi if a in dois) or "https://psi.nasa.gov"
+            text.append(f"{inv.id}: {inv['name']}. NASA Physical Sciences Informatics (PSI). {refs}. {links}")
             key = inv.id.replace("-", "").replace(" ", "")
+            first = next((a for a in psi if a in dois), None)
+            where = (f"  doi = {{{dois[first]}}},\n  url = {{{psi_page.format(first)}}},\n" if first
+                     else "  url = {https://psi.nasa.gov},\n")
             bib.append(f"@misc{{{key},\n  title = {{{inv['name']} ({inv.id})}},\n  howpublished = {{NASA Physical Sciences "
-                       f"Informatics}},\n  url = {{https://psi.nasa.gov}},\n  note = {{Accessed {date.today().isoformat()}}}\n}}")
+                       f"Informatics}},\n{where}  note = {{Accessed {date.today().isoformat()}}}\n}}")
     docs_seen = set()
     for cid in body.chunks:
         if cid not in st.chunks.index:
@@ -539,8 +548,10 @@ def api_export_citations(body: CiteReq):
         ds_seen.setdefault(r.dataset, []).append(tid)
     for ds, ids in ds_seen.items():
         cfg = config.datasets()[ds]
+        acc = re.search(r"PSI-\d+", cfg.get("license") or "")
+        doi = all_dois.get(acc.group(0)) if acc else None
         text.append(f"{cfg['title']}. Rows: {', '.join(ids[:30])}{' …' if len(ids) > 30 else ''}. "
-                    f"License: {cfg.get('license')}. {'DOI ' + cfg['doi'] if cfg.get('doi') else ''}".strip())
+                    f"License: {cfg.get('license')} {'doi:' + doi if doi else ''}".strip())
         bib.append(f"@misc{{{ds},\n  title = {{{cfg['title']}}},\n  year = {{{year}}},\n  note = {{{cfg.get('license')}; "
                    f"rows {', '.join(ids[:30])}}}\n}}")
     return J({"text": "\n".join(text), "bibtex": "\n\n".join(bib)})

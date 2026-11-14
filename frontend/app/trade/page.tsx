@@ -226,6 +226,8 @@ export default function TradePage() {
             <p className="mt-0.5 text-xl font-semibold" style={{ color: tone }}>{!now.f.known ? "No data here" : now.f.p >= 0.5 ? "Predicted to keep burning" : "Predicted to go out"}</p>
             <p className="mt-1 text-sm text-ink-2">
               {now.f.known && <><span className="mono text-ink">{Math.round(now.f.p * 100)}%</span> chance of sustained burning, confidence {now.conf}. </>}
+              {!now.f.known && grid && <span data-no-data-why>Real {mode === "gas" ? "CFI-G" : "FLEX"} tests ran at {(grid.tested.o2_frac[0] * 100).toFixed(0)}–{(grid.tested.o2_frac[1] * 100).toFixed(0)}% oxygen
+                and {(grid.tested.pressure_kpa[0] / PSI).toFixed(1)}–{(grid.tested.pressure_kpa[1] / PSI).toFixed(1)} psi; this point is outside them, so nothing is predicted. </span>}
               {now.best && <>Nearest real test: <button className="mono underline decoration-dotted underline-offset-4 hover:text-ink" onClick={() => openProv({ testId: now.best.test_id, label: now.best.test_id })}>{now.best.test_id}</button> at {(now.best.pressure_kpa / PSI).toFixed(1)} psi, {(now.best.o2_frac * 100).toFixed(0)}% oxygen.</>}
               {pt.o2 > C.o2_flammability_line && <span style={{ color: "var(--flame)" }}> Above NASA's 30% materials line.</span>}
             </p>

@@ -25,11 +25,15 @@ CANON_TABLE = {
     "d0_mm": ("mm", LENGTH),
     "thickness_mm": ("mm", LENGTH),
     "diameter_mm": ("mm", LENGTH),
+    "burner_mm": ("mm", LENGTH),
     "extinction_d_mm": ("mm", LENGTH),
     "flow_cm_s": ("cm/s", SPEED),
     "burn_rate_k_mm2_s": ("mm²/s", RATE_AREA),
     "spread_rate_mm_s": ("mm/s", SPREAD),
     "fuel_flow_mg_s": ("mg/s", MASS_RATE),
+    "heat_duration_s": ("s", TIME),
+    "smoke_aging_s": ("s", TIME),
+    "mass_loss_rate_mg_min": ("mg/min", {"mg/min": 1.0, "mg/s": 60.0, "g/min": 1000.0}),
 }
 
 # Physical limits in canonical units: (lower bound, lower bound allowed?, upper bound or None, plain reason).
@@ -51,6 +55,14 @@ PHYSICAL = {
     "he_frac": (0.0, True, 1.0, "A gas fraction must lie between 0 and 1."),
     "burn_time_s": (0.0, True, None, "A burn time cannot be negative."),
     "fuel_flow_mg_s": (0.0, True, None, "A fuel flow rate cannot be negative."),
+    "heat_duration_s": (0.0, True, None, "A heating time cannot be negative."),
+    "smoke_aging_s": (0.0, True, None, "An aging time cannot be negative."),
+    "mass_loss_rate_mg_min": (0.0, True, None, "A weight-loss rate cannot be negative."),
+    "burner_mm": (0.0, False, None, "A burner size must be greater than zero."),
+    "oxidizer_o2_frac": (0.0, True, 1.0, "An oxygen fraction must lie between 0 and 100 %."),
+    "ambient_fuel_frac": (0.0, True, 1.0, "A gas fraction must lie between 0 and 1."),
+    "flames_ignited": (0.0, True, None, "A count of flames cannot be negative."),
+    "heater_ratio": (0.0, False, None, "A heater resistance ratio must be greater than zero."),
 }
 
 

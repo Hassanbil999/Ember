@@ -88,7 +88,7 @@ function TestRecord({ id }: { id: string }) {
   const rest = rec.fields.filter((f: any) => f.status !== "flagged");
   const row = (f: any) => <Row key={f.var} f={f} testId={rec.test_id} trail={trail} open={open === f.var} onToggle={() => setOpen(open === f.var ? null : f.var)} />;
   return (
-    <div data-ready="provenance">
+    <div data-ready="provenance" data-prov-test={rec.test_id}>
       <div className="flex items-end justify-between gap-4">
         <div>
           <p className="mono text-[26px] leading-8 text-ink">{rec.test_id}</p>

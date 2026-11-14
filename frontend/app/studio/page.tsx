@@ -35,6 +35,13 @@ const DS_DEFAULTS: Record<string, DsDefault> = {
   cfig_normal: { x: "o2_frac", y: "pressure_kpa", logX: false, facet: "fuel", model: "gas_sustain", title: "Gas flames: still burning or went out, by oxygen and pressure",
     envelope: { x: "pressure_kpa", y: "o2_frac", fixed: { fuel: "30% butane", fuel_flow_mg_s: 1.0 } } },
   bass2: SOLID, saffire1: SOLID, saffire2: SOLID, saffire3: SOLID,
+  cfi: { x: "o2_frac", y: "pressure_kpa", logX: false, facet: "fuel", model: "droplet_burn", title: "CFI cool-flame droplet tests: oxygen and pressure" },
+  cfig_inverse: { x: "oxidizer_o2_frac", y: "pressure_kpa", logX: false, facet: "fuel", model: "gas_sustain", title: "Inverse flames: oxygen in the oxidizer stream and pressure" },
+  acme_bre: { x: "o2_frac", y: "flames_ignited", logX: false, facet: "fuel", model: "gas_sustain", title: "Burning Rate Emulator: oxygen levels where flames ignited" },
+  spice: { x: "fuel_flow_mg_s", y: "flow_cm_s", logX: false, facet: "fuel", model: "gas_sustain", title: "SPICE smoke-point flames: fuel flow and air speed" },
+  same_r: { x: "heater_ratio", y: "smoke_aging_s", logX: false, facet: "material", model: "gas_sustain", title: "SAME-R smoke tests: heater setting and smoke aging" },
+  same: { x: "flow_cm_s", y: "smoke_aging_s", logX: false, facet: "material", model: "gas_sustain", title: "SAME smoke tests: airflow and smoke aging" },
+  efield: { x: "flames_ignited", y: "flames_ignited", logX: false, facet: "fuel", model: "gas_sustain", title: "E-FIELD flames ignited per test day" },
 };
 const dsDefault = (ds: string) => DS_DEFAULTS[ds] ?? SOLID;
 
