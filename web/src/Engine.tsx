@@ -89,12 +89,6 @@ export function Engine() {
     timer.current = window.setTimeout(() => writeUrl(filters, section), 200);
   }, [filters, section, s.version]);
 
-  function toData() {
-    const f = emptyFilters('near');
-    f.fuel = ['solid'];
-    f.env = [s.params.g < 0.02 ? 'space' : s.params.g > 0.9 ? 'earth' : 'partial'];
-    setFilters(f); navigate('/engine/data');
-  }
   function openTest(code: string, rid: string | null) {
     setFilters(emptyFilters(filters.sort === 'near' ? 'cred' : filters.sort));
     if (rid) setFocus({ code, rid, n: Date.now() });
@@ -119,7 +113,7 @@ export function Engine() {
       <main>
         {section === 'check' && <FireCheckPage onOpenTest={openTest} />}
         {section === 'stats' && <Statistics />}
-        <SimulateView active={section === 'sim'} panelL={panels.l} panelR={panels.r} setPanels={(l, r) => setPanelsState({ l, r })} onFindData={toData} />
+        <SimulateView active={section === 'sim'} panelL={panels.l} panelR={panels.r} setPanels={(l, r) => setPanelsState({ l, r })} />
         <FindDataView active={section === 'data'} filters={filters} setFilters={setFilters} investigations={investigations} onSimulate={simulate} focus={focus} />
       </main>
     </>

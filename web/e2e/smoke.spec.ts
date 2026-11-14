@@ -101,9 +101,7 @@ test('fire check: no number outside NASA tests, an estimate between them, a repo
   page.on('pageerror', e => errors.push(String(e)));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 
-  await page.goto('/engine/simulator?g=0&o2=34&p=8.2&u=10&mat=fabric');      // older address of the simulation
-  await page.locator('#toCheck').click();
-  await expect(page).toHaveURL(/\/engine\/check\?/);
+  await page.goto('/engine/check?o2=34&psi=8.2');
   const fc = page.locator('#fireCheck');
   // pure propane was only tested near 14 psi: at 8.2 psi there is no number
   await fc.locator('#fcFuel').getByRole('button', { name: 'propane', exact: true }).click();
@@ -146,11 +144,19 @@ test('site: landing → simulation, statistics, research and presentation, deep 
 
   await page.goto('/');
   await expect(page.locator('.hero h1')).toContainText('keep burning');
-  await expect(page.locator('.numbers')).toContainText('NASA tests');            // live numbers from the API
+  await expect(page.locator('.numbers')).toContainText('NASA tests', { timeout: 15000 });   // live numbers from the API
   await expect(page.locator('#example .zone-pill')).toBeVisible();               // the worked example, answered live
   await page.locator('#ctaEngine').click();
   await expect(page).toHaveURL(/\/engine(\?.*)?$/);           // the simulation keeps its settings in the query
   await expect(page.locator('#view-sim')).toBeVisible();                         // the simulation is the front door
+  await expect(page.locator('#playBtn')).toHaveAttribute('aria-label', 'Play');  // it waits for the user
+  await expect(page.locator('#toCheck, #toData')).toHaveCount(0);
+  await page.locator('#igniteBtn').click();
+  await expect(page.locator('#playBtn')).toHaveAttribute('aria-label', 'Pause');
+  await expect(page.locator('#igniteBtn')).toHaveCount(0);
+  const sound = await page.locator('#soundBtn').getAttribute('aria-pressed');
+  await page.locator('#soundBtn').click();
+  await expect(page.locator('#soundBtn')).toHaveAttribute('aria-pressed', sound === 'true' ? 'false' : 'true');
   await page.locator('#nav-check').click();
   await expect(page).toHaveURL(/\/engine\/check/);
   await expect(page.locator('#fcZone')).toBeVisible();

@@ -1,11 +1,11 @@
 /* Simulate view (prototype "SIMULATE"): full-bleed stage, Experiment panel, Result panel, timeline. */
 import { useEffect, useRef } from 'react';
 import { FlammabilityMap } from '../components/FlammabilityMap';
-import { Link } from '../router';
 import { Timeline } from '../components/Timeline';
 import { coverage, nearest } from '../sim/evidence';
-import { fmtU, gName, model, sFromU, uFromS } from '../sim/model';
+import { at, fmtU, gName, model, sFromU, uFromS } from '../sim/model';
 import { StageEngine, isWide } from '../sim/stage';
+import { fireSound } from '../sim/sound';
 import { sim, useSim } from '../sim/store';
 
 const ICON_FLAME = <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M12 3c1 3 5 5.5 5 10a5 5 0 0 1-10 0c0-2.5 1.5-4 2.5-5 .3 1.8 1.2 2.6 2 3 .3-3-1-5.5.5-8z" /></svg>;
@@ -18,10 +18,9 @@ interface Props {
   active: boolean;
   panelL: boolean; panelR: boolean;
   setPanels: (l: boolean, r: boolean) => void;
-  onFindData: () => void;
 }
 
-export function SimulateView({ active, panelL, panelR, setPanels, onFindData }: Props) {
+export function SimulateView({ active, panelL, panelR, setPanels }: Props) {
   const wide = typeof window !== 'undefined' ? isWide() : true;
   const lOn = panelL || !wide, rOn = panelR || !wide;
   return (
@@ -29,7 +28,7 @@ export function SimulateView({ active, panelL, panelR, setPanels, onFindData }: 
       <Stage active={active} panelL={lOn} panelR={rOn} />
       <button className="edge left" id="openL" hidden={lOn} aria-controls="panelL" onClick={() => { setPanels(true, panelR); setTimeout(() => document.getElementById('closeL')?.focus()); }}>{ICON_MENU}Controls</button>
       <button className="edge right" id="openR" hidden={rOn} aria-controls="panelR" onClick={() => { setPanels(panelL, true); setTimeout(() => document.getElementById('closeR')?.focus()); }}>Result{CHEV_L}</button>
-      <Controls open={lOn} onClose={() => { setPanels(false, panelR); setTimeout(() => document.getElementById('openL')?.focus()); }} onFindData={onFindData} />
+      <Controls open={lOn} onClose={() => { setPanels(false, panelR); setTimeout(() => document.getElementById('openL')?.focus()); }} />
       <Result open={rOn} onClose={() => { setPanels(panelL, false); setTimeout(() => document.getElementById('openR')?.focus()); }} />
       <Timeline />
     </section>
@@ -37,6 +36,8 @@ export function SimulateView({ active, panelL, panelR, setPanels, onFindData }: 
 }
 
 function Stage({ active, panelL, panelR }: { active: boolean; panelL: boolean; panelR: boolean }) {
+  const s = useSim();
+  const fresh = !s.tl.playing && s.tl.t <= s.tl.t1 + 1e-3;          // nothing has played yet: offer to ignite
   const stageRef = useRef<HTMLDivElement>(null);
   const tRef = useRef<HTMLCanvasElement>(null), sRef = useRef<HTMLCanvasElement>(null), fRef = useRef<HTMLCanvasElement>(null);
   const eng = useRef<StageEngine | null>(null);
@@ -62,10 +63,11 @@ function Stage({ active, panelL, panelR }: { active: boolean; panelL: boolean; p
       const dt = Math.min(0.05, (now - last) / 1000); last = now;
       sim.advance(dt);
       eng.current?.frame(dt);
+      fireSound.update(at(sim.series.I, sim.tl.t, sim.series.n), sim.tl.playing);
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
+    return () => { cancelAnimationFrame(raf); fireSound.silence(); };
   }, [active]);
 
   return (
@@ -73,11 +75,13 @@ function Stage({ active, panelL, panelR }: { active: boolean; panelL: boolean; p
       <canvas id="trails" ref={tRef} aria-hidden="true" />
       <canvas id="scene" ref={sRef} aria-hidden="true" />
       <canvas id="flame" ref={fRef} role="img" aria-label="Side view of a burning sample in a flow duct. Air streams past it; the flame's shape and color change with gravity, oxygen, pressure and airflow." />
+      {fresh && <button className="ignite" id="igniteBtn" onClick={() => { fireSound.unlock(); sim.togglePlay(); }}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c1 3 5 5.5 5 10a5 5 0 0 1-10 0c0-2.5 1.5-4 2.5-5 .3 1.8 1.2 2.6 2 3 .3-3-1-5.5.5-8z" /></svg>Ignite</button>}
     </div>
   );
 }
 
-function Controls({ open, onClose, onFindData }: { open: boolean; onClose: () => void; onFindData: () => void }) {
+function Controls({ open, onClose }: { open: boolean; onClose: () => void }) {
   const s = useSim();
   const st = s.params;
   return (
@@ -110,8 +114,6 @@ function Controls({ open, onClose, onFindData }: { open: boolean; onClose: () =>
         <button id="mFabric" aria-pressed={st.mat === 'fabric'} onClick={() => sim.set({ mat: 'fabric' }, true)}>Cotton-fiberglass fabric</button>
         <button id="mPmma" aria-pressed={st.mat === 'pmma'} onClick={() => sim.set({ mat: 'pmma' }, true)}>Acrylic rod (PMMA)</button>
       </div>
-      <button className="btn" id="toData" onClick={onFindData}>Find data for these settings</button>
-      <Link className="btn" id="toCheck" to={`/engine/check?o2=${st.o2}&psi=${st.p}`}>Check a fuel</Link>
     </aside>
   );
 }

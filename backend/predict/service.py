@@ -26,6 +26,7 @@ def clear():
     _bundle.cache_clear()
     _domain.cache_clear()
     _links.cache_clear()
+    meta.cache_clear()
 
 
 @lru_cache(maxsize=4)
@@ -61,6 +62,7 @@ def available() -> bool:
     return all((OUT / f"{k}.joblib").exists() for k in PROBLEMS)
 
 
+@lru_cache(maxsize=1)          # the same answer until the models are retrained (clear() resets it)
 def meta() -> dict:
     out = {}
     for key, pb in PROBLEMS.items():
