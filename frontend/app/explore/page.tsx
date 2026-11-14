@@ -12,7 +12,7 @@ import Passage from "@/components/Passage";
    labels can never share space, and nothing is simulated or recomputed while the pointer moves. */
 
 type Inv = { id: string; label: string; name: string; pillars: string[]; burns: string; fuel_phase: string; platform: string; hardware: string; years: number[] | null; n_tests: number; objectives: string; datasets: string[];
-  years_source?: string; test_matrix?: string | null; psi?: { accession: string; file: string | null; url: string | null; rows: number | null }[] };
+  years_source?: string; test_matrix?: string | null; psi?: { accession: string; doi: string | null; doi_url: string | null; file: string | null; url: string | null; rows: number | null }[] };
 type Node = { id: string; kind: "inv" | "cluster"; label: string; sub: string; group: string; r: number; inv?: Inv; members?: string[]; x: number; y: number };
 type Grouping = "burns" | "goal" | "era";
 
@@ -95,6 +95,11 @@ function Detail({ id, data, onSelect }: { id: string; data: any; onSelect: (id: 
           {inv.psi.map((p) => <span key={p.accession + (p.file ?? "")} className="mr-3 inline-block">
             {p.url ? <a className="mono underline decoration-dotted underline-offset-4 hover:text-flame" href={p.url} target="_blank" rel="noreferrer"
               title={`Download ${p.file} from NASA PSI (${p.rows} rows)`}>{p.accession}</a> : <span className="mono">{p.accession}</span>}</span>)}
+        </dd></>}
+        {inv.psi && inv.psi.some((p) => p.doi) && <><dt className="text-ink-3">DOI</dt><dd className="text-ink" data-doi>
+          {Array.from(new Map(inv.psi.filter((p) => p.doi).map((p) => [p.doi, p])).values()).map((p) =>
+            <a key={p.doi!} className="mono mr-3 inline-block underline decoration-dotted underline-offset-4 hover:text-flame" href={p.doi_url!} target="_blank" rel="noreferrer"
+              title={`NASA PSI investigation ${p.accession}`}>{p.doi}</a>)}
         </dd></>}
         <dt className="text-ink-3">Test data</dt>
         <dd className="text-ink">{inv.n_tests ? `${inv.n_tests} tests loaded` : inv.test_matrix ? "No per-test table in PSI; its test plan is below." : "None loaded. This entry is a catalogue record only."}</dd>

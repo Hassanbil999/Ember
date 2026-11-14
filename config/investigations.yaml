@@ -1,7 +1,9 @@
 # Investigation catalog, seeded from the challenge brief.
 # psi_ids: the NASA PSI study accession numbers whose experimental tables were downloaded (scripts/fetch_psi.py).
 # years: from the test dates inside those PSI tables where they have dates (years_source: PSI test dates);
-# otherwise approximate and labelled so. DOIs are not recorded (never invented).
+# otherwise approximate and labelled so.
+# dois: one per PSI accession, each checked on 2026-11-14 to resolve (doi.org / DataCite) to that exact
+# psi.nasa.gov investigation page. Never invented.
 investigations:
   - id: BASS
     name: Burning and Suppression of Solids
@@ -14,6 +16,7 @@ investigations:
     objectives: Flammability and extinguishment of thin and thick solid materials in a controlled flow duct in microgravity.
     datasets: [bass]
     psi_ids: [PSI-26]
+    dois: {PSI-26: 10.60555/58h4-dy80}
   - id: BASS-II
     name: Burning and Suppression of Solids II
     pillars: [prevention, suppression]
@@ -25,6 +28,7 @@ investigations:
     objectives: Extend BASS with varied oxygen, pressure and flow speed to map flammability limits of solids.
     datasets: [bass2]
     psi_ids: [PSI-25]
+    dois: {PSI-25: 10.60555/4qc4-de67}
   - id: Saffire-I
     name: Spacecraft Fire Safety Experiment I
     pillars: [prevention]
@@ -36,6 +40,7 @@ investigations:
     objectives: Large-scale flame spread over a cotton-fiberglass fabric in a spacecraft-sized flow.
     datasets: [saffire1]
     psi_ids: [PSI-98]
+    dois: {PSI-98: 10.60555/0t15-1z43}
   - id: Saffire-II
     name: Spacecraft Fire Safety Experiment II
     pillars: [prevention]
@@ -47,6 +52,7 @@ investigations:
     objectives: Ignition and flammability of nine material samples at spacecraft scale.
     datasets: [saffire2]
     psi_ids: [PSI-99]
+    dois: {PSI-99: 10.60555/2chp-m469}
   - id: Saffire-III
     name: Spacecraft Fire Safety Experiment III
     pillars: [prevention]
@@ -58,6 +64,7 @@ investigations:
     objectives: Large-sample flame spread, repeat of Saffire-I with different flow conditions.
     datasets: [saffire3]
     psi_ids: [PSI-100]
+    dois: {PSI-100: 10.60555/040q-4h36}
   - id: SAME
     name: Smoke Aerosol Measurement Experiment
     pillars: [detection]
@@ -69,6 +76,7 @@ investigations:
     objectives: Characterize smoke particle size from overheated spacecraft materials to design detectors.
     datasets: [same]
     psi_ids: [PSI-102]
+    dois: {PSI-102: 10.60555/gd4k-8h62}
   - id: SAME-R
     name: Smoke Aerosol Measurement Experiment — Reflight
     pillars: [detection]
@@ -80,6 +88,7 @@ investigations:
     objectives: Repeat and extend SAME smoke-particle measurements.
     datasets: [same_r]
     psi_ids: [PSI-101]
+    dois: {PSI-101: 10.60555/2np7-jv14}
   - id: DAFT
     name: Dust and Aerosol measurement Feasibility Test
     pillars: [detection]
@@ -109,6 +118,7 @@ investigations:
     objectives: Isolated fuel droplet burning and extinction in oxygen/diluent atmospheres to evaluate suppressants.
     datasets: [flex]
     psi_ids: [PSI-69]
+    dois: {PSI-69: 10.60555/mbq8-0451}
   - id: FLEX-2
     name: Flame Extinguishment Experiment 2
     pillars: [suppression, prevention]
@@ -119,6 +129,7 @@ investigations:
     years_source: approximate (the PSI table gives no year)
     objectives: Multi-component fuels, droplet pairs and arrays, and convective effects on droplet burning.
     psi_ids: [PSI-68]
+    dois: {PSI-68: 10.60555/byp8-h018}
     test_matrix: "Planned test matrix in the PSI-68 table (not individual tests): 8 fuels or mixtures (isooctane, n-octane, heptane, decane, ethanol, propanol-glycerol and heptane-isooctane mixtures), droplets 1.5-5 mm, oxygen 17-30 % in nitrogen or helium, 0.5-3 atm, 25 °C, flow 0.1-5 cm/s."
   - id: CFI
     name: Cool Flames Investigation
@@ -131,6 +142,7 @@ investigations:
     objectives: Low-temperature (cool flame) droplet burning chemistry in microgravity.
     datasets: [cfi]
     psi_ids: [PSI-39]
+    dois: {PSI-39: 10.60555/m6pj-a914}
   - id: ACME
     name: Advanced Combustion via Microgravity Experiments
     pillars: [prevention]
@@ -142,6 +154,7 @@ investigations:
     objectives: Six gas-flame experiments on soot, flame stability and efficiency, including CFI-G and E-FIELD Flames.
     datasets: [flame_design_normal, acme_bre]
     psi_ids: [PSI-10, PSI-20]
+    dois: {PSI-10: 10.60555/w4zy-bt45, PSI-20: 10.60555/vb93-3y72}
   - id: CFI-G
     name: Cool Flames Investigation with Gases
     pillars: [prevention]
@@ -154,6 +167,7 @@ investigations:
     objectives: Gaseous cool and hot diffusion flames at oxygen fractions up to 85% O₂.
     datasets: [cfig_normal, cfig_inverse]
     psi_ids: [PSI-159]
+    dois: {PSI-159: 10.60555/cyt1-kh64}
   - id: E-FIELD Flames
     name: Electric-Field Effects on Laminar Diffusion Flames
     pillars: [prevention]
@@ -166,6 +180,7 @@ investigations:
     objectives: Use of electric fields to influence flame shape, soot and stability.
     datasets: [efield]
     psi_ids: [PSI-22]
+    dois: {PSI-22: 10.60555/se5a-8c73}
   - id: SPICE
     name: Smoke Point In Co-flow Experiment
     pillars: [prevention, detection]
@@ -177,6 +192,7 @@ investigations:
     objectives: Soot formation and smoke points of gas jet flames in a co-flow (MSG flow duct).
     datasets: [spice]
     psi_ids: [PSI-107]
+    dois: {PSI-107: 10.60555/9kbh-e962}
   - id: SLICE
     name: Structure and Liftoff In Combustion Experiment
     pillars: [prevention]
@@ -186,3 +202,5 @@ investigations:
     years: [2012, 2012]
     years_source: approximate (no PSI table loaded)
     objectives: Lifted and attached gas-jet flame structure in co-flow (MSG flow duct).
+    psi_ids: [PSI-106]
+    dois: {PSI-106: 10.60555/pm12-rg61}

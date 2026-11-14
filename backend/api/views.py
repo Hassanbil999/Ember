@@ -187,8 +187,10 @@ def focus_view(nid: str, role: str = "researcher") -> dict:
         t = t[t.investigation_id == n["label"]]
         out["definition"] = inv.objectives
         psi = json.loads(inv.psi_ids) if inv.psi_ids else []
-        out["meta"] = {"PSI id": ", ".join(psi) or "no PSI table loaded here", "DOI": inv.doi or "not recorded here",
-                       "psi_tables": psi_tables(psi), "years_source": inv.years_source,
+        dois = json.loads(inv.dois) if inv.dois else {}
+        out["meta"] = {"PSI id": ", ".join(psi) or "no PSI table loaded here",
+                       "DOI": ", ".join(dois[a] for a in psi if a in dois) or "not recorded here",
+                       "psi_tables": psi_tables(psi, dois), "years_source": inv.years_source,
                        "platform": inv.platform, "hardware": inv.hardware, "years": json.loads(inv.years),
                        "license": inv.license, "source": json.loads(inv.source_urls)}
         out["numbers"] = key_numbers(t)

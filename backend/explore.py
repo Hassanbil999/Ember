@@ -23,11 +23,16 @@ def _manifest() -> dict:
     return json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
 
 
-def psi_tables(accessions: list[str]) -> list[dict]:
-    """The downloaded PSI experimental tables of these studies: accession, file name and NASA download link."""
-    out = [{"accession": a, "file": m["file"], "url": m["url"], "rows": m["data_rows"]}
-           for a in accessions for m in _manifest().values() if m["psi_accession"] == a]
-    return out or [{"accession": a, "file": None, "url": None, "rows": None} for a in accessions]
+def psi_tables(accessions: list[str], dois: dict | None = None) -> list[dict]:
+    """Per PSI study: its DOI (verified) and its downloaded experimental tables (file name, NASA download link)."""
+    dois = dois or {}
+    out = []
+    for a in accessions:
+        doi = dois.get(a)
+        files = [m for m in _manifest().values() if m["psi_accession"] == a]
+        base = {"accession": a, "doi": doi, "doi_url": f"https://doi.org/{doi}" if doi else None}
+        out += [{**base, "file": m["file"], "url": m["url"], "rows": m["data_rows"]} for m in files] or                [{**base, "file": None, "url": None, "rows": None}]
+    return out
 
 
 @lru_cache(maxsize=1)
@@ -45,7 +50,8 @@ def explore() -> dict:
                      "hardware": r.hardware, "platform": r.platform, "years": years, "parent": r.parent,
                      "n_tests": int(counts.get(r.id, 0)), "objectives": r.objectives,
                      "datasets": json.loads(r.datasets) if r.datasets else [],
-                     "years_source": r.years_source, "test_matrix": r.test_matrix, "psi": psi_tables(json.loads(r.psi_ids) if r.psi_ids else [])})
+                     "years_source": r.years_source, "test_matrix": r.test_matrix, "psi": psi_tables(json.loads(r.psi_ids) if r.psi_ids else [],
+                                                       json.loads(r.dois) if r.dois else {})})
     by_id = {i["label"]: i for i in invs}
 
     # link strength between two investigations, with the reasons spelled out
