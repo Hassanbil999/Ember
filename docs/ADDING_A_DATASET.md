@@ -18,7 +18,7 @@ datasets:
     title: FLEX-2 droplet tests (PSI)
     adapter: flex_droplets          # reuse an existing adapter if the shape matches
     enabled: true
-    demo: false                     # real data: no demo badge, kept by `run.py demo off`
+    demo: false                     # real data: no demo badge
     investigations: [FLEX-2]
     files: [flex2_tests.csv]
     license: "NASA PSI terms of use"
@@ -38,21 +38,17 @@ datasets:
     outcome_map: { "burned": 1, "extinguished": 0, "no ignition": 0 }
 ```
 
-Also add the investigation id to that investigation's `datasets:` list in `config/investigations.yaml`, so the Atlas links them.
+Also add the investigation id to that investigation's `datasets:` list in `config/investigations.yaml`, so the catalog groups them under the right investigation.
 
 New variables (a new measured quantity) go in `config/variables.yaml` with `unit`, `kind`, `role`, `synonyms` and, optionally, `valid_range` / `plausible_range`. Validation rules are generic and live under `validation:` in `datasets.yaml`.
 
 ## 3. Run
 
 ```
-python run.py ingest      # make ingest — adapters → canonical tables → validation → chunks → indexes → atlas
-python run.py train       # make train  — image pipeline over config/media.yaml, then surrogate models
-python run.py ingest      # re-attach image-derived variables (or just: python run.py all)
+python run.py ingest      # canonical (adapters → validation → chunks → index) → existing (map to the SPEC §5 tables) → seed → fit
 ```
 
-Open the **Refinery** to see how many rows were kept, flagged or excluded, and why. Click any number anywhere to see its raw value, source row and every conversion step.
-
-To drop the demo fixture once real data is in: `python run.py demo off` (`demo on` restores it).
+Every number keeps its raw value, source row and conversion steps: `GET /api/test/<id>` returns them and `GET /api/source/<dataset>/row/<n>` returns the raw row. The new tests appear in Find data under the dataset's data resource.
 
 ## 4. Only if the shape is new: write an adapter
 
@@ -83,39 +79,3 @@ Then import it in `backend/adapters/__init__.py`. The two worked examples:
 | `bass2_solids` | `backend/adapters/bass2_solids.py` | XLSX sheet, units in headers (`[mm/s]` → converted to cm/s), gravity labels (`µg`/`1g`), spread rate |
 | `generic_table` | `backend/adapters/generic_table.py` | any tidy table where `columns:` is enough |
 | `pdf_reports` | `backend/adapters/pdf_reports.py` | PDFs → page-anchored chunks; metadata in `data/raw/reports/reports.yaml` |
-
-## 5. Surrogate models (optional)
-
-Add an entry to `config/models.yaml`:
-
-```yaml
-  flex2_k:
-    dataset: flex2_real
-    label: FLEX-2 — burning-rate constant
-    type: gp_regressor            # gp_classifier | gp_regressor
-    target: burn_rate_k_mm2_s
-    features: [o2_frac, pressure_kpa, d0_mm, diluent, fuel]
-    group: campaign               # GroupKFold groups
-    only_when: { burned: 1 }
-```
-
-The Scenario Lab currently binds the droplet and solid modes to `droplet_*` and `solid_*` model ids; new models show up on the Studio advisor and in `/api/models` immediately.
-
-## 6. Real footage (Image Lab)
-
-```yaml
-# config/media.yaml
-media:
-  - id: FLEX2-0123-backlit
-    test_id: FLEX2-0123
-    dataset: flex2_real
-    view: backlit                 # backlit | flame
-    path: flex2_real/media/0123_backlit.avi    # relative to data/raw; a folder = image sequence
-    format: avi
-    fps: 30
-    px_per_mm: 41.7               # calibration
-    t0_s: 0.0
-    kind: footage                 # never "test_pattern" for real data
-```
-
-Videos are split to frames with ffmpeg (system binary or the bundled imageio-ffmpeg) into `data/artifacts/frames/<id>/` and are never loaded whole. Tune thresholds and region of interest per test in the Image Lab's correction loop. Corrections are stored in `data/artifacts/vision/overrides.json` and recorded in provenance.

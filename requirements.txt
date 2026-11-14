@@ -10,16 +10,9 @@ duckdb>=1.0
 pyyaml>=6.0
 rank-bm25>=0.2.2
 pymupdf>=1.24
-opencv-python-headless>=4.9
-scikit-image>=0.22
-imageio>=2.34
-imageio-ffmpeg>=0.4.9
 openpyxl>=3.1
-reportlab>=4.0
 httpx>=0.27
-joblib>=1.3
+anthropic>=2.8
 pytest>=8.0
 # optional: dense embeddings with MiniLM instead of local LSA (set FA_EMBEDDER=st)
 # sentence-transformers>=2.7
-# optional: browser smoke test
-# playwright>=1.44

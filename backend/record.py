@@ -156,7 +156,6 @@ def test_record(test_id: str) -> dict | None:
     row = st.tests.loc[test_id].to_dict()
     ds = row["dataset"]
     invalid: dict = row.get("invalid") or {}
-    image_derived = set(row.get("image_derived") or [])
     prov = st.provenance[st.provenance.test_id == test_id.split("~")[0]]
     pv = {r.variable: r for r in prov.itertuples()}
     fields = []
@@ -187,6 +186,10 @@ def test_record(test_id: str) -> dict | None:
             status = "measured"
         if "constant" in ops:
             src = {"kind": "setting", "text": f"Dataset setting for “{_source_name(ds)}”. The source table has no column for this."}
+        elif "derive" in ops and isinstance(p.column, str) and p.column and pd.notna(row.get("_row")):
+            # worked out from one source cell (e.g. one level of a list): still traceable to that cell
+            src = {"kind": "table", "dataset": ds, "row": int(row["_row"]), "column": p.column,
+                   "text": f"Worked out from {_source_name(ds)}, row {int(row['_row'])}, column “{p.column}”: {steps[0]['detail']}"}
         elif "derive" in ops or "not_computed" in ops:
             how = "oxygen fraction × total pressure" if var == "o2_pp_kpa" else steps[0]["detail"]
             src = {"kind": "calculation", "text": f"Worked out here, not read from the source: {how}."}
@@ -199,17 +202,6 @@ def test_record(test_id: str) -> dict | None:
             "trail": {"variable": var, "raw": p.raw_value, "file": p.source_file, "locator": p.locator,
                       "column": p.column, "steps": steps},
         })
-    for var in sorted(image_derived):
-        iv = row.get(f"img_{var}")
-        value, unit = display(var, iv)
-        if value is not None:
-            label = next((lab for v, lab, _ in FIELDS if v == var), var)
-            fields.append({"var": f"img_{var}", "label": f"{label}, measured from images", "group": "results",
-                           "status": "image", "status_label": STATUS_LABEL["image"], "value": value, "unit": unit,
-                           "note": "Extracted from the test's image sequence by the vision pipeline.",
-                           "source": {"kind": "images", "text": "Image sequence of this test", "test": test_id},
-                           "trail": {"variable": f"img_{var}", "raw": None, "file": "data/artifacts/vision", "locator": test_id,
-                                     "column": None, "steps": [{"op": "image_measurement", "detail": "see Image Lab"}]}})
     log = st.validation_log[st.validation_log.test_id == test_id]
     notices = [{"rule": e.rule, "title": RULE_TITLE.get(e.rule, e.rule.replace("_", " ").capitalize()),
                 "excludes": e.action == "exclude", "reason": e.reason, "detail": e.detail or ""}
@@ -220,5 +212,4 @@ def test_record(test_id: str) -> dict | None:
         "investigation": None if inv is None or pd.isna(inv) else str(inv),
         "excluded": bool(row["excluded"]), "demo": bool(row["demo"]), "source_row": int(row["_row"]),
         "notices": notices, "fields": fields,
-        "media": json.loads(st.media[st.media.test_id == test_id].to_json(orient="records")),
     }

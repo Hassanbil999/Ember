@@ -1,4 +1,6 @@
-"""`make ingest`: raw files → canonical tables → validation → chunks → indexes → atlas."""
+"""The team's cleaning pipeline: raw files → canonical tables → validation → chunks → search index.
+
+Run through `python -m backend.ingest canonical` (see backend/ingest_cli.py for every step)."""
 from __future__ import annotations
 
 import json
@@ -78,12 +80,6 @@ def run() -> dict:
             "raw_preview": json.loads(res.raw_preview.astype(str).to_json(orient="records")) if res.raw_preview is not None else [],
         })
 
-    # Test-pattern media may belong to a table that is no longer loaded (the synthetic droplet set). Its table
-    # values are still the reference the image pipeline is validated against, so keep them available.
-    for ds_id in {m.get("dataset") for m in (config.media_cfg().get("media", []) or [])} - set(published):
-        if ds_id in datasets and datasets[ds_id]["adapter"] in REGISTRY:
-            published[ds_id] = REGISTRY[datasets[ds_id]["adapter"]](ds_id, datasets[ds_id]).published
-
     tests = pd.concat(all_tests, ignore_index=True)
     tests["flags"] = tests["flags"].map(json.dumps)
     tests["invalid"] = tests["invalid"].map(lambda d: json.dumps(d if isinstance(d, dict) else {}, ensure_ascii=False))
@@ -112,11 +108,9 @@ def run() -> dict:
     log_df = pd.DataFrame(all_log) if all_log else pd.DataFrame(columns=["dataset", "test_id", "rule", "action", "reason", "detail", "source_row"])
     vars_df = pd.DataFrame([{"name": k, **{kk: (json.dumps(vv) if isinstance(vv, (list, dict)) else vv) for kk, vv in v.items()}}
                             for k, v in config.variables().items()])
-    media = config.media_cfg().get("media", []) or []
-    media_df = pd.DataFrame(media) if media else pd.DataFrame(columns=["id", "test_id", "dataset", "view", "path", "format", "fps", "px_per_mm", "t0_s", "kind"])
 
     tables = {"investigations": inv_df, "tests": tests, "provenance": prov_df, "validation_log": log_df,
-              "documents": docs_df, "chunks": chunks_df, "concepts": concepts, "variables": vars_df, "media": media_df}
+              "documents": docs_df, "chunks": chunks_df, "concepts": concepts, "variables": vars_df}
     db_path = PROCESSED / "atlas.duckdb"
     if db_path.exists():
         db_path.unlink()
@@ -133,11 +127,6 @@ def run() -> dict:
     (ARTIFACTS / "glossary.json").write_text(json.dumps(concepts_cfg.get("glossary", {}), ensure_ascii=False), encoding="utf-8")
 
     from .search.index import build_index
-    from .atlas import build_atlas
-    from .vision.pipeline import VDIR, write_canonical
-    if any(VDIR.glob("*.json")):
-        write_canonical()          # re-attach image-derived variables to the fresh tables
-    build_atlas()
     build_index()
     summary = {"tests": len(tests), "excluded": int(tests["excluded"].sum()), "documents": len(docs_df),
                "chunks": len(chunks_df), "investigations": len(inv_df), "seconds": round(time.time() - t0, 2)}
@@ -146,4 +135,5 @@ def run() -> dict:
 
 
 if __name__ == "__main__":
-    run()
+    from .ingest_cli import main
+    main()

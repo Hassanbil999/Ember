@@ -65,16 +65,10 @@ def test_search_is_fast():
 def test_api_smoke():
     from backend.api.main import app
     c = TestClient(app)
-    for url in ["/api/meta", "/api/atlas", "/api/navigate?q=moon%20base", "/api/node/inv:FLEX", "/api/refinery",
-                "/api/vision/tests", "/api/gapmap", "/api/answer?q=smoke%20detection"]:
+    for url in ["/api/health", "/api/search?q=smoke%20detection", "/api/test/SAF1-S1", "/api/tests?dataset=saffire1"]:
         r = c.get(url)
         assert r.status_code == 200, url
         assert int(float(r.headers["server-timing"].split("dur=")[1])) < 1500
-    t0 = time.perf_counter()
-    r = c.get("/api/navigate?q=tests%20near%2030%25%20oxygen")
-    assert r.status_code == 200 and (time.perf_counter() - t0) < 0.15
-    r = c.post("/api/scenario", json={"mode": "droplet", "scenario": {"o2_frac": 0.21, "pressure_kpa": 101.3, "d0_mm": 3, "co2_frac": 0, "he_frac": 0, "fuel": "n-heptane", "gravity_g": 0}})
-    assert r.status_code == 200 and r.json()["burn"]["domain"]["status"] == "inside"
     csv = c.post("/api/export/csv", json={"ids": ["BASS2-O4", "SAF2-2-1-UG"]}).text
     assert "DEMO FIXTURE" not in csv and "source" in csv.splitlines()[4]
     assert "PSI-25_Experimental table_BASS-II.csv:row" in csv and "Did not spread" in csv

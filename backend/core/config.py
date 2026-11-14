@@ -39,17 +39,5 @@ def validation_rules() -> list:
     return load_yaml("datasets.yaml").get("validation", [])
 
 
-def models_cfg() -> dict:
-    return load_yaml("models.yaml")
-
-
-def presets() -> dict:
-    return load_yaml("presets.yaml")
-
-
-def media_cfg() -> dict:
-    return load_yaml("media.yaml")
-
-
 def reload() -> None:
     load_yaml.cache_clear()
