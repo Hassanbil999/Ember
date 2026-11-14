@@ -58,6 +58,18 @@ export interface FireCheckRes {
   model: { chosen: string | null; n_tests: number; n_campaigns: number; auc: number | null; brier: number | null; baseline_brier: number; investigation: string; psi_id: string; skill: number | null };
   not_in_data: string;
   suggestion: { code: string; fuel: string; o2_pct: number; psi: number; fuel_flow?: number; d0_mm?: number; co2_pct?: number; he_pct?: number } | null;
+  oxygen_line: OxygenLine | null;
+  next_tests: NextTest[];
+}
+export interface OxygenLine {
+  points: { o2_pct: number; zone: 'tested' | 'estimated' | 'untested'; p: number | null; low: number | null; high: number | null }[];
+  line: { o2_pct: number | null; range: [number | null, number | null] | null; max_p: number; min_p: number; falls_with_oxygen: { from_o2: number; peak_p: number } | null } | null;
+  tests: { code: string; o2_pct: number; burned: number; near_settings: boolean }[];
+  estimated_spans: [number, number][]; held: string[];
+}
+export interface NextTest {
+  inputs: Record<string, number>; labels: Record<string, string>; units: Record<string, string>;
+  committee_low: number; committee_high: number; nearest_test: string; nearest_burned: number; nearest_distance: number; why: string;
 }
 export type FireCheckMeta = Record<'gas' | 'droplet', { label: string; fuels: string[]; ranges: Record<string, [number, number]>; ranges_by_fuel: Record<string, Record<string, [number, number]>>; not_in_data: string }>;
 

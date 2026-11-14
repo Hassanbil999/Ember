@@ -146,3 +146,50 @@ def test_burn_time_and_calibration_are_reported():
 def test_validation_errors_are_readable(client):
     r = client.post("/api/fire-check", json={"problem": "gas", "fuel": "propane", "o2_pct": 21, "psi": 0, "fuel_flow": 1})
     assert r.status_code == 422 and isinstance(r.json()["detail"], list)      # the web client turns this list into text
+
+
+# ------------------------------------------------------------------ oxygen line and next tests
+MOON_PROPANE = {"problem": "gas", "fuel": "propane", "o2_pct": 34, "psi": 8.2, "fuel_flow": 1.0}
+ISS_METHANOL = {"problem": "droplet", "fuel": "methanol", "o2_pct": 21, "psi": 14.7, "d0_mm": 3}
+
+
+def test_oxygen_line_shows_a_chance_only_where_a_single_check_would():
+    res = service.check(ISS_METHANOL)
+    ol = res["oxygen_line"]
+    for p in ol["points"][::7]:
+        single = service.check({**ISS_METHANOL, "o2_pct": p["o2_pct"]})
+        assert p["zone"] == single["zone"]
+        assert (p["p"] is None) == (single["zone"] == "untested")
+        if p["p"] is not None:
+            assert 0 <= p["low"] <= p["high"] <= 1, "the fold range is a real range"
+
+
+def test_oxygen_line_crossing_sits_inside_the_estimated_stretch():
+    L = service.check(ISS_METHANOL)["oxygen_line"]
+    spans = L["estimated_spans"]
+    assert L["line"]["o2_pct"] is not None
+    assert any(a <= L["line"]["o2_pct"] <= b for a, b in spans)
+    assert all(t["burned"] in (0, 1) for t in L["tests"]) and any(t["near_settings"] for t in L["tests"])
+
+
+def test_untested_request_still_gets_next_tests_inside_the_hardware_range():
+    res = service.check(MOON_PROPANE)
+    assert res["zone"] == "untested" and res["estimate"] is None
+    assert res["oxygen_line"]["line"] is None, "no line where nothing is estimated"
+    nt = res["next_tests"]
+    assert 1 <= len(nt) <= 3
+    b = service._bundle("gas")
+    feats = b["features"]
+    for n in nt:
+        for k, v in n["inputs"].items():
+            col = b["X"][:, feats.index(k)]
+            assert col.min() - 1e-6 <= v <= col.max() + 1e-6, f"{k} outside what the hardware has done"
+        assert n["committee_low"] <= n["committee_high"] and n["nearest_distance"] > 0
+    keys = list(nt[0]["inputs"])
+    assert len({tuple(n["inputs"][k] for k in keys) for n in nt}) == len(nt), "three different experiments"
+
+
+def test_report_has_the_line_and_the_next_tests(client):
+    body = client.post("/api/fire-check/report", json=ISS_METHANOL).text
+    assert "Where is the line?" in body and "<svg" in body and "50 % at" in body
+    assert "Tests that would teach the model most" in body and "Query by committee" in body

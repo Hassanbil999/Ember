@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { api, type FireCheckMeta, type FireCheckReq, type FireCheckRes } from '../api';
+import { OxygenLine } from './OxygenLine';
 
 const pct = (p: number) => `${Math.round(p * 100)} %`;
 const r2 = (v: number) => (Math.abs(v) >= 10 ? Math.round(v) : Math.abs(v) >= 1 ? +v.toFixed(1) : +v.toFixed(2));
@@ -168,6 +169,20 @@ export function FireCheck({ o2, psi, g, onClose, onOpenTest }: Props) {
             {res.drivers.length > 0 && (
               <p className="muted fc-small">Moves it most: {res.drivers.slice(0, 3).map(d => `${d.label.toLowerCase()} +${d.step} ${d.unit} → ${d.change_pts > 0 ? '+' : ''}${d.change_pts} pts`).join(' · ')}</p>
             )}
+            {res.oxygen_line && (<>
+              <span className="sec">Where is the line? Oxygen, everything else as entered</span>
+              <OxygenLine data={res.oxygen_line} entered={req.o2_pct} yes={res.estimate?.outcome_yes ?? (res.problem === 'gas' ? 'stayed lit' : 'burned to the end')}
+                no={res.estimate?.outcome_no ?? (res.problem === 'gas' ? 'went out on its own' : 'flame died with fuel left')} />
+            </>)}
+            {res.next_tests.length > 0 && (<>
+              <span className="sec">Tests that would teach the model most</span>
+              <p className="muted fc-small">Where the 15 models (each refitted on resampled NASA campaigns) disagree most, inside what the {res.model.investigation} hardware has already done, and near your settings. One test there narrows the answer most.</p>
+              <ol className="fc-next" id="fcNext">{res.next_tests.map((n, i) => (
+                <li key={i} data-next={i}>
+                  <span className="num">{Object.keys(n.inputs).map(k => `${n.labels[k]} ${r2(n.inputs[k])}${n.units[k] ? ' ' + n.units[k] : ''}`).join(' · ')}</span>
+                  <span className="muted"> · models: {pct(n.committee_low)}–{pct(n.committee_high)} · nearest test {n.nearest_test} ({n.nearest_burned ? 'kept going' : 'went out'})</span>
+                </li>))}</ol>
+            </>)}
             <span className="sec">Nearest NASA tests, same fuel</span>
             <div className="tablebox"><table id="fcNear"><thead><tr><th>Test</th><th>Fuel</th><th className="n">O₂ %</th><th className="n">psi</th>
               <th className="n">{res.problem === 'gas' ? 'Flow mg/s' : 'Drop mm'}</th><th>Measured</th><th className="n">Distance</th><th><span className="sr">Open</span></th></tr></thead>

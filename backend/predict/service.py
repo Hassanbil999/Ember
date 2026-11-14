@@ -11,6 +11,7 @@ import yaml
 
 from ..core.config import CONFIG, PROCESSED
 from ..core.store import get_store
+from . import explore
 from .domain import Domain
 from .problems import PROBLEMS, PSI, features_from, gas_fuel_parts
 from .train import OUT
@@ -163,6 +164,12 @@ def check(req: dict) -> dict:
                      "skill": card.get("skill_vs_baseline"), "calibration": card.get("calibration", []), "range_method": card.get("range_method"),
                      },
            "not_in_data": NOT_IN_DATA[key], "suggestion": None}
+    # where is the line, and which test would teach the models most (computed in every zone: an untested
+    # request is exactly where a next test matters). Model chances on the line appear only where allowed.
+    res["oxygen_line"], res["next_tests"] = None, []
+    if card["chosen"] and b.get("boot_models"):
+        res["oxygen_line"] = explore.oxygen_line(pb, b, dom, x, g)
+        res["next_tests"] = explore.next_tests(pb, b, dom, x)
     close = [r for r in res["nearest"] if r["close"]] if a["zone"] != "untested" else []
     if close:
         k = sum(r["burned"] for r in close)
