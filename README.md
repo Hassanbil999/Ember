@@ -4,6 +4,8 @@ NASA Space Apps 2026: an AI-powered dashboard of NASA microgravity combustion re
 
 > **What is real and what is not.** Every measured test comes from the real NASA PSI experimental tables the team downloaded and cleaned: 19 tables, 1,848 usable tests: droplets (FLEX PSI-69, CFI PSI-39, FLEX-2 PSI-68 test plan), gas flames (CFI-G PSI-159 normal and inverse, ACME Flame Design PSI-10, ACME Burning Rate Emulator PSI-20, ACME CLD Flame PSI-21, ACME s-Flame PSI-23, E-FIELD PSI-22, SPICE PSI-107, SLICE PSI-106), solid materials (BASS-II PSI-25, BASS PSI-26, SAFFIRE-1/2/3 PSI-98–100) and smoke for fire detection (SAME PSI-102, SAME-R PSI-101). They are loaded as published: impossible source values are flagged, never corrected, and values read from free-text notes are marked *derived*. Starter rows from `data/seed.json` fill only what the real data lacks (papers, reports, and the few acrylic and fabric test conditions the simulator demo needs). They stay labelled **placeholder / unverified** until a person checks them. One outside source is loaded but kept apart: ZARM drop-tower flame-spread rates (Zenodo doi:10.5281/zenodo.18479713, CC BY-NC 4.0); it trains no model. The simulator is an illustrative reduced-order model, not a design tool.
 
+**How it works, in plain language:** [docs/methods/](docs/methods/README.md) explains the data, cleaning and outliers, preprocessing, models and evaluation, with every number reproducible by `python scripts/evaluate_methods.py`.
+
 ## Run it
 
 ```
