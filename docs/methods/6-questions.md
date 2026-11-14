@@ -50,6 +50,14 @@ Only partly. Microgravity tests only, so Moon gravity (1/6 g) is untested. Gas f
 With published results, yes, on the direction of the effects (NASA WSTF on oxygen %, the ZARM drop tower). A review of
 selected predictions by a combustion expert is the next step we would take.
 
+**Where is the line between "keeps burning" and "goes out"?**
+The Fire check sweeps oxygen at your settings and shows where the chance passes 50 %, with a range, only where
+NASA's tests allow an estimate. See [4. Models](4-models.md).
+
+**What experiment would help most?**
+The app suggests three tests where the models disagree most, inside what NASA's hardware can do. That turns a gap
+into a concrete next experiment (active learning, "query by committee").
+
 **Why not deep learning or reinforcement learning?**
 133 and 206 examples are far too few for deep learning, and there is no environment for reinforcement learning to act
 in. They would add risk, not insight.

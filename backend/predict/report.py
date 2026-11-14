@@ -46,6 +46,60 @@ def _table(head: list[str], rows: list[list[str]], num: set[int] = frozenset()) 
     return f"<table><thead><tr>{th}</tr></thead><tbody>{body}</tbody></table>"
 
 
+def _line_svg(ol: dict, entered: float | None, yes: str, no: str) -> str:
+    """Static SVG of the oxygen line for print (same encoding as the app's chart, light colours)."""
+    W, H, ml, mr, mt, mb = 640, 262, 44, 14, 30, 50
+    row_yes, row_no = 14, H - mb + 14       # outcome rows outside the plot
+    iw, ih = W - ml - mr, H - mt - mb
+    pts = ol["points"]
+    x0, x1 = pts[0]["o2_pct"], pts[-1]["o2_pct"]
+    X = lambda o: ml + (min(x1, max(x0, o)) - x0) / (x1 - x0) * iw  # noqa: E731
+    Y = lambda p: mt + (1 - p) * ih  # noqa: E731
+    out = [f'<svg class="chart" viewBox="0 0 {W} {H}" role="img" aria-label="Chance it keeps going as oxygen changes">',
+           '<defs><pattern id="h" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
+           '<line x1="0" y1="0" x2="0" y2="6" stroke="#cdd3de" stroke-width="2"/></pattern></defs>']
+    run = None
+    for i, p in enumerate(pts):
+        if p["p"] is None and run is None:
+            run = p["o2_pct"]
+        if run is not None and (p["p"] is not None or i == len(pts) - 1):
+            end = p["o2_pct"] if p["p"] is None else pts[i - 1]["o2_pct"]
+            out.append(f'<rect x="{X(run):.1f}" y="{mt}" width="{max(2, X(end) - X(run)):.1f}" height="{ih}" fill="url(#h)"><title>untested</title></rect>')
+            run = None
+    for p in (0, 0.5, 1):
+        dash = ' stroke-dasharray="4 4"' if p == 0.5 else ""
+        out.append(f'<line x1="{ml}" x2="{W - mr}" y1="{Y(p):.1f}" y2="{Y(p):.1f}" stroke="#d5dae4"{dash}/>'
+                   f'<text x="{ml - 6}" y="{Y(p) + 4:.1f}" text-anchor="end" class="ax">{p * 100:.0f}%</text>')
+    t = 5 * -(-x0 // 5)
+    while t <= x1:
+        out.append(f'<text x="{X(t):.1f}" y="{H - 6}" text-anchor="middle" class="ax">{t:g}</text>')
+        t += 5
+    out.append(f'<text x="{W - mr}" y="{H - 20}" text-anchor="end" class="ax">oxygen, %</text>')
+    est = [p for p in pts if p["p"] is not None]
+    if len(est) > 1:
+        up = "L".join(f'{X(p["o2_pct"]):.1f},{Y(p["high"]):.1f}' for p in est)
+        dn = "L".join(f'{X(p["o2_pct"]):.1f},{Y(p["low"]):.1f}' for p in reversed(est))
+        out.append(f'<path d="M{up}L{dn}Z" fill="#0d121e" opacity="0.10"/>')
+        out.append('<path d="M' + "L".join(f'{X(p["o2_pct"]):.1f},{Y(p["p"]):.1f}' for p in est) + '" fill="none" stroke="#0d121e" stroke-width="2"/>')
+    L = ol["line"]
+    if L and L["o2_pct"] is not None:
+        out.append(f'<line x1="{X(L["o2_pct"]):.1f}" x2="{X(L["o2_pct"]):.1f}" y1="{Y(0.5) - 8:.1f}" y2="{Y(0.5) + 8:.1f}" stroke="#0d121e" stroke-width="2"/>'
+                   f'<text x="{X(L["o2_pct"]) - 6:.1f}" y="{Y(0.5) - 6:.1f}" text-anchor="end" class="lab">50 % at {L["o2_pct"]:g} %</text>')
+    if entered is not None:
+        ex = X(entered)
+        right = ex > W - mr - 90
+        out.append(f'<line x1="{ex:.1f}" x2="{ex:.1f}" y1="{mt}" y2="{mt + ih}" stroke="#5b6478" stroke-width="1.5" stroke-dasharray="2 3"/>'
+                   f'<text x="{ex - 5 if right else ex + 5:.1f}" y="{mt + 13}" text-anchor="{"end" if right else "start"}" class="lab">yours {entered:g} %</text>')
+    for tt in ol["tests"]:
+        c = "#b85f17" if tt["burned"] else "#2369bf"
+        cy = row_yes if tt["burned"] else row_no
+        fill, stroke, sw = (c, "#fff", 2) if tt["near_settings"] else ("none", c, 1.5)
+        label = f'{tt["code"]}: {yes if tt["burned"] else no} at {tt["o2_pct"]:g} % oxygen'
+        out.append(f'<circle cx="{X(tt["o2_pct"]):.1f}" cy="{cy}" r="4" fill="{fill}" stroke="{stroke}" stroke-width="{sw}"><title>{e(label)}</title></circle>')
+    out.append("</svg>")
+    return "".join(out)
+
+
 def verdict(res: dict) -> str:
     """One template sentence; never more than the result supports."""
     z, est, t = res["zone"], res["estimate"], res["tested"]
@@ -105,6 +159,43 @@ def render(res: dict, stamp: datetime) -> str:
         drows = [[e(d["label"]), e(f'+{d["step"]:g} {d["unit"]}'.strip()), f'{d["change_pts"]:+.1f} pts'] for d in res["drivers"]]
         parts.append(f'<section><h2>What moves the estimate</h2>{_table(["Input", "Change", "Change in chance"], drows, {2})}'
                      '<p class="note">Each input raised by a tenth of its tested range, the others held. Read as direction and size near these conditions, not as a law.</p></section>')
+
+    ol = res.get("oxygen_line")
+    if ol:
+        entered = next((float(str(r["value"]).split()[0]) for r in res["inputs"] if r["label"] == "Oxygen"), None)
+        yes = res["estimate"]["outcome_yes"] if res["estimate"] else ("stayed lit" if res["problem"] == "gas" else "burned to the end")
+        no = res["estimate"]["outcome_no"] if res["estimate"] else ("went out on its own" if res["problem"] == "gas" else "flame died with fuel left")
+        L = ol["line"]
+        if L and L["o2_pct"] is not None:
+            lo, hi = L["range"] or (None, None)
+            rng = f'{lo:.3g} %' if lo is not None else "below the estimated range"
+            rng += f' to {hi:g} %' if hi is not None else " to beyond the estimated range"
+            lead = f'The estimated chance passes 50 % at about <b>{L["o2_pct"]:g} % oxygen</b> (models disagree from {rng}).'
+        elif L:
+            lead = f'Where an estimate is allowed, the chance stays between {_pct(L["min_p"])} and {_pct(L["max_p"])}: it does not pass 50 %.'
+        else:
+            lead = "No estimate anywhere on this line: these settings are outside what NASA tested for this fuel. Only the real tests are shown."
+        warn = ""
+        if L and L.get("falls_with_oxygen"):
+            warn = (f'<p class="note warn">Physics check: the estimate falls as oxygen rises above {L["falls_with_oxygen"]["from_o2"]:g} %. '
+                    "More oxygen is expected to help a flame, so this probably reflects other differences between those NASA tests "
+                    "(their exact flow or pressure), not oxygen itself. Read that part with caution.</p>")
+        parts.append(f'<section><h2>Where is the line? Oxygen, everything else as entered</h2><p>{lead}</p>'
+                     f'{_line_svg(ol, entered, yes, no)}{warn}'
+                     f'<p class="note">Held as entered: {e(", ".join(ol["held"]).lower())}. Line: the model used ({e(m["chosen"])}); band: lowest and highest of the five fold models. '
+                     f'Hatched: untested, no estimate. Dots: NASA tests of this fuel, top row {e(yes)}, bottom row {e(no)}; filled = near your other settings, hollow = at other settings.</p></section>')
+
+    nt = res.get("next_tests") or []
+    if nt:
+        nrows = []
+        for n in nt:
+            cond = " · ".join(f'{e(n["labels"][k])} {v:.3g}{(" " + e(n["units"][k])) if n["units"][k] else ""}' for k, v in n["inputs"].items())
+            nrows.append([cond, f'{_pct(n["committee_low"])}–{_pct(n["committee_high"])}',
+                          f'<span class="mono">{e(n["nearest_test"])}</span> ({"kept going" if n["nearest_burned"] else "went out"}), {n["nearest_distance"]:g} away'])
+        parts.append(f'<section><h2>Tests that would teach the model most</h2>'
+                     f'{_table(["Conditions (same fuel)", "Five models say", "Nearest NASA test of this fuel"], nrows, {1})}'
+                     f'<p class="note">Query by committee (Seung, Opper and Sompolinsky, 1992): the five models, each trained without some NASA campaigns, disagree most here, '
+                     f'so one test here narrows the answer most. Candidates stay inside what the {e(m["investigation"])} hardware has already done, away from existing tests of this fuel and near your settings.</p></section>')
 
     ref = res.get("reference")
     if ref:
@@ -171,6 +262,8 @@ th{font-weight:500;color:var(--muted);font-size:11.5px;background:var(--soft)}td
 .z-tested .zone{color:#1d7a46}.z-estimated .zone{color:#8a5a00}.z-untested .zone{color:var(--muted)}.zd{color:var(--muted);font-size:13px}
 .lead{font-size:15px;margin:10px 0 0;max-width:75ch}ul{margin:8px 0 0;padding-left:20px}li{margin:3px 0}
 .note{font-size:12px;color:var(--muted);margin:6px 0 0;max-width:85ch}a{color:var(--cool)}
+svg.chart{width:100%;height:auto;display:block;margin-top:8px}.ax{font:11px var(--fm);fill:var(--muted)}.lab{font:500 11.5px var(--fb);fill:var(--ink)}
+.warn{color:#8a5a00}
 footer{margin-top:26px;padding-top:10px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted)}
 @media print{body{background:#fff}main{border:0;margin:0;padding:0;max-width:none}.meta button{display:none}section{break-inside:avoid}}
 """

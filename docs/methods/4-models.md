@@ -57,6 +57,35 @@ the real tests closest to a request.
   real tests **of the same fuel**. Close to a real test: the real tests answer. Within the tested range: the model
   estimates. Beyond it, at another gravity, or with an untested fuel: **no number is shown**.
 
+## Where is the line? (oxygen sweep)
+
+For the engineer's own settings, the app sweeps oxygen from low to high while every other input stays as entered
+(`backend/predict/explore.py`). Each point gets the same tested / estimated / untested rule as a single check, and
+a chance only where an estimate is allowed. It reports where the chance passes 50 %, with a range: where the most
+optimistic and the most pessimistic of the five fold models pass it. NASA tests of the same fuel are drawn on the
+chart (filled when their other settings are close to the engineer's).
+
+Example: a 3 mm methanol drop at 14.7 psi passes 50 % at about **29.7 % oxygen** (the models disagree from 28 % up).
+
+**Physics check.** Combustion science expects more oxygen to help a flame. If the estimate falls as oxygen rises by
+more than 10 points, the app says so and asks the reader to treat that part with caution. Example: 30 % butane at
+8.2 psi and 1 mg/s peaks at about 40 % chance near 33 % oxygen, then falls, because several real tests near those
+settings went out at 38–40 %. That probably reflects other differences between those tests, not oxygen itself.
+
+## Which test should NASA run next? (active learning)
+
+The five fold models (each trained without some NASA campaigns) act as a **committee**. Where they disagree most,
+one more real test would teach the model most. This is "query by committee" (Seung, Opper and Sompolinsky, 1992),
+a classic active-learning method. Candidates:
+
+- stay inside what the hardware has already done for any fuel (so the test can actually be run);
+- favour conditions far from existing tests of this fuel, and close to the engineer's settings;
+- are kept apart so the three suggestions are three different experiments.
+
+Example: pure propane at Moon-base air (34 % oxygen, 8.2 psi) is **untested**, because NASA only tested propane at
+13.7–14.7 psi. The app gives no chance there, but suggests propane at about 36 % oxygen and 7.3 psi, where the models
+disagree from 51 % to 80 %.
+
 ## What about the AI (language model)?
 
 The language model does not predict fires. It only writes summaries and answers from NASA passages, and a checker
