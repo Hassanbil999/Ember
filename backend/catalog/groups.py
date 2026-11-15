@@ -1,4 +1,4 @@
-"""Investigation groups (README Decision A) and the rules that map real values onto the §5 vocabulary.
+"""Investigation groups (Decision A) and the rules that map real values onto the §5 vocabulary.
 
 The prototype and the seed group investigations (`bass` = BASS + BASS-II). The real catalog
 (config/investigations.yaml) has one row per PSI investigation. Each group lists its real members;

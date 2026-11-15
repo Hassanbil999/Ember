@@ -1,7 +1,7 @@
 """POST /api/ai/ask: an answer grounded in retrieved passages and resources, with citations (resource id + page).
 
 Retrieval: the hybrid search index (BM25 + local LSA). Only NASA passages are used (the team's own context notes
-are excluded, README Decision D). A passage counts as relevant only if it shares at least two of the question's
+are excluded, Decision D). A passage counts as relevant only if it shares at least two of the question's
 content words (one, for one-word questions); with nothing relevant the answer is "The data here doesn't cover that."
 Without an API key, the route returns 503 with the relevant passages so the user still sees the evidence.
 """

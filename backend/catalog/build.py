@@ -19,7 +19,7 @@ from . import credibility
 from .groups import FUEL_PHASE_TO_FUEL, GROUPS, MEMBER_TO_GROUP, PILLAR_TO_PURPOSE, material_of, outcome_of
 
 # Variables a test point's numbers come from. A point is verified only if none of these was derived or refused
-# (README Decision B). Dataset settings (e.g. gravity 0 for an ISS run) count as published.
+# (Decision B). Dataset settings (e.g. gravity 0 for an ISS run) count as published.
 USED_VARS = ["o2_frac", "pressure_kpa", "flow_cm_s", "gravity_g", "burned", "spread_rate_mm_s"]
 SUSPECT_FLAGS = {"implausible", "impossible_value", "fractions_do_not_sum", "extinction_larger_than_start", "rate_without_burn"}
 EXTRA_VARS = ["fuel", "campaign", "mission_date", "test_end", "thickness_mm", "diameter_mm", "d0_mm", "burn_time_s",
@@ -235,7 +235,7 @@ def _resources(tests: pd.DataFrame, inv: pd.DataFrame, docs: pd.DataFrame, manif
             "cred_trace": credibility.PSI_DATA["trace"], "status": "published", "envs_override": None,
             "origin": "psi", "dataset": ds,
         })
-    # NASA documents (README Decision D: the team's own context notes are not resources)
+    # NASA documents (Decision D: the team's own context notes are not resources)
     for d in docs.itertuples():
         if bool(d.demo):
             continue

@@ -2,7 +2,7 @@
    per fuel in depth. Filled orange = the flame kept burning, hollow blue = it went out. Future studies: gold rings where
    the models would learn most from one more test (per fuel), and the Moon & Mars base air as a gold rod through every
    fuel lane (dashed where that air is outside what NASA tested). Drag to turn, scroll to zoom. The only filters are the
-   two outcomes and future studies. Data: GET /api/fire-check/map. README Decision BB. */
+   two outcomes and future studies. Data: GET /api/fire-check/map. Decision BB. */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, type FireMapAll, type MapCrew, type MapLane, type MapNext, type MapTest } from '../api';
 import { Link } from '../router';
@@ -12,7 +12,7 @@ type Hit = { x: number; y: number; r: number; kind: 'test'; t: MapTest } | { x: 
 type Sel = Exclude<Hit, { kind: 'crew' }> | { kind: 'crew'; c: MapCrew; lane: MapLane };
 
 const HOME: Cam = { yaw: -0.55, pitch: 0.38, zoom: 1 };
-const LIT = '#e0802e', OUT = '#4f97ec', GOLD = '#ffc24b';    // outcome pair validated on the dark surface (README Decision BB)
+const LIT = '#e0802e', OUT = '#4f97ec', GOLD = '#ffc24b';    // outcome pair validated on the dark surface (Decision BB)
 const O0 = 10, O1 = 42, PMAX = 46;
 const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const X = (o2: number) => ((o2 - (O0 + O1) / 2) / ((O1 - O0) / 2)) * 1.25;

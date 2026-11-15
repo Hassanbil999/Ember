@@ -210,11 +210,11 @@ Fit $X_\text{min}, u^*, k_l, k_h, c$ per material with `scipy.optimize.least_squ
 
 Keep the prototype's tokens, fonts (Barlow Condensed, IBM Plex Sans, IBM Plex Mono), dark single theme and layout.
 
-**Site structure (added 2026-11-14, README Decision AG).** A landing page (`/`) leads to the engine (`/engine`: Simulation, Fire check, Find data, Statistics; the simulation is the front door), the research page (`/research`) and the presentation (`/presentation`). The Simulate and Find data views below keep the prototype's layout; the palette is the brighter Ember one (Decision AL). The other pages are new design.
+**Site structure (added 2026-11-14, Decision AG).** A landing page (`/`) leads to the engine (`/engine`: Simulation, Fire check, Find data, Statistics; the simulation is the front door), the research page (`/research`) and the presentation (`/presentation`). The Simulate and Find data views below keep the prototype's layout; the palette is the brighter Ember one (Decision AL). The other pages are new design.
 
 **Simulate view**
 - Full-bleed stage: particle airflow canvas, scene canvas (duct, sample, char glow, igniter), WebGL flame canvas (the prototype's fragment shader; 2D fallback when WebGL is missing).
-- Left panel "Experiment": presets, sliders (gravity, oxygen, pressure, airflow on a log scale), material toggle. Collapsible. The flame stays centred (the camera follows the front), the run starts only on Ignite or Play, and a muteable synthesized fire sound follows the flame (README Decision AP).
+- Left panel "Experiment": presets, sliders (gravity, oxygen, pressure, airflow on a log scale), material toggle. Collapsible. The flame stays centred (the camera follows the front), the run starts only on Ignite or Play, and a muteable synthesized fire sound follows the flame (Decision AP).
 - Right panel "Result": verdict pill and sentence, two numbers, flammability map (click to set O₂ and airflow), evidence (coverage line and nearest test with "Load it"), compare box when a record is loaded, "How this is calculated". Collapsible.
 - Bottom timeline: play/pause, speed (1×, 2×, 5×, 10×), draggable t1/t2 handles and playhead (keyboard-operable sliders), burned-length curve, out/burn-through marker, and the stats line for t1 → t2.
 - The model runs on the server (`/api/simulate`), debounced 150 ms while dragging. Keep a client copy of the model for instant feedback and reconcile with the server result.

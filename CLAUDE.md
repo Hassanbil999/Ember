@@ -1,11 +1,12 @@
-# Ember (repo: freefall-atlas)
+# Ember (repo: Hassanbil999/Ember)
 
-NASA Space Apps 2026 entry: will a small fire keep burning in spacecraft and Moon/Mars habitat air? Built on NASA microgravity combustion research. A landing page (`/`) leads to the **engine** (`/engine`: Simulation, Fire check, Fire map, Find data, Statistics), the **research paper** (a PDF, `web/public/research-paper.pdf`, README Decision BA) and the **presentation**. The name is Ember everywhere; only the GitHub repo name and the live link's Modal app id still read freefall-atlas (README Decision AT). UI style: a product, not a paper: short copy, colour, no Limits sections on pages (README Decision AU).
+NASA Space Apps 2026 entry: will a small fire keep burning in spacecraft and Moon/Mars habitat air? Built on NASA microgravity combustion research. A landing page (`/`) leads to the **engine** (`/engine`: Simulation, Fire check, Fire map, Find data, Statistics), the **research paper** (a PDF, `web/public/research-paper.pdf`, Decision BA) and the **presentation**. The name is Ember everywhere (repo Hassanbil999/Ember, live link mohamad-755--ember.modal.run); only the Modal app id, the local folder and internal data file names keep freefall-atlas (Decision AT). UI style: a product, not a paper: short copy, colour, no Limits sections on pages (Decision AU).
 
 ## This repo
+- Product decisions ("Decision X" in code comments and below): `docs/PRODUCT_DECISIONS.md`. Add a row there for each new choice.
 - This repo already holds the **old site with real, cleaned NASA data**. We are replacing its UI with the new frontend and connecting that frontend to the existing data. We are not starting over.
 - Target product: `SPEC.md`. **§0 explains how it applies to this repo.** Read it before planning.
-- Simulator and Find data reference: `prototype/index.html`. Match it; do not redesign those two views. Reuse its shader, model and layout code. The landing, engine shell, fire check, statistics and presentation pages are new design on the same type, with the brighter Ember palette (README Decisions AQ, AU).
+- Simulator and Find data reference: `prototype/index.html`. Match it; do not redesign those two views. Reuse its shader, model and layout code. The landing, engine shell, fire check, statistics and presentation pages are new design on the same type, with the brighter Ember palette (product decisions AQ, AU).
 - Gap-filling starter data: `data/seed.json`. Use it only where the real data has nothing.
 - Audit of the old site: `docs/AUDIT.md` (written in M0). Keep it up to date when the mapping changes.
 
@@ -25,7 +26,7 @@ NASA Space Apps 2026 entry: will a small fire keep burning in spacecraft and Moo
 - Accessibility: real buttons and labels, keyboard-operable sliders, visible focus, never color alone, respect `prefers-reduced-motion`.
 
 ## Stack and commands
-Existing backend kept: Python + FastAPI (`backend/`), data in Parquet + DuckDB (`data/processed/`, gitignored, rebuilt by ingest). New web app: React 18 + Vite + TS in `web/`, built into `web/dist` and served by FastAPI on the same port. No Postgres (README Decision E).
+Existing backend kept: Python + FastAPI (`backend/`), data in Parquet + DuckDB (`data/processed/`, gitignored, rebuilt by ingest). New web app: React 18 + Vite + TS in `web/`, built into `web/dist` and served by FastAPI on the same port. No Postgres (Decision E).
 
 - Start everything (clean checkout, one command): `python run.py start` → http://localhost:8000
 - Dev servers: `python run.py dev` (API :8000 with reload, Vite :5173)

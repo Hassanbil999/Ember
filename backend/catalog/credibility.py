@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import math
 
-# Default factors assigned by ingestion rules (§7 table; README Decision C for PSI data review).
+# Default factors assigned by ingestion rules (§7 table; Decision C for PSI data review).
 PSI_DATA = {"publisher": 1.0, "review": 0.8, "trace": 1.0}
 NASA_DOCUMENT = {"publisher": 0.85, "review": 0.8, "trace": 0.8}
 

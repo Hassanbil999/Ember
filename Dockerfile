@@ -1,4 +1,4 @@
-# One image serves the API and the web app on $PORT (README Decision E). No database server, no keys needed.
+# One image serves the API and the web app on $PORT (Decision E). No database server, no keys needed.
 FROM node:20-slim AS web
 WORKDIR /web
 COPY web/package.json web/package-lock.json ./
