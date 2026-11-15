@@ -8,7 +8,7 @@
 
 ![Ember: the landing page, the flame simulation at Moon-base air, then the fire check answering for a small gas leak at 34 % oxygen and 8.2 psi](docs/assets/hero.gif)
 
-[Live demo](https://mohamad-755--ember.modal.run) · 2-minute video: TBD · [Technical report](docs/TECHNICAL_REPORT.md) · [Method in plain language](docs/methods/README.md)
+[Live demo](https://mohamad-755--ember.modal.run) · [Research paper (PDF)](https://mohamad-755--ember.modal.run/research-paper.pdf) · [Technical report](docs/TECHNICAL_REPORT.md) · [Method in plain language](docs/methods/README.md)
 
 ## The problem
 
@@ -42,6 +42,20 @@ flowchart LR
 ```
 
 Only two NASA tables record whether the fire kept going: **CFI-G** gas-jet flames (a small gas leak) and **FLEX** fuel droplets (a spilled liquid). Ember trains its models on those, validates them on whole NASA test campaigns they never saw, and gives a number only near real tests of the same fuel. Everything else comes straight from NASA's tables and documents. What is **not** from NASA data: the flame simulation (a simple flame model with published starting values, for intuition) and the inputs you choose.
+
+## Research
+
+**Will a Small Fire Keep Burning in Habitat Air? Learning from NASA Microgravity Combustion Experiments.** Ember Team, NASA Space Apps Challenge 2026. [Read the paper (PDF)](https://mohamad-755--ember.modal.run/research-paper.pdf), also in this repository at [`web/public/research-paper.pdf`](web/public/research-paper.pdf), with its source in [`docs/paper/`](docs/paper/).
+
+The paper asks whether a small fire keeps burning in Moon- and Mars-habitat air, using only NASA's own microgravity experiments, and tests three hypotheses:
+
+| Hypothesis | Result |
+|---|---|
+| **H1.** More oxygen raises the chance a flame keeps burning. | Supported without any model: no gas flame stayed lit below 30 % oxygen (0 of 41 tests), against 29 of 89 at 35–40 % (Fisher exact test, p = 5.4 × 10⁻⁶). |
+| **H2.** Oxygen percentage predicts the outcome better than oxygen partial pressure. | Supported: gas-jet AUC 0.815 against 0.649, so lowering cabin pressure does not cancel a higher oxygen share. |
+| **H3.** A model of the test conditions predicts unseen NASA test campaigns better than a constant baseline. | Supported: the Gaussian process was selected for both questions by a rule fixed in advance (AUC 0.830 and 0.838). |
+
+It also identifies the most important gap: NASA's data has no gas-jet test with an outcome between 25 % and 33 % oxygen, the Moon-base range. The case study at Moon-base air (34 % oxygen, 8.2 psi) and every number in the paper come from the same code as the app: `python scripts/build_paper.py` regenerates its figures and numbers.
 
 ## Data
 
@@ -144,7 +158,7 @@ deploy/       Modal deployment of the container
 
 ## Team
 
-TBD: names and roles.
+Hasan Balfaqih · Mohamad Naim Ziadah · Abdullah Al-Qubli (Ember Team, NASA Space Apps Challenge 2026).
 
 ## Citation
 
