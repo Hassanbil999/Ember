@@ -6,6 +6,7 @@ It reuses the app's own data frames and model families (backend/predict), so the
 Fire check cannot disagree. Sections:
   A  cleaning: what the validation rules flagged or excluded
   B  the models the app trains, and how stable their scores are over 10 different campaign splits
+  B2 a ladder of baselines, from "always the average" to "look up the closest NASA tests"
   C  preprocessing choices tested (features, penalty, class weights, flagged rows, mixing data sets)
   D  checks on the main conclusion (significance, stability, coverage), no model involved
 """
@@ -89,7 +90,89 @@ def score(X, y, g, make, mask=None):
         r["brier"].append(brier_score_loss(y[m], pc))
         r["logloss"].append(log_loss(y[m], pc))
         r["slope"].append(calib_slope(y[m], pc))
-    return {k: (float(np.mean(v)), float(np.std(v))) for k, v in r.items()}
+    out = {k: (float(np.mean(v)), float(np.std(v))) for k, v in r.items()}
+    out["runs"] = r                      # per-split scores, for paired comparisons
+    return out
+
+
+# ---- baselines with the same fit / predict_proba shape as the models (section B2)
+class _Base:
+    def predict_proba(self, X):
+        p = np.clip(self._p(X), 0.0, 1.0)
+        return np.c_[1 - p, p]
+
+
+class Average(_Base):
+    """The app's baseline: ignores the conditions."""
+    def fit(self, X, y):
+        self.m = y.mean()
+        return self
+
+    def _p(self, X):
+        return np.full(len(X), self.m)
+
+
+class FuelAverage(_Base):
+    """Share that burned for this fuel (falls back to the average when a fuel has fewer than 3 tests)."""
+    def __init__(self, fuel_cols):
+        self.cols = fuel_cols
+
+    def fit(self, X, y):
+        self.m, keys = y.mean(), [tuple(r) for r in X[:, self.cols]]
+        self.by = {k: y[[kk == k for kk in keys]].mean() for k in set(keys) if sum(kk == k for kk in keys) >= 3}
+        return self
+
+    def _p(self, X):
+        return np.array([self.by.get(tuple(r), self.m) for r in X[:, self.cols]])
+
+
+class OxygenOnly(_Base):
+    def __init__(self, j):
+        self.j = j
+
+    def fit(self, X, y):
+        self.m = make_pipeline(StandardScaler(), LogisticRegression()).fit(X[:, [self.j]], y)
+        return self
+
+    def _p(self, X):
+        return self.m.predict_proba(X[:, [self.j]])[:, 1]
+
+
+class OxygenRule(_Base):
+    """An engineer's rule, 'it keeps burning above X % oxygen': the cut that is right most often in training."""
+    def __init__(self, j):
+        self.j = j
+
+    def fit(self, X, y):
+        o = X[:, self.j]
+        cut = max(np.unique(o), key=lambda c: ((o >= c) == y).mean())
+        self.cut = cut
+        self.hi = y[o >= cut].mean() if (o >= cut).any() else y.mean()
+        self.lo = y[o < cut].mean() if (o < cut).any() else y.mean()
+        return self
+
+    def _p(self, X):
+        return np.where(X[:, self.j] >= self.cut, self.hi, self.lo)
+
+
+class NearestTests(_Base):
+    """Look up the k closest NASA tests of the same fuel (inputs scaled) and use the share that burned."""
+    def __init__(self, fuel_cols, k=3):
+        self.cols, self.k = fuel_cols, k
+
+    def fit(self, X, y):
+        self.cont = [i for i in range(X.shape[1]) if i not in self.cols]
+        self.s = StandardScaler().fit(X[:, self.cont])
+        self.A, self.F, self.y = self.s.transform(X[:, self.cont]), X[:, self.cols], y
+        return self
+
+    def _p(self, X):
+        B, out = self.s.transform(X[:, self.cont]), []
+        for b, f in zip(B, X[:, self.cols]):
+            m = (self.F == f).all(1)
+            A, y = (self.A[m], self.y[m]) if m.any() else (self.A, self.y)
+            out.append(y[np.argsort(((A - b) ** 2).sum(1))[: self.k]].mean())
+        return np.array(out)
 
 
 def base_scores(y):
@@ -149,6 +232,38 @@ for key in PROBLEMS:
         row(name, score(X, y, g, mk), bb, bl)
     w(f"\nThe app's single 5-fold run chose **{cards[key]['chosen']}**: " + ", ".join(
         f"{r['model']} AUC {r['auc']}, Brier {r['brier']}" for r in cards[key]["comparison"][1:]) + ".")
+
+# ------------------------------------------------------------------ B2. a ladder of baselines
+w("\n## B2. A ladder of baselines: is the model better than simple ways of guessing?\n")
+w("The average is the minimum bar (like a sugar pill in a drug trial). These baselines use simple knowledge of the "
+  "conditions; the last one is what an engineer would do by hand: look up the closest real NASA tests. "
+  "Same 10 campaign splits as section B. A constant guess cannot rank anything, so its AUC is 0.5 by definition.\n")
+for key in PROBLEMS:
+    pb, df, X, y, g = frame(key)
+    bb, bl = base_scores(y)
+    j = pb.features.index("o2_pct")
+    fuel_cols = [pb.features.index(c) for c in ("carbon_n", "fuel_share", "heptane") if c in pb.features]
+    ladder = [("1. Always the average (the app's baseline)", lambda d: Average()),
+              ("2. Average for this fuel", lambda d: FuelAverage(fuel_cols)),
+              ("3. Oxygen only (logistic regression)", lambda d: OxygenOnly(j)),
+              ("4. Rule: 'keeps burning above X % oxygen'", lambda d: OxygenRule(j)),
+              ("5. Look up the 3 closest NASA tests of this fuel", lambda d: NearestTests(fuel_cols)),
+              ("6. Gaussian process, all inputs (the app's model)", GP())]
+    w(f"### {pb.label} ({pb.investigation})\n")
+    w("| Way of guessing | AUC (mean ± spread) | Brier | Log loss | Calibration slope | Beats the average? |")
+    w("|---|---|---|---|---|---|")
+    res = {}
+    for name, mk in ladder:
+        s = res[name] = score(X, y, g, mk)
+        if name.startswith("1."):
+            w(f"| {name} | 0.5 (by definition) | {s['brier'][0]:.3f} | {s['logloss'][0]:.3f} | — | — |")
+        else:
+            row(name, s, bb, bl)
+    gp_runs, nn = res[ladder[-1][0]]["runs"], res[ladder[-2][0]]["runs"]
+    wins = sum(a > b and c < d for a, b, c, d in zip(gp_runs["auc"], nn["auc"], gp_runs["brier"], nn["brier"]))
+    gain = np.array(gp_runs["auc"]) - np.array(nn["auc"])
+    w(f"\nAgainst the strongest baseline (5, the closest-tests lookup), the model has the higher AUC **and** the lower Brier "
+      f"score in **{wins} of {REPEATS}** splits; AUC gain {gain.mean():+.3f} (smallest {gain.min():+.3f}, largest {gain.max():+.3f}).\n")
 
 # ------------------------------------------------------------------ C. preprocessing choices
 w("\n## C. Preprocessing choices tested\n")

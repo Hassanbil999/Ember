@@ -7,6 +7,25 @@ tests stayed lit, so the baseline says "23 %" every time. If a model cannot beat
 "Beats the baseline" always means: **the model's probabilities are better than this constant guess on tests it
 never saw**.
 
+## Isn't "always the average" too easy to beat?
+
+Yes, on its own. It is the minimum bar, like a sugar pill in a drug trial: it shows the model learned *something*.
+To show it learned something *useful*, we also compare it with smarter ways of guessing, on the same unseen
+campaigns ([results.md](results.md), section B2):
+
+| Way of guessing | Gas flames AUC | Droplets AUC |
+|---|---|---|
+| Always the average | 0.5 | 0.5 |
+| Average for this fuel | 0.48 | 0.62 |
+| Oxygen only | 0.60 | 0.63 |
+| Rule "keeps burning above X % oxygen" | no better than guessing | no better than guessing |
+| **Look up the 3 closest NASA tests of this fuel** (what an engineer would do by hand) | 0.71 | 0.74 |
+| **Our model (Gaussian process)** | **0.83** | **0.84** |
+
+The model beats the closest-tests lookup on both AUC and Brier score in **10 of 10** splits, by 0.07–0.18 AUC.
+Two lessons: oxygen alone does not decide (some flames at high oxygen still went out), and the model learned how
+oxygen, pressure, leak or drop size and fuel work **together**, which a lookup of similar tests cannot do.
+
 ## What does "tests it never saw" mean here?
 
 NASA ran the tests in **campaigns** (a day or a series). Tests in one campaign are near-repeats. If some of them
