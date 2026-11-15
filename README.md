@@ -3,12 +3,12 @@
 **Will a small fire keep burning in the air planned for a Moon base? Ember answers from NASA's own microgravity fire tests, and says plainly where those tests stop.**
 
 [![NASA Space Apps 2026](https://img.shields.io/badge/NASA%20Space%20Apps-2026-0b3d91)](https://www.spaceappschallenge.org/2026/challenges/flame-in-freefall/)
-[![Live demo](https://img.shields.io/badge/live%20demo-open-d4561e)](https://mohamad-755--freefall-atlas-web.us-east.modal.run)
+[![Live demo](https://img.shields.io/badge/live%20demo-open-d4561e)](https://mohamad-755--ember.modal.run)
 [![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
 ![Ember: the landing page, the flame simulation at Moon-base air, then the fire check answering for a small gas leak at 34 % oxygen and 8.2 psi](docs/assets/hero.gif)
 
-[Live demo](https://mohamad-755--freefall-atlas-web.us-east.modal.run) · 2-minute video: TBD · [Technical report](docs/TECHNICAL_REPORT.md) · [Method in plain language](docs/methods/README.md)
+[Live demo](https://mohamad-755--ember.modal.run) · 2-minute video: TBD · [Technical report](docs/TECHNICAL_REPORT.md) · [Method in plain language](docs/methods/README.md)
 
 ## The problem
 

@@ -30,7 +30,8 @@ app = modal.App("freefall-atlas")
 @app.function(image=image, cpu=1.0, memory=1024, timeout=3600, scaledown_window=180,
               secrets=[modal.Secret.from_name("freefall-ai")])
 @modal.concurrent(max_inputs=50)
-@modal.web_server(port=8000, startup_timeout=240)
+# label sets the public link: https://mohamad-755--ember.modal.run (the project is now called Ember)
+@modal.web_server(port=8000, startup_timeout=240, label="ember")
 def web():
     # the Dockerfile's CMD, run from its working directory
     subprocess.Popen("python -m uvicorn backend.api.main:app --host 0.0.0.0 --port 8000 --log-level warning",
