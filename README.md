@@ -1,140 +1,181 @@
 # Ember
 
-NASA Space Apps 2026: will a small fire keep burning in the air planned for spacecraft, Moon and Mars habitats, and pressurized rovers? Built on NASA microgravity combustion research. A landing page (`/`) leads to the **engine** (`/engine`: Simulation, Fire check, Find data, Statistics), the **research** page (`/research`) and the **presentation** (`/presentation`). The repo, package and API keep the earlier name, Freefall Atlas.
+**Will a small fire keep burning in the air planned for a Moon base? Ember answers from NASA's own microgravity fire tests, and says plainly where those tests stop.**
 
-> **What is real and what is not.** Every measured test comes from the real NASA PSI experimental tables the team downloaded and cleaned: 19 tables, 1,848 usable tests: droplets (FLEX PSI-69, CFI PSI-39, FLEX-2 PSI-68 test plan), gas flames (CFI-G PSI-159 normal and inverse, ACME Flame Design PSI-10, ACME Burning Rate Emulator PSI-20, ACME CLD Flame PSI-21, ACME s-Flame PSI-23, E-FIELD PSI-22, SPICE PSI-107, SLICE PSI-106), solid materials (BASS-II PSI-25, BASS PSI-26, SAFFIRE-1/2/3 PSI-98–100) and smoke for fire detection (SAME PSI-102, SAME-R PSI-101). They are loaded as published: impossible source values are flagged, never corrected, and values read from free-text notes are marked *derived*. Starter rows from `data/seed.json` fill only what the real data lacks (papers, reports, and the few acrylic and fabric test conditions the simulator demo needs). They stay labelled **placeholder / unverified** until a person checks them. One outside source is loaded but kept apart: ZARM drop-tower flame-spread rates (Zenodo doi:10.5281/zenodo.18479713, CC BY-NC 4.0); it trains no model. The simulator is an illustrative reduced-order model, not a design tool.
+[![NASA Space Apps 2026](https://img.shields.io/badge/NASA%20Space%20Apps-2026-0b3d91)](https://www.spaceappschallenge.org/2026/challenges/flame-in-freefall/)
+[![Live demo](https://img.shields.io/badge/live%20demo-open-d4561e)](https://mohamad-755--ember.modal.run)
+[![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
-**How it works, in plain language:** [docs/methods/](docs/methods/README.md) explains the data, cleaning and outliers, preprocessing, models and evaluation, with every number reproducible by `python scripts/evaluate_methods.py`.
+![Ember: the landing page, the flame simulation at Moon-base air, then the fire check answering for a small gas leak at 34 % oxygen and 8.2 psi](docs/assets/hero.gif)
 
-## For judges
+[Live demo](https://mohamad-755--ember.modal.run) · 2-minute video: TBD · [Technical report](docs/TECHNICAL_REPORT.md) · [Method in plain language](docs/methods/README.md)
 
-- **Live app:** https://mohamad-755--freefall-atlas-web.us-east.modal.run (no login, no keys; the first visit after a quiet spell takes a few seconds to wake up)
-- **Challenge:** NASA Space Apps 2026, *Flame in Freefall*: summarize, rank and interpret NASA microgravity combustion findings for fire safety in human exploration.
-- **What it does:** an engineer or student picks an environment (ISS, Moon base, rover, Mars base) and a fuel. The app shows what NASA actually measured near those conditions, estimates whether a fire keeps burning where the tests allow it, and says plainly where nothing has been tested. **Find data** ranks NASA research by fit to the chosen environment and by credibility, and summarizes it with citations. **Report** exports the result with its NASA sources.
-- **Where to click:** the landing page → **Launch simulation** (the flame simulator), then **Fire check** (will a fire keep burning, with its range, the oxygen line and the next tests to run), **Fire map** (every NASA test in 3D by oxygen, pressure and fuel, and where tests are needed), **Find data** and **Statistics**; **Research** and **Presentation** are linked from every public page.
-- **How it meets the brief:** *summarize* (cited AI and template summaries), *rank* (best fit for an environment, credibility scores), *interpret* (Fire check with tested / estimated / untested zones, gaps computed from the data).
-- **NASA data is the core:** 19 NASA PSI experimental tables (1,848 tests), NASA's *Researcher's Guide to Combustion Science* and 33 NASA NTRS reports. Every number links back to a PSI table row or a document page.
-- **Why you can trust it:** models are scored on whole NASA test campaigns they never saw and are used only if they beat a no-skill baseline; nothing is estimated far from real tests. Plain-language method: [docs/methods/](docs/methods/README.md). Known limits: [docs/LIMITS.md](docs/LIMITS.md).
-- **Use of AI (SI):** see [References and AI use](#references-and-ai-use) at the end.
+## The problem
 
-## Run it
+Moon and Mars habitats are planned with more oxygen at lower pressure than the space station: about 34 % oxygen at 8.2 psi, against 21 % at 14.7 psi. Oxygen feeds fire, and a crew cannot leave a burning habitat. NASA has run hundreds of fire experiments in microgravity, and the results are public through [Physical Sciences Informatics (PSI)](https://psi.nasa.gov), but they sit in many tables, each with its own format, codes and errors, so they are hard to compare or apply to a design question. No combustion test has been run at Moon or Mars gravity yet. ([Challenge: Flame in Freefall](https://www.spaceappschallenge.org/2026/challenges/flame-in-freefall/))
+
+## What it does
+
+- **Check a fire against NASA's tests.** Choose a gas leak or a fuel drop, the fuel, oxygen, pressure and size. Ember answers with one of three labels: **Tested** (NASA ran nearly this; the real result is the answer), **Estimated** (between tests; a validated model gives a chance with a range) or **Untested** (outside the tests; no number).
+- **See where the line is and what to test next.** The fire check shows the oxygen level at which the chance passes 50 %, and the experiments that would narrow the answer most.
+- **Open the evidence.** Every answer lists the closest NASA tests; one click opens each test's row in its NASA table, and the report downloads as a printable page.
+- **See every test on one map.** The fire map places each NASA test with a known ending in 3D by oxygen, pressure and fuel (kept burning or went out), with the next tests the models need and the Moon and Mars base air marked where NASA has not tested.
+- **Watch a flame.** The simulation shows how gravity, oxygen, pressure and airflow change a flame on fabric or acrylic. It illustrates trends; it is not fitted to NASA data and shows no numbers outside tested conditions.
+- **Find the research.** Search 19 NASA tables, NASA reports and papers with credibility scores, ask a question answered only from NASA passages, and export CSV, JSON or BibTeX.
+
+| Fire check (Moon-base air, small gas leak) | Simulation (Moon base, flame lit) | Statistics |
+|---|---|---|
+| ![Fire check showing Estimated, a 38 % chance that a 30 % ethane leak at 34 % oxygen and 8.2 psi stays lit, with its range and the oxygen line](docs/assets/screen-fire-check.png) | ![Flame simulation at Moon gravity with the result panel saying the flame burns and that no NASA solid-fuel test covers these conditions](docs/assets/screen-simulation.png) | ![Statistics page with the number of NASA tests, the models' scores and the path from NASA tables to the model](docs/assets/screen-statistics.png) |
+
+## How it works
+
+```mermaid
+flowchart LR
+    A["NASA PSI tables<br/>19 tables, 1,903 rows"] --> B["Cleaning and validation<br/>flag, never fix<br/>1,848 tests kept"]
+    B --> C["Models<br/>Gaussian process, chosen over<br/>logistic regression and random forest"]
+    B --> D["Distance to real tests<br/>tested / estimated / untested"]
+    C --> E["Fire check<br/>chance, range, oxygen line, next tests"]
+    D --> E
+    B --> F["Evidence<br/>nearest tests, source rows,<br/>report, CSV / JSON / BibTeX"]
+    E --> F
+    G["Flame simulation<br/>illustrative physics"] -.-> H["Trend only outside<br/>tested conditions"]
+```
+
+Only two NASA tables record whether the fire kept going: **CFI-G** gas-jet flames (a small gas leak) and **FLEX** fuel droplets (a spilled liquid). Ember trains its models on those, validates them on whole NASA test campaigns they never saw, and gives a number only near real tests of the same fuel. Everything else comes straight from NASA's tables and documents. What is **not** from NASA data: the flame simulation (a simple flame model with published starting values, for intuition) and the inputs you choose.
+
+## Data
+
+All test data are NASA PSI experimental tables, read as published (NASA open data under the [PSI terms of use](https://psi.nasa.gov)): 1,848 usable tests.
+
+| Investigation | PSI study · DOI | Tests used | Used for |
+|---|---|---|---|
+| FLEX (fuel droplets) | PSI-69 · [10.60555/mbq8-0451](https://doi.org/10.60555/mbq8-0451) | 273 (206 with an outcome) | **model** (drop burns to the end), evidence |
+| CFI-G (gas-jet flames) | PSI-159 · [10.60555/cyt1-kh64](https://doi.org/10.60555/cyt1-kh64) | 333 (133 with an outcome) | **model** (flame stays lit), evidence |
+| FLEX-2 | PSI-68 · [10.60555/byp8-h018](https://doi.org/10.60555/byp8-h018) | test plan only | coverage |
+| CFI | PSI-39 · [10.60555/m6pj-a914](https://doi.org/10.60555/m6pj-a914) | 79 | evidence |
+| ACME: Flame Design, Burning Rate Emulator, CLD Flame, s-Flame | PSI-10, 20, 21, 23 · [w4zy-bt45](https://doi.org/10.60555/w4zy-bt45), [vb93-3y72](https://doi.org/10.60555/vb93-3y72), [23e1-9950](https://doi.org/10.60555/23e1-9950), [k57n-p030](https://doi.org/10.60555/k57n-p030) | 207 + 41 + 32 + 23 | evidence |
+| E-FIELD Flames | PSI-22 · [10.60555/se5a-8c73](https://doi.org/10.60555/se5a-8c73) | 20 | evidence |
+| SPICE | PSI-107 · [10.60555/9kbh-e962](https://doi.org/10.60555/9kbh-e962) | 426 | evidence |
+| SLICE | PSI-106 · [10.60555/pm12-rg61](https://doi.org/10.60555/pm12-rg61) | 12 | evidence |
+| BASS-II, BASS (solids) | PSI-25, 26 · [4qc4-de67](https://doi.org/10.60555/4qc4-de67), [58h4-dy80](https://doi.org/10.60555/58h4-dy80) | 129 + 122 | evidence (no outcome recorded) |
+| SAFFIRE-1, 2, 3 (large solid fires) | PSI-98, 99, 100 · [0t15-1z43](https://doi.org/10.60555/0t15-1z43), [2chp-m469](https://doi.org/10.60555/2chp-m469), [040q-4h36](https://doi.org/10.60555/040q-4h36) | 2 + 18 + 2 | evidence |
+| SAME, SAME-R (smoke) | PSI-102, 101 · [gd4k-8h62](https://doi.org/10.60555/gd4k-8h62), [2np7-jv14](https://doi.org/10.60555/2np7-jv14) | 20 + 109 | evidence |
+
+Also used: NASA's *A Researcher's Guide to: Combustion Science* (2015) and 33 NASA Technical Reports Server records, quoted by page. Kept apart and never used to train: five ZARM drop-tower flame-spread rates ([doi:10.5281/zenodo.18479713](https://doi.org/10.5281/zenodo.18479713), CC BY-NC 4.0) and Earth limiting-oxygen values from *Perry's Chemical Engineers' Handbook*.
+
+## Validation
+
+**Data quality.** 1,903 rows read, 55 excluded (44 duplicates, 11 physically impossible values such as 0 mmHg pressure), 1,848 kept. Kept rows that look odd carry a written flag instead of being changed (flags by rule: 131 missing outcome, 7 implausible, 6 gas fractions that do not sum to 100 %, 1 extinction diameter larger than the starting drop).
+
+**Models against a baseline.** The baseline ignores the conditions and always predicts the average. Scores are on whole NASA test campaigns held out from training, averaged over 10 different splits. AUC (0.5 = chance) measures ranking; the Brier score (lower is better) measures whether the probabilities are right. A model is used only if it beats the baseline on both Brier score and log loss.
+
+| Question | Tests · campaigns | Chosen model | AUC | Brier (baseline) |
+|---|---|---|---|---|
+| Gas-jet flame stays lit (CFI-G) | 133 · 11 | Gaussian process | 0.830 ± 0.032 | 0.123 (0.179) |
+| Fuel drop burns to the end (FLEX) | 206 · 12 | Gaussian process | 0.838 ± 0.013 | 0.094 (0.114) |
+
+![(a) Every NASA CFI-G gas-flame test with an outcome by oxygen and pressure, with no tests between 25 and 33 % oxygen and the Moon-base setting marked; (b) the three models' AUC on unseen campaigns, all above the 0.5 baseline](docs/assets/validation.png)
+
+**Main finding, checked without any model.** No gas flame stayed lit below 30 % oxygen: 0 of 41 tests, against 29 of 89 at 35–40 % (Fisher exact test, p = 5.4 × 10⁻⁶). The lowest oxygen at which one stayed lit is 33.2 %, and leaving out any one campaign moves it only to 33.2–35.4 %. There are **no** gas-jet tests with an outcome between 25 % and 33 % oxygen, the Moon-base range: the data supports "no flame stayed lit below 30 % in these tests", not "flames need 33 %". Oxygen share predicts the outcome far better than oxygen partial pressure (gas-jet AUC 0.815 against 0.649).
+
+Reproduce every number: `python scripts/evaluate_methods.py` (writes [docs/methods/results.md](docs/methods/results.md)); figures: `python scripts/readme_assets.py`. Full write-up: [docs/TECHNICAL_REPORT.md](docs/TECHNICAL_REPORT.md).
+
+## Limitations
+
+- **Microgravity only.** No combustion test exists at Moon or Mars gravity, so those cases are always untested.
+- **Gas leaks and fuel drops only.** Solid materials (fabric, plastic, wiring), the main cabin hazard, have no model: their NASA tables do not record pressure and outcome together. Test fuels stand in for cabin fluids.
+- **Small data.** 31 and 27 fires that kept going; for gas jets the three models are within noise of each other, and the ranges are rough.
+- **The simulation is illustrative.** It uses published starting values, not a fit to NASA tests, and it is not a computational fluid dynamics (CFD) solver.
+- **Airflow is not an input to the fire check:** the outcome-labelled tests have no airflow variation.
+
+More in [docs/LIMITS.md](docs/LIMITS.md).
+
+## Quick start
+
+You need Python 3.11+ and Node 20+. No API keys and no login.
 
 ```
-python run.py start      # one command from a clean checkout → http://localhost:8000
+git clone https://github.com/Hassanbil999/Ember.git
+cd Ember
+python run.py start          # installs what is missing, loads the data, trains the models → http://localhost:8000
 ```
 
-`start` installs missing Python and Node dependencies, runs the ingest steps if `data/processed/` is empty, builds the web app if needed, and serves the app and API on one port. You need Python 3.11+ and Node 20+. No API keys and no login are needed.
+Tests: `python run.py test`. Lint: `python run.py lint`. Container: `docker compose up --build` (not run on the build machine).
+
+<details>
+<summary>More commands</summary>
 
 | Task | Command |
 |---|---|
 | Dev servers (API with reload + Vite) | `python run.py dev` |
 | Load data (offline, no key) | `python run.py ingest [canonical\|existing\|psi\|ntrs\|text\|seed\|curate\|fit\|predict\|index\|all]` |
-| Retrain the fire-check models (about 2 min) | `python run.py ingest predict` → `data/artifacts/predict/*.card.json` holds each model comparison |
-| Refresh a network snapshot (M5) | `python -m backend.ingest ntrs --fetch` (NASA NTRS records) · `text --fetch` (PDF text) · `psi --discover`, confirm `data/psi_map.csv`, then `psi --fetch` (public PSI bucket) |
-| Propose test points with AI (M5; needs `ANTHROPIC_API_KEY`, costs credits, not part of `all`) | `python -m backend.ingest extract`, then review on `/admin/verify` (needs `ADMIN_TOKEN`) |
-| Re-download the PSI tables and verify checksums | `python run.py fetch` |
-| Lint (Python + TypeScript) | `python run.py lint` |
-| Unit tests / browser smoke test / both | `python -m pytest backend/tests -q` / `python run.py e2e` / `python run.py test` |
-| Container | `docker compose up --build` |
+| Retrain the fire-check models (about 2 min) | `python run.py ingest predict` |
+| Re-download the PSI tables and check their checksums | `python run.py fetch` |
+| Regenerate the method numbers / README figures | `python scripts/evaluate_methods.py` / `python scripts/readme_assets.py` |
+| Check the typography rules on the rendered pages | `python scripts/typo_audit.py --strict` |
+| Optional AI (summary and Ask) | set `ANTHROPIC_API_KEY`, or a free OpenAI-compatible key (`LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`), in `.env` |
 
-Optional settings are in `.env.example`. With `ANTHROPIC_API_KEY` set, the AI summary and Ask use Claude (`ANTHROPIC_MODEL`). Without it, a free OpenAI-compatible key works instead (`LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`; e.g. Google AI Studio or Groq free tiers). With neither, both fall back to templates and NASA passages.
+</details>
 
-## Layout
+## Project structure
 
 ```
-backend/   adapters (team's cleaning code) · core (schema, units, validation, store) · ingest · record (provenance)
-           · search · answer/verifier · api
-web/       React + Vite + TypeScript: site/ (landing, research, presentation) · Engine.tsx (engine shell) · views/ (simulation
-           and find data ported from prototype/index.html, fire check, statistics) · router.tsx
-config/    datasets.yaml (cleaning spec) · variables.yaml · investigations.yaml · concepts.yaml
-data/      raw/ (NASA PSI tables + PDFs, byte-exact, checksummed) · seed.json · processed/ (built, gitignored)
-prototype/ the reference UI (do not edit)
-docs/      AUDIT (M0) · DECISIONS (old site's data decisions) · LIMITS · ADDING_A_DATASET
+backend/      FastAPI app: cleaning pipeline, catalog, fire-check models (predict/), simulator, AI with citations
+web/          React + Vite web app: landing, simulation, fire check, fire map, find data, statistics
+config/       dataset definitions, variables, outside reference values
+data/raw/     NASA PSI tables and reports, checksum-pinned
+scripts/      data download, method evaluation, README figures, typography audit
+docs/         method notes, technical report, research paper source, limits, audit, decisions
+deploy/       Modal deployment of the container
 ```
 
-The old Next.js site is tagged `v0-old-site`.
+<details>
+<summary>Glossary</summary>
 
-## Decisions
+- **PSI** (Physical Sciences Informatics): NASA's public archive of physical-science experiments run on the space station.
+- **Microgravity:** the near-weightless state in orbit. Hot gas does not rise, so a flame gets oxygen only by slow mixing or a fan.
+- **Partial pressure (of oxygen):** oxygen share × total pressure. NASA materials testing, and these models, find the oxygen share predicts flammability better.
+- **LOI / limiting oxygen:** the lowest oxygen share at which a fuel can keep burning.
+- **Flammability limit:** the boundary between conditions where a flame survives and where it dies.
+- **Campaign:** a batch of NASA tests run together with the same hardware; Ember validates on campaigns the model never saw.
+- **cm/s, psi:** airflow speed in centimetres per second; pressure in pounds per square inch (14.7 psi is sea level).
 
-Choices made where the brief was open. Newest last. The old site's data decisions (1–88) are in `docs/DECISIONS.md`.
+</details>
 
-| # | Decision | Why |
-|---|---|---|
-| A | **Investigations use the prototype's grouped slugs** (`bass` = BASS + BASS-II, `saffire` = Saffire-I/II/III, `same` = SAME + SAME-R, `flex` = FLEX + FLEX-2, `cfi`, `acme` = ACME + CFI-G + E-FIELD Flames, `spice` = SPICE + SLICE, `daft` = DAFT + DAFT-2, plus seed-only `sofie` and `ea`). Each group lists its real PSI members with PSI ids, DOIs and years. Test points and data resources keep the exact PSI investigation name. | Matches the prototype's filter and the seed's references. No real information is lost. |
-| B | **Real PSI rows are `verified=true`, `extraction=manual`** (read by the team's deterministic adapters) only when every value used is as published. Rows that use a value derived from free-text notes stay `verified=false`. Seed rows stay as given (`false`). | They are NASA's published tables, not AI extraction. Derived values deserve a human check. |
-| C | Credibility review factor for PSI flight data: **R = 0.8** (with P = 1.0 and T = 1.0, S = 94, High). | §7 has no rule for curated NASA data that is not peer-reviewed. |
-| D | The two context-notes PDFs the team wrote are **not resources** and are not cited by AI. | They are not NASA sources. |
-| E | **No Postgres.** The existing DuckDB + Parquet store is kept, and the §5 tables are added beside it. Embeddings stay local LSA (`FA_EMBEDDER=st` switches to MiniLM). The deploy is **one container** that serves the API and the built web app. | The existing stack works, the demo needs no database server, and MiniLM would add about 2 GB of PyTorch. |
-| F | **Deleted:** the old frontend, the synthetic-data generator (`backend/fixture.py`), the Image Lab (`backend/vision/`) and its 11 MB of synthetic frames, the GP surrogates, and the old screens' backend modules. **Kept:** the two small synthetic tables, because the adapter unit tests check the cleaning code against them. | `fixture.py` overwrote `data/raw/reports/reports.yaml` and broke every clean checkout (docs/AUDIT.md §0). Nothing deleted was NASA data. All of it is recoverable from `v0-old-site`. |
-| G | **Presets come from the prototype/seed** (Moon base 34 % O₂ at 8.2 psi), not from the old `config/presets.yaml` (30 % at 10.2 psi). | The §8.5 anchor tests and the §13 smoke path depend on them; the value is NASA's 2024 exploration-atmosphere recommendation (`r-ea`). |
-| H | The processed tables stay gitignored. A clean checkout runs the team's unchanged pipeline (`ingest canonical`) once, at start or at image build. | Nothing is re-cleaned by hand. Running the existing deterministic code is the only way to rebuild its outputs. |
-| I | `POST /api/admin/reload` now requires the `X-Admin-Token` header, and admin routes are disabled while `ADMIN_TOKEN` is empty or `change-me`. | It had no auth on the old site. |
-| J | A seed **placeholder data** resource (`d-bass`, `d-saffire`, `d-flex`, `d-cfig`, `d-same`) is skipped when a real PSI data resource exists for its investigation. Its starter test points still load (codes don't collide with real ones), marked unverified, with no source. | Each placeholder stood in for "the PSI test matrix". The real tables now exist, and the simulator's demo points have no real equivalent. |
-| K | Investigation **environments** = where the real tests ran (0 g → space, 1 g ground tests → earth) **plus** the seed's relevance tags (e.g. "Moon or Mars"). Purposes add the seed's `basics`. Fuels come from the seed only when the real catalog names none (smoke, dust). | These are classification tags the real catalog lacks. Taking the union never removes a real value. |
-| L | A test point is **simulatable** when it is fabric or PMMA, has an O₂ value, and has a burned / went-out outcome. Only those appear on the flammability map and as nearest evidence. | The compare box needs a measured outcome. Real BASS-II rows report O₂ but no outcome, so they would always "disagree". |
-| M | Loading a test whose table gives no pressure runs the simulator at 14.7 psi and **says so** in the compare box. Pressure and flow are left out of the §8.3 distance when the test doesn't report them. | It keeps the prototype's behaviour without presenting an assumed pressure as measured. |
-| N | Coverage thresholds come from the loaded points: "Extrapolated" above the highest solid-fuel O₂ that has an outcome (22.1 % today, SAF2-2-5-UG), or below the lowest tested pressure. | SPEC §8.3, computed instead of hard-coded. |
-| O | The AI summary template names **gaps computed from the data** (no partial-gravity tests; no solid-material test below sea-level pressure) and cites resource ids as `[id]` markers, the same format the Claude version will use. | One citation format for template and AI; the gaps are checked, not asserted. |
-| P | Export is implemented in M1 as `POST /api/export` (CSV / JSON / BibTeX downloads). The dialog previews the server's file. | The prototype's client-side preview had nothing to export from once data moved to the API. |
-| Q | `ingest fit` runs on the real data and **keeps the §8.1 defaults**: 0 verified fabric/PMMA tests report oxygen, pressure, airflow and an outcome. The fitter itself is tested on model-generated points (in the test suite only). The screen says the parameters are defaults and why. | SPEC §8.4: fit to verified points or keep the defaults. We do not relax "verified" or assume a cabin pressure to get a fit. |
-| R | The browser keeps a copy of the model for instant feedback. After 150 ms the server's `/api/simulate` result is compared with it, and replaces it if they differ. A 600-case golden file (`backend/tests/fixtures/model_golden.json`) proves the two copies match. | SPEC §10 reconciliation, without a round-trip on every frame. |
-| S | **AI uses `ANTHROPIC_MODEL` (default `claude-sonnet-5-5`, per SPEC §11)**, effort `low`, a 20 s timeout and no retries. Server-side refusal fallbacks (`fallbacks: "default"`) are on for models that support them. The model sees sources as `[S1]…[Sn]`; the server maps them back to resource ids. It then drops unknown labels, sentences with no citation, and sentences with a number that isn't in the sources. An answer left with nothing is rejected. | "Cite or refuse" enforced in code, not just asked for in the prompt. Short labels are more reliable than long ids. |
-| T | The AI summary writes only the "start with…" sentences; the **gap sentences are computed from the data** and appended. | The model would have to cite a source to say that no source covers something. Computing absences from the data is both checkable and true. |
-| U | **Ask with no API key returns 503 plus the matching NASA passages**, and the UI shows them, so the public demo still answers with evidence. Off-topic questions are refused before any AI call: a passage must share at least two of the question's content words. | SPEC §11 says 503; showing the evidence keeps the demo useful. The word gate stops spurious matches (e.g. "best" in a pizza question). |
-| V | `ai_cache` is a SQLite file next to the processed tables, keyed by sha256 of prompt version + model + context. | No database server (Decision E). A cache failure never fails a request. |
-| W | Retrieval for Ask uses the team's existing hybrid index (BM25 + local LSA). It is extended with the §5 resources, which are returned only when a caller asks for them. NASA passages only (Decision D). | Reuses the existing search instead of adding pgvector. The old site's search-quality tests still pass. |
-| X | The public `nasa-psi` bucket is read **directly over HTTPS** (its S3 listing and file URLs), not through Amazon's Python SDK. | The bucket is public, so no credentials or SDK are needed; one less dependency, and the request code is small enough to test with mocked responses. |
-| Y | **Every network step writes a committed snapshot** (`data/raw/ntrs/`, `data/raw/ntrs/text/`, `data/raw/psi_bucket/`), and `ingest all` reads only the snapshots. Each step's `--fetch` refreshes its snapshot. | A clean checkout, the tests and the container build run offline and give the same result every time; a network refresh is a deliberate, reviewable change. |
-| Z | **Fire check** (Simulate → "Check a fuel against NASA tests"): machine-learned estimates from the two NASA tables that record whether the fire kept going, CFI-G gas-jet flames (133 tests) and FLEX droplets (206). Validation is **GroupKFold by NASA campaign** (a whole campaign is hidden, then predicted). Logistic regression, random forest and a Gaussian process (per-input length scales) are compared with an always-the-average baseline; a model is used only if it beats the baseline on **both** Brier score and log loss, and the lowest log loss wins. Today the Gaussian process wins both (gas AUC 0.86, Brier 0.109 vs 0.182; droplet AUC 0.82, Brier 0.094 vs 0.115). | Random splits put near-repeat tests in training and overstate skill (droplet kNN AUC 0.89 random vs 0.71 grouped). Accuracy is not used to choose: 87 % of drops die early, so always guessing that scores 87 %. |
-| AA | **Three zones, decided by distance to real tests of the same fuel** (inputs scaled by their spread; thresholds from the data's own nearest-neighbour distances, OECD QSAR principle 3): *tested* (the real tests answer, the model cross-checks), *estimated* (between tests, inside every tested range), *untested* (outside a range, too far, or any gravity but microgravity: no number). | An estimate is only as good as the tests around it; "no number" is the honest answer outside them. |
-| AB | Gas fuels are described by **carbon number and the fuel's share of the jet**, not by label. Other engineered inputs were tried on unseen campaigns and dropped: oxygen partial pressure (gas AUC 0.86 → 0.58), pure-fuel flow (→ 0.51), log fuel flow (no gain), drop size squared (droplet 0.82 → 0.81). | Keep a feature only if it helps on campaigns the model never saw. |
-| AC | Ranges (chance range superseded by AK: 15 campaign-bootstrap models): measured quantities (burn rate K, drop size at extinction) use a split-conformal 90 % range, which held 89.9 % of values on unseen campaigns. | Uncertainty that has been checked, not assumed. |
-| AD | Earth limiting-oxygen values (ethane 11, propane 11.5, butane 12 % O₂ with nitrogen; Perry's Handbook) appear as a labelled **reference** in the check and report, never as training data. No value is shown for heptane or methanol because none was verified. | Outside data adds context without mixing measurement types. |
-| AE | The **report** is a fixed template (HTML in the app's typefaces, prints to PDF): conditions, zone, estimates with ranges, nearest NASA tests with source rows, what moves the estimate, model comparison, limits, PSI id and DOI. No generated prose. | An engineering record must say only what the result supports. |
-| AF | **Free AI option**: `backend/ai/llm.py` also speaks the OpenAI-compatible chat API (standard library HTTPS), used when no Anthropic key is set. The cite-or-refuse checks are unchanged. | Ask and the summary can run on a free tier. |
-| AG | Droplet air is entered as **CO₂ and helium shares, nitrogen the rest**, as NASA mixed it (45–70 % CO₂ or 45 % helium). | The earlier "inert gas" switch set CO₂ or helium to everything but oxygen (≈80 %), outside every tested mix, so those checks were always untested. |
-| AH | Tested-range hints are **per fuel** (pure propane: 13.7–14.7 psi), and the dialog says which simulator settings the data cannot inform: **airflow** (FLEX drops all burned in still air; CFI-G records no surrounding flow). | A hint over all fuels promised coverage the chosen fuel does not have. |
-| AI | Number fields keep the typed text; nothing is sent until every field is a valid number, the last result is marked out of date meanwhile, only the newest request may update it, and the report needs a current result. Validation errors from the server are turned into text. | No flicker of errors, no stale result presented as current, no "[object Object]". |
-| AJ | **Burn time** is estimated: droplets (ignition to extinction or burnout; error 3.0 s vs 6.0 s baseline) and gas flames that go out on their own (time to self-extinction; 20 s vs 44 s). Gas burn time is not shown when the flame most likely stays lit, because then the test was stopped by the crew. | Uses the measured time only where it measures the fire. |
-| AK | Chance ranges come from **15 models refitted on campaign-bootstrap samples** (10th–90th percentile), replacing the 5-fold spread; every model card stores a **calibration table** on unseen campaigns and a **Brier skill score** (gas 40 %, droplet 18 %), and the dialog calls the result a screening estimate. Gas calibration is good at the ends and overconfident in the middle (predicted 38 %, observed 19 %); the report shows that table. | Ranges that reflect which campaigns NASA happened to run, and a visible check of whether the chances can be taken at face value. |
-| AL | When a check is untested in microgravity, the dialog offers **the nearest tested conditions** of the same fuel (one click). | An untested answer should point to where the evidence is. |
-| AM | The **simulator** follows the same rule: outside tested conditions (partial gravity, oxygen above the highest solid test, reduced pressure) it shows the trend and the flame but **no numbers** ("Untested here"); inside, numbers are marked approximate ("Illustrative, not yet fitted"). For acrylic it shows the **ZARM** drop-tower spread rate nearest the chosen oxygen next to the model's number, labelled outside NASA (`/api/outside/zarm`). | A number the data cannot support should not appear; the outside measurement lets a reader see how far the illustrative model is off. |
-| AN | **Linting**: `python run.py lint` runs ruff (pyflakes, pycodestyle, import order, bugbear) on the Python code and the TypeScript strict check on the web app. Exceptions are per file with the reason in `ruff.toml`. | Catch dead code and likely bugs before review. |
-| AO | **Where is the line?** The fire check sweeps oxygen at the engineer's settings (everything else held), with the same zone rule at every point and a chance only where an estimate is allowed. It reports the 50 % crossing with its range (where the most optimistic and most pessimistic of the 15 campaign-bootstrap models cross), draws the same-fuel NASA tests on outcome rows outside the plot, and flags any stretch where the estimate falls by more than 10 points as oxygen rises. | The engineer's real question is "how much oxygen is too much"; a falling estimate contradicts combustion physics, so it is shown with a caution, not hidden or smoothed away. |
-| AP | **Next tests** by query by committee (Seung, Opper and Sompolinsky, 1992): candidates on a grid inside what the hardware has done (any fuel), scored by disagreement among the 15 campaign-bootstrap models plus distance from existing same-fuel tests, weighted toward the engineer's settings; three suggestions kept apart. Shown in every zone, including untested. | An untested request is exactly where a new NASA test matters most; the committee is the 15 campaign-bootstrap models already kept for the ranges (decision AK), so nothing new is trained. |
-| AQ | **Site structure from a past Space Apps winner** (Resonant Worlds Explorer): a landing page leads to the engine, the presentation and the research. Their structure only, not their content or look. Real paths with a 40-line pathname router (no dependency); the old `/#simulate` and `/#data` links redirect. The engine, research and presentation load on demand (landing: 56 KB gzipped JS). | A judge understands the project in seconds and reaches a result in two clicks. Their app kept one URL (no deep links, Back left the site) and had dead ends ("Model Not Trained"); ours has neither. |
-| AR | The **fire check is a page** (`/engine/check`), not a dialog: inputs live in the URL, gravity is chosen on the page (default microgravity), and it opens on the landing page's worked example. `/api/fire-check/meta` also returns the outcome-labelled points (coverage chart), input labels and source table, and is cached until the next retrain. The dialog's features (Decisions AG, AH, AJ, AL, AO, AP) carry over; with sliders there is no half-typed field, so Decision AI's checks reduce to the oxygen + CO₂ + helium ≤ 100 % rule. | The dialog inherited the Moon preset's gravity and always said untested; a page can be linked and is easier to read. |
-| AS | **Research and presentation are in-app pages** with live numbers from the engine, not PDF links. Both print cleanly to PDF; a `web/public/research-paper.pdf` or `presentation.pdf`, if added, is offered for download. Text the team must write is tagged *draft*. | Every number traces to the running engine and stays current with the data. |
-| AT | The name is **Ember** everywhere: pages, tab titles, report, API title, export files (`ember-<date>.csv`), the web package, start-up messages and docs (first called Freefall Atlas, briefly The Oxygen Edge). Only the GitHub repo name and the live link's Modal app id still read `freefall-atlas`; internal data file names (`atlas_*.parquet`, `atlas.duckdb`) are unchanged. | One name for judges and users; renaming the repo, the live link or stored data files would break links and builds for no visible gain. |
-| AU | **A product, not a paper.** Pages carry short copy and colour (a brighter navy with ember accents; the burned / went-out pair is unchanged and validated); the Limits sections are gone from the landing page, fire check, research page and presentation. The limits still live in `docs/LIMITS.md` and in the downloadable report, and the behaviour that keeps answers honest is unchanged: untested gives no number, every estimate carries its range. | Team feedback: it should invite use; caveat paragraphs and grey captions read as clutter. |
-| AV | **Statistics** (`/engine/stats`) replaces Overview and Models: four headline numbers, one ROC line per model on campaigns it never saw, and where NASA tested. `ingest predict` now records each model's ROC points (from the same out-of-campaign predictions as its AUC) in the model card; every score and the chosen models are unchanged. Tables sit behind "Show as a table". | A line per model shows the comparison at a glance; the AUC is the area under it. |
-| AW | **The simulation is the engine's front door** (`/engine`), and the public pages have one way in: "Launch simulation". `/engine/simulator`, `/engine/models` and `/engine/overview` still resolve. | One clear entry point instead of several competing buttons. |
-| AX | **Fire check with chips and sliders.** Each slider lights the range NASA tested for the selected fuel; ISS and Moon-base air are one-click presets; drops take CO₂ and helium shares as sliders (Decision AG). The result is a gauge with its range, one sentence, the oxygen line, the next tests and the closest NASA tests. | Seeing the tested band makes "untested" obvious before the answer arrives. |
-| AY | **Simulation stage**: the flame stays at the centre and the camera follows the burning front (the sample slides past, burned part behind it, "x of 100 mm burned" under the flame). The timeline never starts by itself: an Ignite button starts the first run, and new settings rewind without playing. A fire sound is synthesized with Web Audio (filtered-noise roar plus random crackles, both following the flame's intensity; no audio files), plays only while the timeline runs, starts only after a click, and has a remembered mute toggle. "Find data for these settings" and "Check a fuel" are gone from the panel; both pages are one click away in the nav. | A flame drifting across the screen read as unsteady; a run that starts on its own is a surprise; sound makes the fire feel present. |
-| AZ | **Statistics: from NASA tables to the model** (`GET /api/fire-check/pipeline`, `backend/predict/pipeline.py`), per question: (1) the cleaning funnel from rows in the NASA table to the rows the model learns from; (2) *unsupervised*: a Gaussian mixture on the standardized physical conditions (oxygen, pressure, leak or drop size, CO₂, helium), outcome not used, 2–6 groups chosen by BIC (today 5 for gas jets, 6 for drops), each group's share that kept burning shown afterwards, and the agreement with NASA's campaigns as the adjusted Rand index; (3) *supervised*: the Gaussian process's chance over oxygen × pressure for the most-tested fuel, other inputs at that fuel's median, empty wherever the fire check would say untested. Exploratory and descriptive: no estimate uses the clusters. Cached; computed at server start. | Shows how the data was cleaned, what structure it has without labels, and what the model learned, on the same data and rules as the fire check. A test checks one map cell against a real fire check. |
-| BA | **The research page is the team's paper as a PDF** (`web/public/research-paper.pdf`, the team's final build of `docs/paper/`). The in-app research page is removed (replaces the research half of Decision AS); every "Paper" / "View paper" link opens the PDF in a new tab, and old `/research` links redirect to it. The presentation stays an in-app page. | Team request: one finished paper instead of a second, generated version of it. |
-| BA | **Typography pass**: two fonts (IBM Plex Sans for words, IBM Plex Mono for numbers, units and IDs), six sizes (13/14/16/18/22/28 px, tokens in `web/src/tokens.css`), weights 400/500, sentence case, no tracking, nothing below 13 px, spacing on a 4 px scale, thin space between number and unit. Colours and layout unchanged. Checked on the rendered pages by `scripts/typo_audit.py --strict` (docs/AUDIT.md §8, docs/DECISIONS.md 89–99). | Hierarchy by size, legibility and consistency; the old 35 sizes, 3 fonts and uppercase tracked labels read as generated. |
-| BB | **Fire map: the NASA tests in 3D** (`/engine/map`, `GET /api/fire-check/map`, `backend/predict/firemap.py`, `web/src/views/FireMap.tsx`): every NASA test with a recorded ending (the fire check's CFI-G gas jets and FLEX droplets) as a dot at its oxygen (across), pressure (up) and fuel (one lane per fuel in depth), with a stem to its lane. Filled orange = kept burning, hollow blue = went out (the validated outcome pair, plus fill, so never colour alone). Future studies: per fuel, the two tests the models would learn most from (query by committee, `explore.next_tests`), as gold rings; and the Moon & Mars base air (presets) as a gold rod through every lane, dashed where that air is outside what NASA tested for the fuel. ISS cabin air is a white rod for reference. No settings: the only filters are the two outcomes and future studies. Drag or arrow keys to turn, scroll or +/− to zoom, gentle sway (off with reduced motion), hover and click for details with links to the NASA row and a fire check there; table view. The NASA tables give no airflow for these tests, so airflow is not an axis. Earlier versions (a chance heat map, then a space scene) were dropped as hard to read. | One picture of what NASA measured and where the next tests are needed, from the same data and models as the fire check. |
+## Team
 
-## References and AI use
+TBD: names and roles.
 
-### Use of AI (SI)
+## Citation
+
+If you use Ember or its cleaned data, please cite it (GitHub shows "Cite this repository" from [CITATION.cff](CITATION.cff)) and cite the NASA PSI datasets by their DOIs above.
+
+## License and acknowledgments
+
+Code: [MIT](LICENSE). Data: NASA PSI experimental data under the PSI terms of use; the ZARM dataset is CC BY-NC 4.0.
+
+Built for the [NASA International Space Apps Challenge 2026](https://www.spaceappschallenge.org/2026/challenges/flame-in-freefall/) on data from NASA Physical Sciences Informatics, NASA's Researcher's Guide to Combustion Science and the NASA Technical Reports Server.
+
+### Use of AI, references and libraries
+
+#### Use of AI (SI)
 - **Code:** this repository's code, tests and documentation were written with the help of an AI coding assistant, **Claude (Anthropic), through Claude Code**. Commits made with it carry a `Co-Authored-By: Claude` line. The team chose the idea, the data and the decisions, and reviewed the results.
 - **In the app:** the AI summary and *Ask* use a large language model (Claude via the Anthropic API, or a free OpenAI-compatible provider such as Groq or Google AI Studio). Every AI sentence must cite a NASA source and use only numbers found in it, or it is removed (Decision S). Without a key the app uses templates. Optional AI extraction of test points from NASA PDFs stays *unverified* until a person checks it.
 - **Not AI:** the fire-check estimates are classical statistical models (scikit-learn) trained on NASA tables; the report contains no generated prose. No AI-generated images, audio or video are used, and no NASA logos or branding are reproduced.
 
-### NASA data
+#### NASA data
 - NASA Physical Sciences Informatics (PSI) experimental tables, https://psi.nasa.gov: FLEX PSI-69 (doi:10.60555/mbq8-0451), FLEX-2 PSI-68 (10.60555/byp8-h018), CFI PSI-39 (10.60555/m6pj-a914), CFI-G PSI-159 (10.60555/cyt1-kh64), ACME Flame Design PSI-10 (10.60555/w4zy-bt45), ACME BRE PSI-20 (10.60555/vb93-3y72), ACME CLD Flame PSI-21 (10.60555/23e1-9950), ACME E-FIELD PSI-22 (10.60555/se5a-8c73), ACME s-Flame PSI-23 (10.60555/k57n-p030), BASS-II PSI-25 (10.60555/4qc4-de67), BASS PSI-26 (10.60555/58h4-dy80), SAFFIRE-1 PSI-98 (10.60555/0t15-1z43), SAFFIRE-2 PSI-99 (10.60555/2chp-m469), SAFFIRE-3 PSI-100 (10.60555/040q-4h36), SAME-R PSI-101 (10.60555/2np7-jv14), SAME PSI-102 (10.60555/gd4k-8h62), SLICE PSI-106 (10.60555/pm12-rg61), SPICE PSI-107 (10.60555/9kbh-e962). Checksums in `data/raw/psi_manifest.json`.
 - NASA, *A Researcher's Guide to: Combustion Science* (2015), NP-2015-10-034-JSC.
 - NASA Technical Reports Server (NTRS) records and report text: `data/raw/ntrs/` (33 records).
 
-### Other data (kept apart from NASA data, never used to train a model)
+#### Other data (kept apart from NASA data, never used to train a model)
 - ZARM drop tower, Bremen: Ries, Krieger, Meyer, Eigenbrod (2026), Zenodo doi:10.5281/zenodo.18479713, CC BY-NC 4.0 (funded by the German Space Agency at DLR).
 - Earth limiting-oxygen reference values: Green & Perry, *Perry's Chemical Engineers' Handbook*, 8th ed. (McGraw-Hill, 2007), §23 (`config/outside_reference.yaml`).
 - Starter rows in `data/seed.json` (from the team's prototype), labelled *placeholder / unverified*.
 
-### Code and libraries
+#### Code and libraries
 - Python: FastAPI, ruff (lint), Uvicorn, Pydantic, pandas, PyArrow, NumPy, SciPy, scikit-learn, DuckDB, PyYAML, rank-bm25, PyMuPDF, openpyxl, httpx, Anthropic Python SDK, pytest.
 - Web: React 18, Vite, TypeScript, Vitest, Playwright. Fonts: Barlow Condensed, IBM Plex Sans, IBM Plex Mono (Google Fonts).
 - Hosting: Docker, Modal.
 - Methods cited in `docs/methods/`: grouped cross-validation, Brier score and calibration practice from clinical prediction research (van den Goorbergh et al. 2022; Riley et al. 2019), OECD QSAR applicability-domain principle.
+
