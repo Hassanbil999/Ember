@@ -2,6 +2,7 @@
    sliders), burned-length curve, out/burn-through marker and the stats line for t1 → t2. The playhead and clock
    update every frame through sim.onTick, outside React. */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { coverage } from '../sim/evidence';
 import { at, DT, fmtT, SAMPLE_MM } from '../sim/model';
 import { fireSound } from '../sim/sound';
 import { sim, useSim } from '../sim/store';
@@ -42,12 +43,18 @@ export function Timeline() {
     }
     if (tNow.current) tNow.current.textContent = 't = ' + fmtT(T.t);
     if (tStat.current) {
+      // same rule as the Result panel: outside tested conditions, the timeline shows the trend, not numbers
+      if (coverage(sim.params, sim.points).kind !== 'inside') {
+        tStat.current.textContent = (sr.tOut != null ? 'The flame goes out. ' : sr.tEnd != null ? 'The flame burns through the sample. ' : '')
+          + 'Trend only: no NASA test covers these conditions, so no times or speeds are given.';
+        return;
+      }
       const a = at(sr.X, T.t1, sr.n), b = at(sr.X, T.t2, sr.n), dt = T.t2 - T.t1;
       let st = '';
       if (sr.tOut != null) st = 'Flame out at ' + fmtT(sr.tOut) + '. ';
       else if (sr.tEnd != null) st = 'Burns through at ' + fmtT(sr.tEnd) + '. ';
       tStat.current.innerHTML = st + 'From t1 <b>' + fmtT(T.t1) + '</b> to t2 <b>' + fmtT(T.t2) + '</b>, the front moves <b>' + (b - a).toFixed(1) + ' mm</b>' +
-        (dt > 0 ? ' (<b>' + ((b - a) / dt).toFixed(2) + ' mm/s</b>)' : '');
+        (dt > 0 ? ' (<b>' + ((b - a) / dt).toFixed(2) + ' mm/s</b>)' : '') + ' · illustrative model';
     }
   }
   useEffect(() => sim.onTick(renderTime), []);
@@ -114,7 +121,7 @@ export function Timeline() {
             <rect x={x1} y="0" width={Math.max(0, x2 - x1)} height={H} fill="#1b2540" />
             <path d={d} fill="rgba(212,119,42,.28)" stroke="#d4772a" strokeWidth="1.2" />
             {ev != null && <line x1={xOfT(ev)} x2={xOfT(ev)} y1="2" y2={H - 2} stroke="#9cc6f6" strokeDasharray="3 3" />}
-            {ticks.map(t => <text key={t} x={xOfT(t)} y={H + 12} fill="#5d6780" fontSize="10" textAnchor="middle" fontFamily="IBM Plex Mono,monospace">{t}</text>)}
+            {ticks.map(t => <text key={t} x={xOfT(t)} y={H + 12} fill="#5d6780" fontSize="13" textAnchor="middle" fontFamily="IBM Plex Mono,monospace">{t}</text>)}
           </>}
         </svg>
         <div className="hdl" id="h1" role="slider" tabIndex={0} aria-label="Start time t1" style={{ left: x1 }} {...sliderProps(tl.t1)} onKeyDown={e => onKey('h1', e)} />
