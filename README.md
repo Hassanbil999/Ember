@@ -157,6 +157,8 @@ Built for the [NASA International Space Apps Challenge 2026](https://www.spaceap
 
 ### Use of AI, references and libraries
 
+The complete list (every NASA table with its DOI, the 33 NASA reports, outside data, methods, software and AI use) is in [docs/REFERENCES.md](docs/REFERENCES.md).
+
 #### Use of AI (SI)
 - **Code:** this repository's code, tests and documentation were written with the help of an AI coding assistant, **Claude (Anthropic), through Claude Code**. Commits made with it carry a `Co-Authored-By: Claude` line. The team chose the idea, the data and the decisions, and reviewed the results.
 - **In the app:** the AI summary and *Ask* use a large language model (Claude via the Anthropic API, or a free OpenAI-compatible provider such as Groq or Google AI Studio). Every AI sentence must cite a NASA source and use only numbers found in it, or it is removed (Decision S). Without a key the app uses templates. Optional AI extraction of test points from NASA PDFs stays *unverified* until a person checks it.
