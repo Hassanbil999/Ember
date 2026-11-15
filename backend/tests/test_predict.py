@@ -97,7 +97,7 @@ def test_api_and_report(client):
     rep = client.post("/api/fire-check/report", json=req)
     assert rep.status_code == 200 and "attachment" in rep.headers["content-disposition"]
     body = rep.text
-    for s in ("Nearest NASA tests", "Model and validation", "Limits", "IBM+Plex+Sans", "Barlow+Condensed", "PSI-159"):
+    for s in ("Nearest NASA tests", "Model and validation", "Limits", "IBM+Plex+Sans", "IBM+Plex+Mono", "PSI-159"):
         assert s in body
 
 

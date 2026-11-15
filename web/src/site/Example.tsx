@@ -21,7 +21,7 @@ export function ExampleCard() {
       {res && (
         <ul className="ex-tests" aria-label="Closest NASA tests">
           {res.nearest.slice(0, 3).map(r => (
-            <li key={r.code}><span className="num">{r.code}</span><span>{r.o2_pct} % · {r.psi} psi</span><span className={'out ' + (r.burned ? 'b' : 'o')}>{r.outcome}</span></li>
+            <li key={r.code}><span className="num">{r.code}</span><span>{r.o2_pct} % · {r.psi} psi</span><span className={'out ' + (r.burned ? 'b' : 'o')}>{r.outcome}</span></li>
           ))}
         </ul>
       )}

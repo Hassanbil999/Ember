@@ -59,7 +59,7 @@ export function recDist(rec: TestPoint, s: SimState): number {
 }
 
 export const fitLabel = (d: number) => d < 1 ? 'close' : d < 2.5 ? 'partial' : 'distant';
-export const fmtU = (u: number | null) => u == null ? 'flow not reported' : u === 0 ? 'off' : (u < 1 ? u.toFixed(2) : u < 10 ? u.toFixed(1) : u.toFixed(0)) + ' cm/s';
+export const fmtU = (u: number | null) => u == null ? 'flow not reported' : u === 0 ? 'off' : (u < 1 ? u.toFixed(2) : u < 10 ? u.toFixed(1) : u.toFixed(0)) + ' cm/s';
 export const fmtT = (t: number) => (t < 10 ? t.toFixed(1) : t.toFixed(0)) + ' s';
 export function gName(g: number) { for (const [v, n] of [[0, 'micro-g'], [0.166, 'Moon'], [0.38, 'Mars'], [1, 'Earth']] as const) if (Math.abs(g - v) < 0.012) return n; return ''; }
 export const uFromS = (s: number) => s <= 0 ? 0 : 0.1 * Math.pow(500, (s - 1) / 99);

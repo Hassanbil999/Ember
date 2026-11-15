@@ -311,3 +311,43 @@ Approved 2026-11-14 with proposals A–G (README Decisions). Code: `backend/cata
 | `atlas_presets`, `atlas_model_params` | 5, 2 | From seed (Decision G) and the §8.1 defaults. `ingest fit` replaces the parameters once at least 4 verified points exist. |
 
 Gaps still open after M1: `s3_key` (null everywhere until `ingest psi`, M5), embeddings in `chunks` (LSA index, M4), `verified_by`/`verified_at` for seed rows (set by the admin verify page, M5).
+
+## 8. Typography and spacing pass (2026-11-15)
+
+Scope: fonts, text sizes, spacing and text alignment only. No colour, layout, feature or copy-meaning changes.
+Measured from the rendered pages, not only the source: `python scripts/typo_audit.py` reads the computed font of
+every visible piece of text (HTML and SVG) on every demo screen at 1440 and 1024 px; `--strict` fails on any
+rule break. Screenshots: `python scripts/typo_shots.py <folder>`.
+
+**Before** (3,782 text items measured):
+- **35 distinct sizes**, from 10 px to 84 px: 10, 10.4, 10.5, 11, 11.5, 12, 12.5, 13, 13.5, 14, 14.5, 15, 15.3, 15.5, 16, 17, 18, 18.5, 19, 20, 22, 24, 24.7, 26, 30, 34, 38, 40, 40.5, 41, 44, 46, 54.1, 65.5, 84.
+- **1,171 text instances below 13 px.** Mostly 12.5 px table cells, legends and captions in Find data, the simulator panels and the fire check; 10–11 px axis ticks in the flammability map, the timeline and the simulator canvas; 10.4 px formula subscripts; 11.5 px slide numbers; 12 px code lines.
+- **Three font families:** Barlow Condensed (77 items: logo, headings, section labels, pills), IBM Plex Sans, IBM Plex Mono (925 items, including word labels such as section headers, badges, the scale under sliders and the canvas labels).
+- **Four weights** (400, 500, 600, 700).
+- **81 uppercase labels and 97 tracked labels** (0.02–0.14 em).
+- **Uneven spacing:** 169 padding, margin and gap values off a 4 px scale (2, 3, 5, 6, 10, 14, 18, 20 px …).
+
+**After:** two families (IBM Plex Sans 3,066 items, IBM Plex Mono 736 items for numbers, units, IDs and code), weights
+400 and 500 only, sizes 13/14/16/18/22/28 px, nothing below 13 px, no uppercase, no tracking above 0.01 em, spacing on
+4/8/12/16/24/32/48 px. The one exception is the presentation slides: they scale their text with the slide width (cqw),
+like a projected image, with a 13 px floor. No clipped text on any screen. Lint, 211 backend tests, 7 model-parity
+tests and 8 browser tests pass.
+
+| Screen | Before | After |
+|---|---|---|
+| landing | [before 1440](audit/typography/before/landing-1440.png) · [1024](audit/typography/before/landing-1024.png) | [after 1440](audit/typography/after/landing-1440.png) · [1024](audit/typography/after/landing-1024.png) |
+| simulation | [before 1440](audit/typography/before/simulation-1440.png) · [1024](audit/typography/before/simulation-1024.png) | [after 1440](audit/typography/after/simulation-1440.png) · [1024](audit/typography/after/simulation-1024.png) |
+| fire-check-estimated | [before 1440](audit/typography/before/fire-check-estimated-1440.png) · [1024](audit/typography/before/fire-check-estimated-1024.png) | [after 1440](audit/typography/after/fire-check-estimated-1440.png) · [1024](audit/typography/after/fire-check-estimated-1024.png) |
+| fire-check-untested | [before 1440](audit/typography/before/fire-check-untested-1440.png) · [1024](audit/typography/before/fire-check-untested-1024.png) | [after 1440](audit/typography/after/fire-check-untested-1440.png) · [1024](audit/typography/after/fire-check-untested-1024.png) |
+| find-data | [before 1440](audit/typography/before/find-data-1440.png) · [1024](audit/typography/before/find-data-1024.png) | [after 1440](audit/typography/after/find-data-1440.png) · [1024](audit/typography/after/find-data-1024.png) |
+| statistics | [before 1440](audit/typography/before/statistics-1440.png) · [1024](audit/typography/before/statistics-1024.png) | [after 1440](audit/typography/after/statistics-1440.png) · [1024](audit/typography/after/statistics-1024.png) |
+| research | [before 1440](audit/typography/before/research-1440.png) · [1024](audit/typography/before/research-1024.png) | [after 1440](audit/typography/after/research-1440.png) · [1024](audit/typography/after/research-1024.png) |
+| presentation | [before 1440](audit/typography/before/presentation-1440.png) · [1024](audit/typography/before/presentation-1024.png) | [after 1440](audit/typography/after/presentation-1440.png) · [1024](audit/typography/after/presentation-1024.png) |
+
+**Noticed, left as is (outside this pass):**
+- The fire check's three measured quantities wrap to two rows at 1440 px, leaving the third alone on its line.
+- The presentation's title slide still shows the placeholder "Team: names and roles".
+- Colours in the flammability-map SVG are hard-coded (`#949eb3` and others) instead of using the colour tokens.
+- Find data and the simulator panels keep the prototype's dark palette while the other engine pages use the brighter Ember navy.
+- The fire check's oxygen line can fall as oxygen rises (it says so in a caution line); that is a model behaviour, not a typography issue.
+

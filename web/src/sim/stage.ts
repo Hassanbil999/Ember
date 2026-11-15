@@ -176,7 +176,7 @@ export class StageEngine {
     const yT = ys - Math.min(H * 0.3, 190), yB = ys + Math.min(H * 0.22, 130);
     c.strokeStyle = 'rgba(148,158,179,.22)'; c.lineWidth = 1; c.setLineDash([5, 7]);
     c.beginPath(); c.moveTo(box.l, yT); c.lineTo(box.r, yT); c.moveTo(box.l, yB); c.lineTo(box.r, yB); c.stroke(); c.setLineDash([]);
-    c.font = '11px "IBM Plex Mono", monospace'; c.fillStyle = 'rgba(176,186,206,.85)'; c.strokeStyle = 'rgba(232,236,244,.8)'; c.lineWidth = 1.4;
+    c.font = '13px "IBM Plex Sans", system-ui, sans-serif'; c.fillStyle = 'rgba(176,186,206,.85)'; c.strokeStyle = 'rgba(232,236,244,.8)'; c.lineWidth = 1.4;
     c.fillStyle = 'rgba(232,236,244,.8)';
     if (state.u > 0) this.arrow(c, box.l, yT + 20, box.l + 36 + Math.min(56, 10 * Math.sqrt(state.u)), yT + 20);
     c.fillStyle = 'rgba(176,186,206,.85)';

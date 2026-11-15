@@ -46,7 +46,7 @@ export function AdminVerify() {
   return (
     <main style={{ overflow: 'auto' }}>
       <div className="dwrap">
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 26 }}>Verify test points</h2>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-title)' }}>Verify test points</h2>
         <p className="muted" style={{ margin: 0, maxWidth: '80ch' }}>Check each value against the quoted source text and page. Verified points can be used to fit the simulator (SPEC §8.4). NASA table rows can only be verified; AI-extracted and starter rows can also be edited or rejected. Decisions are written to <code>data/curation/verifications.json</code>: commit that file to keep them.</p>
         <form className="r1" onSubmit={saveToken}>
           <label className="sr" htmlFor="tok">Admin token</label>

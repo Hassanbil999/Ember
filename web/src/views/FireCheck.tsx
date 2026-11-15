@@ -163,7 +163,7 @@ function Result({ res, entered, onOpenTest, onSuggest }: { res: FireCheckRes; en
         <Gauge id={e ? 'fcProb' : undefined} p={e ? e.probability : null} low={e?.low} high={e?.high} label={e ? `chance it ${e.will}` : 'no estimate'} />
         <div className="fc-say">
           <p id="fcVerdict">{line}</p>
-          {e && <p className="range">Range {Math.round(e.low * 100)}–{Math.round(e.high * 100)}%</p>}
+          {e && <p className="range">Range {Math.round(e.low * 100)}–{Math.round(e.high * 100)} %</p>}
           {top && <p className="lever">Biggest lever: <b>{top.label.toLowerCase()}</b> ({top.change_pts > 0 ? '+' : ''}{top.change_pts} pts per +{top.step} {top.unit})</p>}
           {res.suggestion && <button className="btn ember small" id="fcSuggest" onClick={onSuggest}>Try the nearest NASA test ({res.suggestion.code})</button>}
         </div>
@@ -182,7 +182,7 @@ function Result({ res, entered, onOpenTest, onSuggest }: { res: FireCheckRes; en
         <ol className="next" id="fcNext">{res.next_tests.map((n, i) => (
           <li key={i} data-next={i}>
             <span>{Object.keys(n.inputs).map(k => `${n.labels[k]} ${nice(n.inputs[k])}${n.units[k] ? ' ' + n.units[k] : ''}`).join(' · ')}</span>
-            <em>models disagree: {Math.round(n.committee_low * 100)}–{Math.round(n.committee_high * 100)}%</em>
+            <em>models disagree: {Math.round(n.committee_low * 100)}–{Math.round(n.committee_high * 100)} %</em>
           </li>))}</ol>
       </>)}
       <h3 className="sub-h">Closest NASA tests</h3>

@@ -19,7 +19,7 @@ export function Gauge({ p, low, high, label, id }: { p: number | null; low?: num
         {p != null && <circle cx="64" cy="64" r={R} className="g-arc" strokeDasharray={arc(p)} transform="rotate(-90 64 64)" />}
       </svg>
       <div className="g-mid">
-        {p != null ? <b id={id}>{Math.round(p * 100)}%</b> : <b className="g-none">—</b>}
+        {p != null ? <b id={id}>{Math.round(p * 100)} %</b> : <b className="g-none">—</b>}
         <span>{label}</span>
       </div>
     </div>

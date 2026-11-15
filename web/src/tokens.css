@@ -1,0 +1,61 @@
+/* Typography and spacing tokens (typography pass, docs/DECISIONS.md). Loaded last, so these values win.
+   Two fonts: IBM Plex Sans for every word, IBM Plex Mono for numbers, units and IDs only.
+   Six sizes, two weights, sentence case, no tracking. Spacing on a 4 px scale. Colours are not set here. */
+:root {
+  --font-body: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: var(--font-body);          /* the former display face (Barlow Condensed) is retired */
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+
+  --fs-caption: 13px;  --lh-caption: 1.4;     /* metadata, captions, axis ticks, badges */
+  --fs-small: 14px;    --lh-small: 1.4;       /* chips, legends, tables, buttons */
+  --fs-body: 16px;     --lh-body: 1.6;        /* running text */
+  --fs-readout: 18px;  --lh-readout: 1.5;     /* readouts, sub-headings */
+  --fs-verdict: 22px;  --lh-verdict: 1.35;    /* the one-line answer, headline numbers */
+  --fs-title: 28px;    --lh-title: 1.25;      /* page titles, hero */
+  --fw-regular: 400;   --fw-medium: 500;
+
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; --sp-6: 32px; --sp-7: 48px;
+}
+
+body { font-family: var(--font-body); font-size: var(--fs-body); line-height: var(--lh-body); font-weight: var(--fw-regular); }
+h1, h2, h3, h4 { font-family: var(--font-body); font-weight: var(--fw-medium); text-transform: none; letter-spacing: 0; }
+b, strong, th, label, button, .btn { font-weight: var(--fw-medium); }
+p { max-width: 70ch; }
+
+/* every number in tabular figures; mono only where the text is a number, unit or ID */
+.num, output, .stats b, .tile b, .qty b, td.n, th.n, .g-mid b, .tnow, kbd, code { font-variant-numeric: tabular-nums; }
+
+/* labels that were tracked-out uppercase mono or condensed caps: sentence case in the text face */
+.sec, .phead h2, .eyebrow, .live, .badge, .ai, .scale, .apidot, .brand span, .logo, .pill, .zone-pill, .count, .page-title,
+.legend, .key, .chip .c, .dd-btn .cnt, .hdl span, .tstat, .ol-legend, .site-nav a, .tabs a, .kicker {
+  font-family: var(--font-body); text-transform: none; letter-spacing: 0;
+}
+.sec, .phead h2 { font-size: var(--fs-small); font-weight: var(--fw-medium); }
+.page-title { font-size: var(--fs-title); line-height: var(--lh-title); font-weight: var(--fw-medium); }
+.badge, .ai { font-size: var(--fs-caption); }
+.pill, .zone-pill { font-size: var(--fs-readout); font-weight: var(--fw-medium); }
+.logo { font-weight: var(--fw-medium); }
+
+/* small UI roles: chips, buttons, legends, tables */
+.chip, .tog, .dd-btn, .btn.small, .tabs a, .seg button, .legend, .ol-legend, table, th, td, .key { font-size: var(--fs-small); line-height: var(--lh-small); }
+.chip { padding: var(--sp-2) var(--sp-3); }
+.chips, .legend, .ol-legend, .acts, .tl-row { gap: var(--sp-2); }
+
+/* charts and scales: never below the caption size */
+svg text, .scale, .tick, .ol-ax, .chart .tick, .hdl span, .tstat, .ctl output small, .stats span { font-size: var(--fs-caption); }
+svg .ol-lab { font-size: var(--fs-caption); }
+
+/* icons sit on the text baseline at text size */
+.chip svg, .btn svg, .tog svg, .edge svg, .dd-btn svg { width: 1em; height: 1em; vertical-align: -0.125em; flex: none; }
+
+/* formula sub/superscripts and code: never below the caption size */
+sub, sup { font-size: var(--fs-caption); line-height: 0; }
+code, pre.cmd { font-size: var(--fs-caption); }
+/* words set in the text face even inside numeric contexts; the digits keep tabular figures */
+th.n, .fc-say .range, .ol-ax, .draft, .s-no { font-family: var(--font-body); font-variant-numeric: tabular-nums; }
+.draft { font-size: var(--fs-caption); font-weight: var(--fw-medium); }
+.hero h1 { line-height: var(--lh-title); }
+.s-no { font-size: max(var(--fs-caption), 1.3cqw); }
+.ctl output small { font-family: var(--font-body); }
+/* Presentation slides are the one exception to the six sizes: a slide scales its text with its own width (cqw),
+   like a projected image, so its proportions stay fixed on any screen. Nothing on a slide goes below 13 px. */

@@ -52,7 +52,7 @@ export function OxygenLine({ data, entered, yes, no }: { data: Line; entered: nu
         <defs><pattern id="olHatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="var(--line)" strokeWidth="2" /></pattern></defs>
         {gaps.map(([a, b]) => <rect key={a} x={X(a)} y={M.t} width={Math.max(2, X(b) - X(a))} height={IH} fill="url(#olHatch)" />)}
         {[0, 0.5, 1].map(p => <g key={p}><line x1={M.l} x2={W - M.r} y1={Y(p)} y2={Y(p)} stroke="var(--line)" strokeDasharray={p === 0.5 ? '4 4' : undefined} />
-          <text x={M.l - 6} y={Y(p) + 4} textAnchor="end" className="ol-ax">{p * 100}%</text></g>)}
+          <text x={M.l - 6} y={Y(p) + 4} textAnchor="end" className="ol-ax">{p * 100} %</text></g>)}
         {ticks.map(t => <text key={t} x={X(t)} y={H - 6} textAnchor="middle" className="ol-ax">{t}</text>)}
         <text x={W - M.r} y={H - 20} textAnchor="end" className="ol-ax">oxygen, %</text>
         {band && <path d={band} fill="var(--ink)" opacity={0.12} />}

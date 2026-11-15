@@ -99,11 +99,11 @@ function Controls({ open, onClose }: { open: boolean; onClose: () => void }) {
         <div className="scale"><span>0 g</span><span>Moon</span><span>Mars</span><span>Earth</span></div>
       </div>
       <div className="ctl">
-        <div className="row"><label htmlFor="oR">Oxygen</label><output id="oO" htmlFor="oR">{st.o2.toFixed(1)}%</output></div>
+        <div className="row"><label htmlFor="oR">Oxygen</label><output id="oO" htmlFor="oR">{st.o2.toFixed(1)} %</output></div>
         <input type="range" id="oR" min="15" max="45" step="0.5" value={st.o2} onChange={e => sim.set({ o2: +e.target.value, preset: 'custom' })} />
       </div>
       <div className="ctl">
-        <div className="row"><label htmlFor="pR">Pressure</label><output id="pO" htmlFor="pR">{st.p.toFixed(1)} psi<small>{(st.p * 6.89476).toFixed(0)} kPa</small></output></div>
+        <div className="row"><label htmlFor="pR">Pressure</label><output id="pO" htmlFor="pR">{st.p.toFixed(1)} psi<small>{(st.p * 6.89476).toFixed(0)} kPa</small></output></div>
         <input type="range" id="pR" min="4" max="15" step="0.1" value={st.p} onChange={e => sim.set({ p: +e.target.value, preset: 'custom' })} />
       </div>
       <div className="ctl">
@@ -190,8 +190,8 @@ function OutsideZarm({ o2, model }: { o2: number; model: number | null }) {
   if (!z || !z.points.length) return null;
   const p = z.points.reduce((a, b) => (Math.abs(b.o2_frac * 100 - o2) < Math.abs(a.o2_frac * 100 - o2) ? b : a));
   return (
-    <p id="zarm" className="outside"><span className="badge">outside NASA</span> {z.label}, {z.material}: at {+(p.o2_frac * 100).toFixed(1)}% O₂ and {+(p.pressure_kpa / 6.89476).toFixed(1)} psi,
-      a flame spread at <b>{p.spread_mm_s.toFixed(1)} ± {p.spread_std.toFixed(1)} mm/s</b> (flow {+(p.flow_mm_s / 10).toFixed(0)} cm/s)
+    <p id="zarm" className="outside"><span className="badge">outside NASA</span> {z.label}, {z.material}: at {+(p.o2_frac * 100).toFixed(1)} % O₂ and {+(p.pressure_kpa / 6.89476).toFixed(1)} psi,
+      a flame spread at <b>{p.spread_mm_s.toFixed(1)} ± {p.spread_std.toFixed(1)} mm/s</b> (flow {+(p.flow_mm_s / 10).toFixed(0)} cm/s)
       {model != null ? <>; the model says ≈ {model.toFixed(1)} mm/s here</> : null}.{' '}
       <a className="link" href={z.url} target="_blank" rel="noopener noreferrer">doi:{z.doi}</a></p>
   );

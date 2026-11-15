@@ -4,6 +4,7 @@ import { usePath } from './router';
 import { Landing } from './site/Landing';
 import './styles.css';
 import './site.css';
+import './tokens.css';
 
 // Old links (/#simulate, /#data, with the simulator settings and filters in the query) keep working.
 if (location.pathname === '/' && /^#(simulate|data)\b/.test(location.hash)) {

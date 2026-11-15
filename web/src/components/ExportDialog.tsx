@@ -47,7 +47,7 @@ export function ExportDialog({ ids, onClose }: { ids: string[]; onClose: () => v
   return (
     <dialog id="dlg" ref={dlg} aria-labelledby="dlgTitle">
       <div className="dlg">
-        <h2 id="dlgTitle" style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 600 }}>Export</h2>
+        <h2 id="dlgTitle" style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-verdict)', fontWeight: 500 }}>Export</h2>
         <div className="seg" role="group" aria-label="Format" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
           <button id="fCsv" aria-pressed={fmt === 'csv'} onClick={() => setFmt('csv')}>Test points (CSV)</button>
           <button id="fJson" aria-pressed={fmt === 'json'} onClick={() => setFmt('json')}>JSON</button>
@@ -56,7 +56,7 @@ export function ExportDialog({ ids, onClose }: { ids: string[]; onClose: () => v
         <label htmlFor="out" className="sr">Export preview</label>
         <textarea id="out" ref={out} readOnly value={preview} />
         <div style={{ display: 'flex', gap: 10, justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
-          <span className="muted" id="copyMsg" style={{ fontSize: 12.5 }} aria-live="polite">{msg || (file ? file.filename : '')}</span>
+          <span className="muted" id="copyMsg" style={{ fontSize: 'var(--fs-caption)' }} aria-live="polite">{msg || (file ? file.filename : '')}</span>
           <span style={{ display: 'flex', gap: 8 }}>
             <button className="btn primary" id="downloadBtn" disabled={!file} onClick={download}>Download</button>
             <button className="btn" id="copyBtn" disabled={!file} onClick={copy}>Copy</button>

@@ -52,14 +52,14 @@ export function FlammabilityMap() {
         {[21, 30, 40].map(o => (
           <g key={o}>
             <line x1={MAP.l} x2={R} y1={my(o)} y2={my(o)} stroke="#1f2840" />
-            <text x={MAP.l - 5} y={my(o) + 3.5} fill="#949eb3" fontSize="10" textAnchor="end" fontFamily={MONO}>{o}%</text>
+            <text x={MAP.l - 5} y={my(o) + 3.5} fill="#949eb3" fontSize="13" textAnchor="end" fontFamily={MONO}>{o} %</text>
           </g>
         ))}
-        {[0.1, 1, 10, 50].map(u => <text key={u} x={mx(u)} y={B + 13} fill="#949eb3" fontSize="10" textAnchor="middle" fontFamily={MONO}>{u === 0.1 ? '≤0.1' : u}</text>)}
-        <text x={(MAP.l + R) / 2} y={MAP.h - 3} fill="#949eb3" fontSize="10.5" textAnchor="middle">airflow, cm/s</text>
+        {[0.1, 1, 10, 50].map(u => <text key={u} x={mx(u)} y={B + 13} fill="#949eb3" fontSize="13" textAnchor="middle" fontFamily={MONO}>{u === 0.1 ? '≤0.1' : u}</text>)}
+        <text x={(MAP.l + R) / 2} y={MAP.h - 3} fill="#949eb3" fontSize="13" textAnchor="middle">airflow, cm/s</text>
         <path d={line} fill="none" stroke="#e8ecf4" strokeWidth="2" />
-        <text x={R - 4} y={MAP.t + 12} fill="#f3b07a" fontSize="10.5" fontWeight="600" textAnchor="end" letterSpacing=".08em">BURNS</text>
-        <text x={R - 4} y={B - 6} fill="#9cc6f6" fontSize="10.5" fontWeight="600" textAnchor="end" letterSpacing=".08em">GOES OUT</text>
+        <text x={R - 4} y={MAP.t + 12} fill="#f3b07a" fontSize="13" fontWeight="500" textAnchor="end">Burns</text>
+        <text x={R - 4} y={B - 6} fill="#9cc6f6" fontSize="13" fontWeight="500" textAnchor="end">Goes out</text>
         {recs.map(rec => {
           const b = rec.outcome === 'burned';
           return <circle key={rec.code} className="rec" data-id={rec.code} cx={mx(Math.max(rec.flow_cm_s!, MAP.x0))} cy={my(rec.o2_pct!)} r="5"
