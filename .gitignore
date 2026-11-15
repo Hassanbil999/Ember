@@ -10,3 +10,8 @@ tests/screens/
 web/test-results/
 web/playwright-report/
 data/cache/
+
+# secrets: never commit (copy .env.example to .env)
+.env
+.env.*
+!.env.example

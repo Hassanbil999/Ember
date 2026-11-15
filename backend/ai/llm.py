@@ -66,7 +66,9 @@ def _complete_openai_compatible(system: str, user: str, max_tokens: int, schema:
     if schema is not None:
         body["response_format"] = {"type": "json_object"}
     req = urllib.request.Request(os.environ["LLM_BASE_URL"].rstrip("/") + "/chat/completions", data=json.dumps(body).encode(),
-                                 headers={"Content-Type": "application/json", "Authorization": "Bearer " + os.environ["LLM_API_KEY"]})
+                                 # a named User-Agent: Groq's Cloudflare front blocks Python's default one (403, error 1010)
+                                 headers={"Content-Type": "application/json", "Authorization": "Bearer " + os.environ["LLM_API_KEY"],
+                                          "User-Agent": "freefall-atlas/1.0"})
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT_S) as r:
             data = json.loads(r.read().decode("utf-8"))
