@@ -1,5 +1,5 @@
 {
-  "_readme": "Starter data from the Freefall Atlas prototype. status=placeholder means no source link yet (shown as Unverified). All test points are verified=false until a teammate checks them against the source. Never present placeholder rows as NASA data.",
+  "_readme": "Starter data from the first Ember prototype. status=placeholder means no source link yet (shown as Unverified). All test points are verified=false until a teammate checks them against the source. Never present placeholder rows as NASA data.",
   "presets": [
     {
       "key": "earth",

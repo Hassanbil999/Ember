@@ -1,11 +1,11 @@
 # Ember (repo: freefall-atlas)
 
-NASA Space Apps 2026 entry: will a small fire keep burning in spacecraft and Moon/Mars habitat air? Built on NASA microgravity combustion research. A landing page (`/`) leads to the **engine** (`/engine`: Simulation, Fire check, Find data, Statistics), the **research** page and the **presentation**. The visible name is Ember; repo, package and API names stay Freefall Atlas (README Decision AT). UI style: a product, not a paper: short copy, colour, no Limits sections on pages (README Decision AU).
+NASA Space Apps 2026 entry: will a small fire keep burning in spacecraft and Moon/Mars habitat air? Built on NASA microgravity combustion research. A landing page (`/`) leads to the **engine** (`/engine`: Simulation, Fire check, Fire map, Find data, Statistics), the **research paper** (a PDF, `web/public/research-paper.pdf`, README Decision BA) and the **presentation**. The name is Ember everywhere; only the GitHub repo name and the live link's Modal app id still read freefall-atlas (README Decision AT). UI style: a product, not a paper: short copy, colour, no Limits sections on pages (README Decision AU).
 
 ## This repo
 - This repo already holds the **old site with real, cleaned NASA data**. We are replacing its UI with the new frontend and connecting that frontend to the existing data. We are not starting over.
 - Target product: `SPEC.md`. **§0 explains how it applies to this repo.** Read it before planning.
-- Simulator and Find data reference: `prototype/index.html`. Match it; do not redesign those two views. Reuse its shader, model and layout code. The landing, engine shell, fire check, statistics, research and presentation pages are new design on the same type, with the brighter Ember palette (README Decisions AQ, AU).
+- Simulator and Find data reference: `prototype/index.html`. Match it; do not redesign those two views. Reuse its shader, model and layout code. The landing, engine shell, fire check, statistics and presentation pages are new design on the same type, with the brighter Ember palette (README Decisions AQ, AU).
 - Gap-filling starter data: `data/seed.json`. Use it only where the real data has nothing.
 - Audit of the old site: `docs/AUDIT.md` (written in M0). Keep it up to date when the mapping changes.
 
@@ -32,7 +32,7 @@ Existing backend kept: Python + FastAPI (`backend/`), data in Parquet + DuckDB (
 - Load data: `python run.py ingest [canonical|existing|seed|fit|all]` (= `python -m backend.ingest <step>`); `canonical` is the team's cleaning pipeline, unchanged
 - Unit tests: `python -m pytest backend/tests -q` · browser model parity: `cd web && npm test` · e2e: `python run.py e2e` · all: `python run.py test`
 - Container: `docker compose up --build` (root `Dockerfile`: builds the web app, runs `ingest all` at build time)
-- Code map: `backend/catalog/` = adapter layer to SPEC §5 (`build.py` existing, `seed.py`, `query.py` read side); `backend/api/routes_*.py` = SPEC §9; `backend/sim/model.py` = SPEC §8; `backend/predict/` = fire check; `web/src/sim/` = stage, model copy, store; `web/src/router.tsx` = pathname router; `web/src/Engine.tsx` = engine shell; `web/src/views/` = engine pages; `web/src/site/` = landing, research, presentation
+- Code map: `backend/catalog/` = adapter layer to SPEC §5 (`build.py` existing, `seed.py`, `query.py` read side); `backend/api/routes_*.py` = SPEC §9; `backend/sim/model.py` = SPEC §8; `backend/predict/` = fire check (`firemap.py` = fire map); `web/src/sim/` = stage, model copy, store; `web/src/router.tsx` = pathname router; `web/src/Engine.tsx` = engine shell; `web/src/views/` = engine pages; `web/src/site/` = landing, presentation
 
 ## Secrets
 Use `.env` (see `.env.example`, merged with any existing env file). Never commit keys.

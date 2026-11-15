@@ -1,4 +1,4 @@
-# Freefall Atlas: Build Spec
+# Ember: Build Spec
 
 NASA Space Apps Challenge 2026: an AI-powered dashboard that summarizes, ranks and interprets NASA microgravity combustion research for fire safety in spacecraft, Moon and Mars habitats, and pressurized rovers.
 
@@ -8,7 +8,7 @@ The working prototype lives at `prototype/index.html`. **It is the source of tru
 
 ## 0. Starting point: build on the existing repo
 
-This is an upgrade, not a fresh build. The repo already holds the old Freefall Atlas site **with real NASA data the team cleaned and integrated**. Do not repeat that work.
+This is an upgrade, not a fresh build. The repo already holds the old site (then called Freefall Atlas) **with real NASA data the team cleaned and integrated**. Do not repeat that work.
 
 - **Keep:** cleaned datasets, cleaning and ingestion scripts, database contents and migrations, and any backend code that serves the data.
 - **Delete:** the old frontend UI, plus code that only it uses. Do this only after the audit (M0) is approved, and only on the branch `rebuild/new-frontend`, with the old version tagged `v0-old-site`.
@@ -22,7 +22,7 @@ This is an upgrade, not a fresh build. The repo already holds the old Freefall A
 
 ## 1. Product in one paragraph
 
-Freefall Atlas has two connected views.
+Ember has two connected views.
 
 - **Simulate** lets anyone pick an environment (ISS, Moon base, lunar rover with the fan off, Mars base, custom) and a material, then watch a flame and the airflow react to gravity, oxygen, pressure and fan speed over a time window t1 → t2. A flammability map shows where the settings sit against measured NASA tests.
 - **Find data** lets users filter NASA research by data type, investigation, purpose, fuel, environment and credibility. Each result shows a credibility score, and the AI summarizes the filtered set with citations and names the gaps.

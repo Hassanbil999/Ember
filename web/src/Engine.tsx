@@ -1,27 +1,29 @@
-/* The engine (/engine/*): the simulation is the front door (/engine), with the fire check, the data finder and the
-   statistics beside it. The simulator's settings and the data filters live in the URL query so a view can be shared:
+/* The engine (/engine/*): the simulation is the front door (/engine), with the fire check, the fire map, the data
+   finder and the statistics beside it. The simulator's settings and the data filters live in the URL query so a view can be shared:
    /engine?g=0.166&o2=34&p=8.2&u=10&mat=fabric and /engine/data?types=paper. The fire check keeps its own inputs. */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from './api';
-import { Link, navigate, title, usePath } from './router';
+import { Link, navigate, PaperLink, title, usePath } from './router';
 import { sim, useSim } from './sim/store';
 import { isWide } from './sim/stage';
 import type { Filters, Investigation, Material } from './types';
 import { emptyFilters, FindDataView } from './views/FindData';
 import { FireCheckPage } from './views/FireCheck';
+import { FireMap } from './views/FireMap';
 import { SimulateView } from './views/Simulate';
 import { Statistics } from './views/Statistics';
 
-type Section = 'sim' | 'check' | 'data' | 'stats';
+type Section = 'sim' | 'check' | 'map' | 'data' | 'stats';
 const SECTIONS: { key: Section; path: string; label: string }[] = [
   { key: 'sim', path: '/engine', label: 'Simulation' },
   { key: 'check', path: '/engine/check', label: 'Fire check' },
+  { key: 'map', path: '/engine/map', label: 'Fire map' },
   { key: 'data', path: '/engine/data', label: 'Find data' },
   { key: 'stats', path: '/engine/stats', label: 'Statistics' },
 ];
 // /engine/simulator, /engine/models and /engine/overview are older addresses of the same pages.
 const sectionOf = (path: string): Section =>
-  path.startsWith('/engine/check') ? 'check' : path.startsWith('/engine/data') ? 'data' : /^\/engine\/(stats|models|overview)/.test(path) ? 'stats' : 'sim';
+  path.startsWith('/engine/check') ? 'check' : path.startsWith('/engine/map') ? 'map' : path.startsWith('/engine/data') ? 'data' : /^\/engine\/(stats|models|overview)/.test(path) ? 'stats' : 'sim';
 const LIST_KEYS = ['types', 'inv', 'purpose', 'fuel', 'env'] as const;
 
 function readUrl(section: Section): Filters {
@@ -104,7 +106,7 @@ export function Engine() {
           {SECTIONS.map(x => <Link key={x.key} to={x.path} id={'nav-' + x.key} aria-current={section === x.key ? 'page' : undefined}>{x.label}</Link>)}
         </nav>
         <nav className="sitelinks" aria-label="Site">
-          <Link to="/research">Research</Link><Link to="/presentation">Presentation</Link>
+          <PaperLink>Paper</PaperLink><Link to="/presentation">Presentation</Link>
           <span className={'apidot ' + api_} title={api_ === 'ok' ? 'API online' : api_ === 'down' ? 'API not reachable' : 'Connecting'}>
             <i aria-hidden="true" />{api_ === 'ok' ? 'API online' : api_ === 'down' ? 'API offline' : '…'}</span>
         </nav>
@@ -112,6 +114,7 @@ export function Engine() {
       </header>
       <main>
         {section === 'check' && <FireCheckPage onOpenTest={openTest} />}
+        {section === 'map' && <FireMap />}
         {section === 'stats' && <Statistics />}
         <SimulateView active={section === 'sim'} panelL={panels.l} panelR={panels.r} setPanels={(l, r) => setPanelsState({ l, r })} />
         <FindDataView active={section === 'data'} filters={filters} setFilters={setFilters} investigations={investigations} onSimulate={simulate} focus={focus} />

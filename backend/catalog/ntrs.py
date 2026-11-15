@@ -66,7 +66,7 @@ def fetch(get=None) -> dict:
         import httpx
 
         def get(url, params):
-            r = httpx.get(url, params=params, timeout=30, headers={"User-Agent": "freefall-atlas-ingest/1.0"})
+            r = httpx.get(url, params=params, timeout=30, headers={"User-Agent": "ember-ingest/1.0"})
             r.raise_for_status()
             return r.json()
     records: dict[str, dict] = {}

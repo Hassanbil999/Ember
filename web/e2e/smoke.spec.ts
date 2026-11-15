@@ -46,7 +46,7 @@ test('find data runs on the real NASA tables and exports a real file with a sour
   await page.locator('#exportBtn').click();
   await expect(page.locator('#out')).toHaveValue(/^test_id,.*,source,/);
   const [download] = await Promise.all([page.waitForEvent('download'), page.locator('#downloadBtn').click()]);
-  expect(download.suggestedFilename()).toMatch(/^freefall-atlas-.*\.csv$/);
+  expect(download.suggestedFilename()).toMatch(/^ember-.*\.csv$/);
 });
 
 test('settings and filters survive a reload through the URL', async ({ page }) => {
@@ -84,7 +84,7 @@ test('export dialog downloads CSV, JSON and BibTeX files that parse', async ({ p
   expect(bib.text).toContain('doi = {10.60555/4qc4-de67}');
 });
 
-test('Ask the Atlas: cites NASA passages or refuses (no API key in the demo)', async ({ page }) => {
+test('Ask Ember: cites NASA passages or refuses (no API key in the demo)', async ({ page }) => {
   await page.goto('/#data');
   await page.locator('#askQ').fill('What is the capital of France?');
   await page.locator('#askBtn').click();
@@ -157,7 +157,7 @@ test('site: landing → simulation, statistics, research and presentation, deep 
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 
   await page.goto('/');
-  await expect(page.locator('.hero h1')).toContainText('keep burning');
+  await expect(page.locator('.hero h1')).toHaveText("What If the Fire You Know Doesn't Exist in Space?");
   await expect(page.locator('.numbers')).toContainText('NASA tests', { timeout: 15000 });   // live numbers from the API
   await expect(page.locator('#example .zone-pill')).toBeVisible();               // the worked example, answered live
   await page.locator('#ctaEngine').click();
@@ -192,11 +192,12 @@ test('site: landing → simulation, statistics, research and presentation, deep 
   await page.goto('/engine/models');                                              // older address
   await expect(page.locator('#view-stats')).toBeVisible();
 
-  const tables = (await (await page.request.get('/api/resources?types=data&page_size=200')).json()).items.length;
-  await page.goto('/research');
-  await expect(page.locator('#psiTables tbody tr')).toHaveCount(tables);
-  await expect(page.locator('#psiTables .badge')).toHaveCount(2);               // the two tables the models learn from
-  await expect(page.locator('#moonAir tbody tr').first()).toBeVisible();
+  // the research paper is a PDF, opened from the site's Paper links
+  const pdf = await page.request.get('/research-paper.pdf');
+  expect(pdf.ok()).toBe(true);
+  expect(pdf.headers()['content-type']).toContain('pdf');
+  await page.goto('/');
+  await expect(page.getByRole('link', { name: 'View paper' })).toHaveAttribute('href', '/research-paper.pdf');
 
   await page.goto('/presentation/3');
   await expect(page.locator('#slideNo')).toHaveText(/^3 \/ \d+$/);
@@ -216,4 +217,26 @@ test('simulator: outside tested conditions it shows a trend, not numbers; acryli
   await expect(page.locator('#sSpread')).toContainText('≈');
   await expect(page.locator('#zarm')).toContainText('outside NASA');
   await expect(page.locator('#zarm')).toContainText('doi:10.5281/zenodo.18479713');
+});
+
+test('fire map: NASA tests by oxygen, pressure and fuel; filters for the outcome and future studies; table view', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(String(e)));
+  page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+  const d = await (await page.request.get('/api/fire-check/map')).json();
+  const lit = d.tests.filter((t: { lit: number }) => t.lit).length;
+  await page.goto('/engine/map');
+  await expect(page.locator('#nav-map')).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('#fm-lit')).toContainText(String(lit), { timeout: 20000 });
+  await expect(page.locator('#fm-out')).toContainText(String(d.tests.length - lit));
+  await page.click('#fm-out');
+  await expect(page.locator('#fm-out')).toHaveAttribute('aria-pressed', 'false');
+  await page.click('#fm-future');
+  await expect(page.locator('#fm-future')).toHaveAttribute('aria-pressed', 'false');
+  await page.locator('#fmCanvas').focus();
+  await page.keyboard.press('ArrowLeft');
+  await page.click('#fmTableBtn');
+  await expect(page.locator('#fmTable')).toContainText('methanol');
+  await expect(page.locator('#fmTable')).toContainText('Moon & Mars air');
+  expect(errors, errors.join('\n')).toEqual([]);
 });

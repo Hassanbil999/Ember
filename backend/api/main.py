@@ -41,17 +41,18 @@ async def lifespan(_app):
         try:
             from ..catalog.query import catalog
             catalog()
-            from ..predict import pipeline, service  # the Statistics page's views, so its first visit is fast
+            from ..predict import firemap, pipeline, service  # Statistics and Fire map views, so first visits are fast
             if service.available():
                 service.meta()
                 pipeline.build()
+                firemap.build()
         except Exception as e:                      # warming is an optimisation, never a reason to fail to start
             print("warm-up skipped:", e)
     threading.Thread(target=warm, daemon=True).start()
     yield
 
 
-app = FastAPI(title="Freefall Atlas API", version="1.0.0", lifespan=lifespan,
+app = FastAPI(title="Ember API", version="1.0.0", lifespan=lifespan,
               description="NASA microgravity combustion data (PSI) for spacecraft and habitat fire safety. SPEC §9.")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.add_middleware(GZipMiddleware, minimum_size=2000)
@@ -194,7 +195,7 @@ def api_doc_file(doc_id: str):
 class CsvReq(BaseModel):
     ids: list[str]
     columns: list[str] | None = None
-    title: str = "Freefall Atlas export"
+    title: str = "Ember export"
 
 
 @app.post("/api/export/csv")
@@ -208,7 +209,7 @@ def api_export_csv(body: CsvReq):
     cols = [c for c in cols if c in t.columns]
     buf = io.StringIO()
     vm = config.variables()
-    buf.write(f"# {body.title}\n# exported {date.today().isoformat()} from Freefall Atlas\n")
+    buf.write(f"# {body.title}\n# exported {date.today().isoformat()} from Ember\n")
     if t["demo"].any():
         buf.write("# WARNING: contains DEMO FIXTURE rows (synthetic) - not NASA results\n")
     buf.write("# units: " + "; ".join(f"{c}={vm.get(c, {}).get('unit', '')}" for c in cols if vm.get(c, {}).get("unit")) + "\n")
@@ -315,7 +316,7 @@ def web_app(path: str):
     if path.startswith("api/"):
         raise HTTPException(404, "No such API route")
     if not (WEB_DIST / "index.html").exists():
-        return PlainTextResponse("Freefall Atlas API is running. The web app is not built yet: run `python run.py build`.", status_code=503)
+        return PlainTextResponse("Ember API is running. The web app is not built yet: run `python run.py build`.", status_code=503)
     f = (WEB_DIST / path).resolve()
     if path and f.is_file() and WEB_DIST.resolve() in f.parents:
         cache = "public, max-age=31536000, immutable" if "/assets/" in f.as_posix() else "no-cache"

@@ -58,6 +58,16 @@ def pipeline_view():
     return pipeline.build()
 
 
+@router.get("/map")
+def fire_map():
+    """Fire map: every NASA test with a recorded ending by oxygen, pressure and fuel, plus where new tests are needed
+    (the models' next tests per fuel, and the crew air with its zone per fuel)."""
+    if not service.available():
+        raise HTTPException(503, "The fire-check models are not trained yet (python -m backend.ingest predict).")
+    from ..predict import firemap
+    return firemap.build()
+
+
 @router.post("")
 def check(body: CheckReq):
     return _run(body)

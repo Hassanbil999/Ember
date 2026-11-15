@@ -37,7 +37,7 @@ CRED = {"data": (1.0, 0.8, 1.0), "video": (1.0, 0.8, 0.8), "image": (1.0, 0.8, 0
 
 def _http_get(params: dict) -> str:
     import httpx
-    r = httpx.get(ENDPOINT, params=params, timeout=30, headers={"User-Agent": "freefall-atlas-ingest/1.0"})
+    r = httpx.get(ENDPOINT, params=params, timeout=30, headers={"User-Agent": "ember-ingest/1.0"})
     r.raise_for_status()
     return r.text
 

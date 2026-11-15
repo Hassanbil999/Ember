@@ -1,4 +1,4 @@
-/* "Ask the Atlas" (SPEC §10): question → /api/ai/ask. Answers show numbered citations (resource + page).
+/* "Ask Ember" (SPEC §10): question → /api/ai/ask. Answers show numbered citations (resource + page).
    Without an API key the server answers 503 with the relevant NASA passages, which are shown instead. */
 import { useState } from 'react';
 import { api, type AskPassage, type AskResponse } from '../api';
