@@ -244,10 +244,10 @@ for key in PROBLEMS:
     j = pb.features.index("o2_pct")
     fuel_cols = [pb.features.index(c) for c in ("carbon_n", "fuel_share", "heptane") if c in pb.features]
     ladder = [("1. Always the average (the app's baseline)", lambda d: Average()),
-              ("2. Average for this fuel", lambda d: FuelAverage(fuel_cols)),
-              ("3. Oxygen only (logistic regression)", lambda d: OxygenOnly(j)),
-              ("4. Rule: 'keeps burning above X % oxygen'", lambda d: OxygenRule(j)),
-              ("5. Look up the 3 closest NASA tests of this fuel", lambda d: NearestTests(fuel_cols)),
+              ("2. Average for this fuel", lambda d, fc=fuel_cols: FuelAverage(fc)),
+              ("3. Oxygen only (logistic regression)", lambda d, j=j: OxygenOnly(j)),
+              ("4. Rule: 'keeps burning above X % oxygen'", lambda d, j=j: OxygenRule(j)),
+              ("5. Look up the 3 closest NASA tests of this fuel", lambda d, fc=fuel_cols: NearestTests(fc)),
               ("6. Gaussian process, all inputs (the app's model)", GP())]
     w(f"### {pb.label} ({pb.investigation})\n")
     w("| Way of guessing | AUC (mean ± spread) | Brier | Log loss | Calibration slope | Beats the average? |")
