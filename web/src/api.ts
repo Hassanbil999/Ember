@@ -112,8 +112,19 @@ export interface PipelineView {
 }
 export type Pipeline = Record<'gas' | 'droplet', PipelineView>;
 
+/* /api/fire-check/map: every NASA test with a recorded ending (oxygen × pressure × fuel lane) and where tests are needed. */
+export interface MapLane { lane: number; problem: 'gas' | 'droplet'; fuel: string; kind: string; investigation: string; psi_id: string; outcome_yes: string; outcome_no: string; n: number; lit: number }
+export interface MapTest { id: string; lane: number; o2: number; psi: number; lit: number; campaign: string; size: number; co2?: number; he?: number }
+export interface MapNext { lane: number; o2: number; psi: number; size: number | null; low: number; high: number; nearest: string; why: string }
+export interface MapCrew { key: string; label: string; o2: number; psi: number; note: string | null; needed: boolean; zone_by_lane: Record<string, 'tested' | 'estimated' | 'untested'> }
+export interface FireMapAll {
+  lanes: MapLane[]; tests: MapTest[]; next: MapNext[]; crew: MapCrew[];
+  size_label: Record<'gas' | 'droplet', string>; size_unit: Record<'gas' | 'droplet', string>; o2_range: [number, number]; psi_range: [number, number];
+}
+
 export const api = {
   pipeline: () => get<Pipeline>('/api/fire-check/pipeline'),
+  fireMap: () => get<FireMapAll>('/api/fire-check/map'),
   zarm: () => get<Zarm>('/api/outside/zarm'),
   fireCheckMeta: () => get<FireCheckMeta>('/api/fire-check/meta'),
   fireCheck: (r: FireCheckReq) => post<FireCheckRes>('/api/fire-check', r),
@@ -150,7 +161,7 @@ export const api = {
     const r = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resource_ids: ids, format }) });
     if (!r.ok) throw new Error(`export: ${r.status}`);
     const cd = r.headers.get('Content-Disposition') || '';
-    const filename = /filename="?([^";]+)"?/.exec(cd)?.[1] ?? `freefall-atlas.${format === 'bibtex' ? 'bib' : format}`;
+    const filename = /filename="?([^";]+)"?/.exec(cd)?.[1] ?? `ember.${format === 'bibtex' ? 'bib' : format}`;
     return { text: await r.text(), filename, type: r.headers.get('Content-Type') || 'text/plain' };
   },
 };

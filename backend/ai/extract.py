@@ -7,7 +7,7 @@ Rules (enforced here, not just asked for):
   a row whose quote is not found in the passage text, or whose numbers are not in its quote, is dropped
 - values outside physical ranges are dropped (O₂ 0–100 %, pressure 0–200 kPa, flow 0–100 cm/s, gravity 0–1.2 g)
 - rows are written to data/curation/ai_extracted.json with extraction=ai, verified=false; `ingest curate`
-  adds them to the Atlas, and only a person can verify them
+  adds them to Ember, and only a person can verify them
 """
 from __future__ import annotations
 

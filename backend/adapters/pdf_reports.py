@@ -47,7 +47,7 @@ def load_pdfs(ds_id: str, cfg: dict) -> tuple[list[dict], list[dict]]:
                 "id": doc_id, "title": title, "file": f"data/raw/{ds_id}/{p.name}", "pages": pdf.page_count,
                 "investigations": m.get("investigations", []), "demo": bool(m.get("demo", cfg.get("demo", False))),
                 "authors": authors, "year": year, "url": m.get("url"),
-                "citation": m.get("citation") or f"{authors} ({year}). {title}. Freefall Atlas corpus file {p.name}.",
+                "citation": m.get("citation") or f"{authors} ({year}). {title}. Ember corpus file {p.name}.",
             })
             section = "Front matter"
             counter: dict[str, int] = {}

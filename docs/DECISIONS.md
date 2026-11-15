@@ -4,7 +4,7 @@ Choices made where the brief was open or the environment forced a deviation. New
 
 | # | Decision | Why |
 |---|----------|-----|
-| 1 | Product name **Freefall Atlas**; repo at `freefall-atlas/`. | Short, describes the Atlas-first idea. |
+| 1 | Product name **Freefall Atlas** at first (now **Ember**, Decision AT); repo at `freefall-atlas/`. | Short, describes the Atlas-first idea. |
 | 2 | **`run.py` task runner** mirrors every `make` target. | The build machine had no `make` and no Docker. `make <t>` and `python run.py <t>` do the same thing. |
 | 3 | Docker Compose + Dockerfiles are shipped but **were not run here** (no Docker on the build machine). | Kept per spec; the local path (`python run.py dev`) is the verified one. |
 | 4 | **Dense embeddings default to local LSA** (TF-IDF → TruncatedSVD, 70 dims). `FA_EMBEDDER=st` switches to sentence-transformers MiniLM if installed. | sentence-transformers needs PyTorch (~2 GB). LSA runs offline instantly; on this corpus hybrid search scores MRR > 0.6 on the labeled set. |

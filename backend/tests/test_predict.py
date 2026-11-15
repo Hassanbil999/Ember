@@ -254,3 +254,17 @@ def test_statistics_pipeline_cleaning_clusters_and_chance_map():
             req[{"Fuel flow (leak size)": "fuel_flow", "Drop size": "d0_mm", "CO₂ in the air": "co2_pct", "Helium in the air": "he_pct"}[h["label"]]] = h["value"]
         res = service.check(req)
         assert res["zone"] != "untested" and abs(res["estimate"]["probability"] - nums[0]) < 0.02
+
+
+def test_fire_map_places_every_outcome_test_and_needed_studies(client):
+    from backend.predict import firemap
+    d = firemap.build()
+    n = sum(len(pb.frame()) for pb in PROBLEMS.values())
+    assert len(d["tests"]) == n == sum(lane["n"] for lane in d["lanes"])
+    assert all(t["lit"] in (0, 1) for t in d["tests"])
+    assert sum(t["lit"] for t in d["tests"]) == sum(lane["lit"] for lane in d["lanes"])
+    # future studies: the models' next tests sit in a real fuel lane; crew air has a zone for every lane
+    assert d["next"] and all(0 <= s["lane"] < len(d["lanes"]) and s["low"] <= s["high"] for s in d["next"])
+    moon = next(c for c in d["crew"] if c["key"] == "moon")
+    assert moon["needed"] and set(moon["zone_by_lane"]) == {str(i) for i in range(len(d["lanes"]))}
+    assert client.get("/api/fire-check/map").json()["lanes"] == d["lanes"]

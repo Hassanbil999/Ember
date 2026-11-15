@@ -1,7 +1,7 @@
 /* Landing page (/): hero, three numbers, how it works, a live example, why it matters, one call to action.
    Every number comes from the engine. */
 import { useEffect } from 'react';
-import { Link, title } from '../router';
+import { Link, PaperLink, title } from '../router';
 import { facts, fmt, useSiteData } from '../siteData';
 import { SiteFooter, SiteHeader } from './Chrome';
 import { ExampleCard } from './Example';
@@ -28,12 +28,11 @@ export function Landing() {
         <HeroField />
         <div className="hero-in">
           <span className="eyebrow">NASA Space Apps 2026</span>
-          <h1>Will a fire <em>keep burning</em> in the air we plan to breathe?</h1>
-          <p className="lede">Ember checks cabin fire risk against NASA's own microgravity fire tests.</p>
+          <h1>What If the Fire You Know <em>Doesn't Exist in Space?</em></h1>
           <div className="cta">
             <Link className="btn ember big" to="/engine" id="ctaEngine">Launch simulation</Link>
             <Link className="btn big" to="/presentation">Presentation</Link>
-            <Link className="btn big" to="/research">Research</Link>
+            <PaperLink className="btn big">View paper</PaperLink>
           </div>
         </div>
       </section>

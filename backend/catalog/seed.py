@@ -6,7 +6,7 @@ never overwrites a real row; it keeps its `status` and `verified` exactly as giv
   notion of (`basics`, relevance environments such as "Moon or Mars") and fuels when the real catalog
   names none (smoke, dust).
 - A seed *placeholder data* resource stands in for "the PSI test matrix"; it is skipped when a real PSI
-  data resource exists for its investigation (README Decision J).
+  data resource exists for its investigation (Decision J).
 """
 from __future__ import annotations
 

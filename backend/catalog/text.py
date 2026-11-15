@@ -61,7 +61,7 @@ def fetch(get=None) -> dict:
         import httpx
 
         def get(url: str) -> bytes:
-            r = httpx.get(url, timeout=120, follow_redirects=True, headers={"User-Agent": "freefall-atlas-ingest/1.0"})
+            r = httpx.get(url, timeout=120, follow_redirects=True, headers={"User-Agent": "ember-ingest/1.0"})
             r.raise_for_status()
             return r.content
     res = read("atlas_resources")

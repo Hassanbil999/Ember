@@ -74,7 +74,7 @@ def _json(ids: list[str]) -> str:
         r = c.res[rid]
         pts = [c.points[x] for x in r["_codes"] if x in c.points]
         out.append({**{k: v for k, v in public(r).items() if k not in ("sim_point",)}, "test_points": pts})
-    return json.dumps({"exported": date.today().isoformat(), "generator": "Freefall Atlas", "resources": out}, ensure_ascii=False, indent=2, default=str)
+    return json.dumps({"exported": date.today().isoformat(), "generator": "Ember", "resources": out}, ensure_ascii=False, indent=2, default=str)
 
 
 def _bib_escape(s) -> str:
@@ -118,5 +118,5 @@ def export(body: ExportReq):
     if not body.resource_ids:
         raise HTTPException(422, "Select at least one resource")
     text = {"csv": _csv, "json": _json, "bibtex": _bibtex}[body.format](body.resource_ids)
-    name = f"freefall-atlas-{date.today().isoformat()}.{EXT[body.format]}"
+    name = f"ember-{date.today().isoformat()}.{EXT[body.format]}"
     return Response(text, media_type=MIME[body.format], headers={"Content-Disposition": f'attachment; filename="{name}"'})

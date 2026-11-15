@@ -1,4 +1,4 @@
-# How Freefall Atlas works: data, cleaning, models, evaluation
+# How Ember works: data, cleaning, models, evaluation
 
 Plain-language answers for students, mentors and judges. Every number in these pages comes from the
 NASA tables in this repo and can be regenerated with one command:

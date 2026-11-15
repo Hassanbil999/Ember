@@ -1,4 +1,4 @@
-"""Deploy Freefall Atlas on Modal (modal.com) from the repo's own Dockerfile.
+"""Deploy Ember on Modal (modal.com) from the repo's own Dockerfile.
 
     pip install modal
     modal setup                         # once: signs this computer in through the browser

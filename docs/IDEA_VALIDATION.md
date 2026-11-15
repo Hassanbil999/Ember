@@ -1,9 +1,9 @@
-# The Oxygen Edge: idea validation
+# Ember: idea validation
 
 NASA Space Apps 2026 · 14 November 2026
 
 ## Verdict
-**Promising, useful and impactful.** The Oxygen Edge turns NASA's space-station fire experiments into answers that engineers can use, and into a flame that anyone can explore. The hardest part, cleaning NASA's messy data so a model can learn from it, is already done. The models trained on it beat a simple baseline on NASA tests they had never seen.
+**Promising, useful and impactful.** Ember turns NASA's space-station fire experiments into answers that engineers can use, and into a flame that anyone can explore. The hardest part, cleaning NASA's messy data so a model can learn from it, is already done. The models trained on it beat a simple baseline on NASA tests they had never seen.
 
 ## The problem
 Future Moon and Mars habitats plan to use air with more oxygen at lower pressure than the ISS. The planned Moon-base air is 34 % oxygen at 8.2 psi. In low gravity, hot air doesn't rise, so flames get their oxygen differently and behave in ways that Earth tests don't predict. Fire is one of the most serious dangers in a sealed habitat.

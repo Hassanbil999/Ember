@@ -2,7 +2,7 @@
    the slide number is in the URL; Fullscreen and Print (one slide per page) are built in. Live numbers come from
    the engine. Text marked "draft" is for the team to write or check. */
 import { useEffect, useRef, type ReactNode } from 'react';
-import { Link, navigate, title, usePath } from '../router';
+import { Link, navigate, PaperLink, title, usePath } from '../router';
 import { facts, fmt, usePdf, useSiteData, type SiteData } from '../siteData';
 import { SiteHeader } from './Chrome';
 import { ExampleCard } from './Example';
@@ -48,7 +48,7 @@ function slides(d: SiteData | null): { title: string; body: ReactNode }[] {
       <li>An inert-gas share input, so CO₂ and helium mixes match how NASA ran them.</li>
       <li>Fit the flame simulator once verified solid-material points exist.</li></ul> },
     { title: 'Thank you', body: <div className="s-title">
-      <p className="big">Try it: <Link className="link" to="/engine">launch the simulation</Link> · <Link className="link" to="/research">read the research</Link></p>
+      <p className="big">Try it: <Link className="link" to="/engine">launch the simulation</Link> · <PaperLink className="link">read the paper</PaperLink></p>
       <p className="muted">Data: NASA Physical Sciences Informatics. Contact and links <Draft /></p></div> },
   ];
 }

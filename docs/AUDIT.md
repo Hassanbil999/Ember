@@ -299,7 +299,7 @@ Also: `stash@{0}` holds the fixture-regenerated demo files from your working tre
 
 ## 7. As built (M1): how the mapping was implemented
 
-Approved 2026-11-14 with proposals A–G (README Decisions). Code: `backend/catalog/build.py` (`ingest existing`) and `backend/catalog/seed.py` (`ingest seed`). Output tables: `data/processed/atlas_*.parquet`, also in `atlas.duckdb`.
+Approved 2026-11-14 with proposals A–G (product decisions). Code: `backend/catalog/build.py` (`ingest existing`) and `backend/catalog/seed.py` (`ingest seed`). Output tables: `data/processed/atlas_*.parquet`, also in `atlas.duckdb`.
 
 | Table | Rows | Notes |
 |---|---|---|

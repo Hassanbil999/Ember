@@ -30,7 +30,7 @@ from pathlib import Path
 BASE = "https://psi.nasa.gov/geode-py/ws/studies/{acc}/download?file={name}"
 RAW = Path(__file__).resolve().parents[1] / "data" / "raw"
 MANIFEST = RAW / "psi_manifest.json"
-UA = "freefall-atlas (NASA Space Apps 2026)"
+UA = "ember (NASA Space Apps 2026)"
 
 # dataset_id, PSI accession, file name, pinned sha256 (verified against PSI on 2026-11-13)
 TABLES = [

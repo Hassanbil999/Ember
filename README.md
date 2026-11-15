@@ -19,6 +19,7 @@ Moon and Mars habitats are planned with more oxygen at lower pressure than the s
 - **Check a fire against NASA's tests.** Choose a gas leak or a fuel drop, the fuel, oxygen, pressure and size. Ember answers with one of three labels: **Tested** (NASA ran nearly this; the real result is the answer), **Estimated** (between tests; a validated model gives a chance with a range) or **Untested** (outside the tests; no number).
 - **See where the line is and what to test next.** The fire check shows the oxygen level at which the chance passes 50 %, and the experiments that would narrow the answer most.
 - **Open the evidence.** Every answer lists the closest NASA tests; one click opens each test's row in its NASA table, and the report downloads as a printable page.
+- **See every test on one map.** The fire map places each NASA test with a known ending in 3D by oxygen, pressure and fuel (kept burning or went out), with the next tests the models need and the Moon and Mars base air marked where NASA has not tested.
 - **Watch a flame.** The simulation shows how gravity, oxygen, pressure and airflow change a flame on fabric or acrylic. It illustrates trends; it is not fitted to NASA data and shows no numbers outside tested conditions.
 - **Find the research.** Search 19 NASA tables, NASA reports and papers with credibility scores, ask a question answered only from NASA passages, and export CSV, JSON or BibTeX.
 
@@ -120,11 +121,11 @@ Tests: `python run.py test`. Lint: `python run.py lint`. Container: `docker comp
 
 ```
 backend/      FastAPI app: cleaning pipeline, catalog, fire-check models (predict/), simulator, AI with citations
-web/          React + Vite web app: landing, simulation, fire check, find data, statistics
+web/          React + Vite web app: landing, simulation, fire check, fire map, find data, statistics
 config/       dataset definitions, variables, outside reference values
 data/raw/     NASA PSI tables and reports, checksum-pinned
 scripts/      data download, method evaluation, README figures, typography audit
-docs/         method notes, technical report, limits, audit, decisions
+docs/         method notes, technical report, research paper source, limits, audit, decisions
 deploy/       Modal deployment of the container
 ```
 

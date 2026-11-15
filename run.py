@@ -90,7 +90,7 @@ def _ensure_ready():
 def start():
     """Production mode: one process serves the built web app and the API on one port."""
     _ensure_ready()
-    print(f"\n  Freefall Atlas → http://localhost:{PORT}   (API docs at /docs)\n")
+    print(f"\n  Ember → http://localhost:{PORT}   (API docs at /docs)\n")
     sh([PY, "-m", "uvicorn", "backend.api.main:app", "--host", os.environ.get("HOST", "127.0.0.1"), "--port", PORT,
         "--log-level", "warning"])
 
@@ -105,7 +105,7 @@ def dev():
                                "--reload-dir", "backend"], cwd=ROOT, env=ENV)]
     if WEB.exists():
         procs.append(subprocess.Popen([NPM, "run", "dev"], cwd=WEB, env=ENV, shell=SHELL))
-    print(f"\n  Freefall Atlas (dev) → http://localhost:5173   (API http://127.0.0.1:{PORT}/docs)\n")
+    print(f"\n  Ember (dev) → http://localhost:5173   (API http://127.0.0.1:{PORT}/docs)\n")
     try:
         for p in procs:
             p.wait()

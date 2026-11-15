@@ -33,3 +33,10 @@ export function Link({ to, onClick, ...rest }: LinkProps) {
 export function title(page?: string) {
   document.title = page ? `${page} · Ember` : 'Ember: will a fire keep burning?';
 }
+
+/* The team's research paper (web/public/research-paper.pdf), opened in its own tab. */
+export const PAPER_PDF = '/research-paper.pdf';
+
+export function PaperLink(props: AnchorHTMLAttributes<HTMLAnchorElement>) {
+  return <a {...props} href={PAPER_PDF} target="_blank" rel="noopener" />;
+}
