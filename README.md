@@ -94,8 +94,8 @@ More in [docs/LIMITS.md](docs/LIMITS.md).
 You need Python 3.11+ and Node 20+. No API keys and no login.
 
 ```
-git clone https://github.com/Hassanbil999/freefall-atlas.git
-cd freefall-atlas
+git clone https://github.com/Hassanbil999/Ember.git
+cd Ember
 python run.py start          # installs what is missing, loads the data, trains the models → http://localhost:8000
 ```
 
