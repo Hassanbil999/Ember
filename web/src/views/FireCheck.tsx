@@ -130,6 +130,7 @@ export function FireCheckPage({ onOpenTest }: { onOpenTest: (code: string, resou
               {GRAVITY.map(([v, label]) => <button key={v} className="chip" id={'fcG' + label} aria-pressed={f.g === v} onClick={() => set({ g: v })}>{label}</button>)}
             </div>
             <p className="key"><i /> range NASA tested for {f.fuel}{f.problem === 'droplet' ? ' · the rest of the air is nitrogen' : ''}</p>
+            {m?.not_in_data && <p className="key" id="fcNotIn">{m.not_in_data}</p>}
           </div>
 
           <div className={'card result zone-' + (res?.zone ?? 'none')} aria-live="polite">
