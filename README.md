@@ -8,7 +8,7 @@ NASA Space Apps 2026: will a small fire keep burning in the air planned for spac
 
 ## For judges
 
-- **Live app:** https://mohamad-755--freefall-atlas-web.us-east.modal.run (no login, no keys; the first visit after a quiet spell takes a few seconds to wake up)
+- **Live app:** https://mohamad-755--ember.modal.run (no login, no keys; the first visit after a quiet spell takes a few seconds to wake up)
 - **Challenge:** NASA Space Apps 2026, *Flame in Freefall*: summarize, rank and interpret NASA microgravity combustion findings for fire safety in human exploration.
 - **What it does:** an engineer or student picks an environment (ISS, Moon base, rover, Mars base) and a fuel. The app shows what NASA actually measured near those conditions, estimates whether a fire keeps burning where the tests allow it, and says plainly where nothing has been tested. **Find data** ranks NASA research by fit to the chosen environment and by credibility, and summarizes it with citations. **Report** exports the result with its NASA sources.
 - **Where to click:** the landing page → **Launch simulation** (the flame simulator), then **Fire check** (will a fire keep burning, with its range, the oxygen line and the next tests to run), **Find data** and **Statistics**; **Research** and **Presentation** are linked from every public page.
