@@ -45,6 +45,37 @@ Baseline (always predicts the average, 13%): Brier 0.114, log loss 0.388, AUC 0.
 
 The app's single 5-fold run chose **Gaussian process**: logistic regression AUC 0.741, Brier 0.1165, random forest AUC 0.725, Brier 0.1021, Gaussian process AUC 0.816, Brier 0.0942.
 
+## B2. A ladder of baselines: is the model better than simple ways of guessing?
+
+The average is the minimum bar (like a sugar pill in a drug trial). These baselines use simple knowledge of the conditions; the last one is what an engineer would do by hand: look up the closest real NASA tests. Same 10 campaign splits as section B. A constant guess cannot rank anything, so its AUC is 0.5 by definition.
+
+### Gas leak flame (CFI-G)
+
+| Way of guessing | AUC (mean ± spread) | Brier | Log loss | Calibration slope | Beats the average? |
+|---|---|---|---|---|---|
+| 1. Always the average (the app's baseline) | 0.5 (by definition) | 0.184 | 0.557 | — | — |
+| 2. Average for this fuel | 0.476 ± 0.006 | 0.197 | 0.802 | -0.04 | no |
+| 3. Oxygen only (logistic regression) | 0.603 ± 0.007 | 0.165 | 0.481 | 1.11 | yes |
+| 4. Rule: 'keeps burning above X % oxygen' | 0.361 ± 0.031 | 0.191 | 0.600 | -5.02 | no |
+| 5. Look up the 3 closest NASA tests of this fuel | 0.710 ± 0.017 | 0.173 | 0.849 | 0.21 | no |
+| 6. Gaussian process, all inputs (the app's model) | 0.830 ± 0.032 | 0.123 | 0.410 | 1.00 | yes |
+
+Against the strongest baseline (5, the closest-tests lookup), the model has the higher AUC **and** the lower Brier score in **10 of 10** splits; AUC gain +0.120 (smallest +0.086, largest +0.180).
+
+### Liquid fuel droplet (FLEX)
+
+| Way of guessing | AUC (mean ± spread) | Brier | Log loss | Calibration slope | Beats the average? |
+|---|---|---|---|---|---|
+| 1. Always the average (the app's baseline) | 0.5 (by definition) | 0.116 | 0.397 | — | — |
+| 2. Average for this fuel | 0.617 ± 0.010 | 0.110 | 0.370 | 0.76 | yes |
+| 3. Oxygen only (logistic regression) | 0.628 ± 0.009 | 0.109 | 0.377 | 0.68 | yes |
+| 4. Rule: 'keeps burning above X % oxygen' | 0.370 ± 0.066 | 0.120 | 0.462 | -0.18 | no |
+| 5. Look up the 3 closest NASA tests of this fuel | 0.740 ± 0.014 | 0.103 | 0.505 | 0.29 | no |
+| 6. Gaussian process, all inputs (the app's model) | 0.838 ± 0.013 | 0.094 | 0.304 | 0.90 | yes |
+
+Against the strongest baseline (5, the closest-tests lookup), the model has the higher AUC **and** the lower Brier score in **10 of 10** splits; AUC gain +0.097 (smallest +0.066, largest +0.124).
+
+
 ## C. Preprocessing choices tested
 
 ### Gas leak flames (CFI-G): 31 'stayed lit' among 133 tests

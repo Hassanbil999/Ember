@@ -24,6 +24,10 @@ question NASA's tables answer. The probability carries the "how likely", and the
 Always predicting the average (23 % for gas, 13 % for droplets), ignoring the conditions. A model is only shown if
 it beats this.
 
+**Isn't "always the average" a weak baseline?**
+Yes, so it is only the minimum bar. We also beat an oxygen-only model, a fuel average, an oxygen threshold rule and
+"look up the 3 closest NASA tests", in 10 of 10 splits. See [5. Evaluation](5-evaluation.md).
+
 **What is AUC?**
 Take one test that burned and one that went out. AUC is the chance the model ranked the burned one higher.
 0.5 is a coin flip, 1.0 is perfect. Ours: 0.83–0.84.
